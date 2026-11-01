@@ -52,3 +52,10 @@ assert.deepStrictEqual(fallback.od.selected, { sphere: -1, cylinder: -0.5, axis:
 assert.deepStrictEqual(fallback.os.selected, { sphere: 0.5, cylinder: -0.25, axis: 90 });
 
 console.log("ticket-scan: ok");
+
+const plus = scan.parseRxLine("+1.00 +1.50 180 9");
+assert.strictEqual(plus.sphere, 2.5);
+assert.strictEqual(plus.cylinder, -1.5);
+assert.strictEqual(plus.axis, 90);
+assert.strictEqual(scan.parseRxLine("24/07/2026 05:30 PM"), null);
+assert.strictEqual(scan.parseRxLine("PD 62 N 58"), null);
