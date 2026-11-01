@@ -26,7 +26,14 @@ const server = http.createServer(async (req, res) => {
     const context = await browser.newContext({ viewport: { width: 1280, height: 900 }, serviceWorkers: "block" });
     const page = await context.newPage();
     const errors = [];
+    const scannerDialogs = [];
+    let acceptScannerImport = true;
     page.on("pageerror", err => errors.push(err.message));
+    page.on("dialog", async dialog => {
+      scannerDialogs.push(dialog.message());
+      if (acceptScannerImport) await dialog.accept();
+      else await dialog.dismiss();
+    });
     const url = `http://127.0.0.1:${server.address().port}`;
     await page.goto(url);
     assert.match(await page.locator("#engineLine").innerText(), /Experimental v0.4.0-rc.1 · unvalidated/);
@@ -165,13 +172,32 @@ const server = http.createServer(async (req, res) => {
     await page.evaluate(() => {
       DioptraTicketScan.scanImage = async () => DioptraTicketScan.parseTicketText("<R>\n-2.37 -1.12 178 9\n<-2.37 -1.12 178>\n<L>\n+1.37 -0.62 168 9\n<+1.37 -0.62 168>\nVD=12.0\nWD=40cm\nPD=62");
     });
+    await page.locator("#odR2Sph").selectOption("4.00");
     await page.locator("#ticketImageInput").setInputFiles({ name: "synthetic.png", mimeType: "image/png", buffer: Buffer.from("stubbed OCR") });
     await page.locator("#scanStatus").filter({ hasText: /Imported/ }).waitFor();
+    assert.match(scannerDialogs.at(-1), /OD: -2\.37 \/ -1\.12 \/ 178° · 1\/3 repeats/);
+    assert.match(scannerDialogs.at(-1), /PD: distance 62 mm · near not recognized/);
+    assert.doesNotMatch(scannerDialogs.at(-1), /\\n/, "scanner confirmation uses real line breaks");
     assert.equal(await page.locator("#odSelSph").inputValue(), "2.37");
     assert.equal(await page.locator("#odSelCyl").inputValue(), "1.12");
     assert.equal(await page.locator("#osSelSph").getAttribute("data-sign"), "1");
     assert.equal(await page.locator("#odR1Q").inputValue(), "9");
+    assert.equal(await page.locator("#odR2Sph").inputValue(), "", "unrecognized repeat rows do not retain stale values");
     assert.equal(await page.locator("#nearWd").inputValue(), "400");
+    acceptScannerImport = false;
+    await page.evaluate(() => {
+      DioptraTicketScan.scanImage = async () => DioptraTicketScan.parseTicketText("<R>\n-9.00 -1.00 90 9\n<-9.00 -1.00 90>\n<L>\n-8.00 -2.00 80 9\n<-8.00 -2.00 80>");
+    });
+    await page.locator("#ticketImageInput").setInputFiles({ name: "cancelled.png", mimeType: "image/png", buffer: Buffer.from("stubbed OCR") });
+    await page.locator("#scanStatus").filter({ hasText: /Cancelled/ }).waitFor();
+    assert.equal(await page.locator("#odSelSph").inputValue(), "2.37", "cancelled scan leaves the form untouched");
+    acceptScannerImport = true;
+    await page.evaluate(() => {
+      DioptraTicketScan.scanImage = async () => DioptraTicketScan.parseTicketText("<R>\n-7.00 -1.00 90 9\n<-7.00 -1.00 90>");
+    });
+    await page.locator("#ticketImageInput").setInputFiles({ name: "incomplete.png", mimeType: "image/png", buffer: Buffer.from("stubbed OCR") });
+    await page.locator("#scanStatus").filter({ hasText: /Scan failed/ }).waitFor();
+    assert.equal(await page.locator("#odSelSph").inputValue(), "2.37", "one-eye scans never partially overwrite the form");
     await page.locator("#age").fill("30");
     await page.getByRole("radio", { name: "Yes", exact: true }).click();
     await page.locator("#odPrevSph").selectOption("4.00");
