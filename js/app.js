@@ -338,6 +338,16 @@
       const result = await ticketScan.scanImage(file, message => {
         status.textContent = scanProgressText(message);
       });
+      const describe = eye => eye && eye.selected
+        ? [eye.selected.sphere.toFixed(2), eye.selected.cylinder.toFixed(2), eye.selected.axis + "°"].join(" / ")
+        : "Not recognized";
+      const summary = ["Review these values against the photographed ticket:",
+        "OD: " + describe(result.od), "OS: " + describe(result.os),
+        ...(result.warnings || []), "Import recognized values into the examination form?"].join("\\n");
+      if (!window.confirm(summary)) {
+        status.textContent = "Cancelled · no values changed";
+        return;
+      }
       applyTicketScan(result);
       const warningCount = result.warnings ? result.warnings.length : 0;
       status.textContent = warningCount
