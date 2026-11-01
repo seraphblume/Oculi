@@ -25,7 +25,9 @@
 
   function parseRxLine(line) {
     const source = String(line || "").trim();
-    const nums = numberTokens(source);
+    const cleaned = source.replace(/^\\s*(?:<\\s*|\\*\\s*)/, "").replace(/>\\s*$/, "").trim();
+    if (!/^[+\\-]?\\s*\\d{1,2}\\.\\d{1,2}\\s+[+\\-]?\\s*\\d{1,2}\\.\\d{1,2}\\s+\\d{1,3}(?:\\s+\\d{1,2})?\\s*$/.test(cleaned)) return null;
+    const nums = numberTokens(cleaned);
     if (nums.length < 3) return null;
 
     const sphere = nums[0];
@@ -34,8 +36,11 @@
     const reliability = nums.length >= 4 ? nums[3] : null;
 
     if (Math.abs(sphere) > 30 || Math.abs(cylinder) > 10) return null;
-    if (cylinder === 0 && (axis < 1 || axis > 180)) axis = 180;
-    if (axis < 1 || axis > 180) return null;
+    if (!Number.isInteger(axis) || axis < 1 || axis > 180) return null;
+    const transposed = cylinder > 0;
+    const normalizedSphere = transposed ? sphere + cylinder : sphere;
+    const normalizedCylinder = transposed ? -cylinder : cylinder;
+    if (transposed) axis = ((axis + 89) % 180) + 1;
 
     const selected =
       /<[^>]*>/.test(source) ||
@@ -43,9 +48,10 @@
       /selected/i.test(source);
 
     return {
-      sphere,
-      cylinder: cylinder === 0 ? 0 : -Math.abs(cylinder),
+      sphere: normalizedSphere,
+      cylinder: normalizedCylinder,
       axis,
+      transposed,
       reliability: Number.isFinite(reliability) && reliability >= 0 && reliability <= 99 ? reliability : null,
       selected,
       source
@@ -95,7 +101,8 @@
       selected: selected ? {
         sphere: selected.sphere,
         cylinder: selected.cylinder,
-        axis: selected.axis
+        axis: selected.axis,
+        ...(selected.transposed ? { transposed: true } : {})
       } : null
     };
   }
@@ -114,7 +121,7 @@
     const rIndex = lines.findIndex(line => eyeHeader(line, "R"));
     const lIndex = lines.findIndex(line => eyeHeader(line, "L"));
 
-    let rEnd = lIndex >= 0 ? lIndex : lines.length;
+    let rEnd = lIndex > rIndex ? lIndex : lines.length;
     if (rIndex >= 0 && lIndex < 0) {
       const stop = lines.findIndex((line, i) => i > rIndex && metadataStop(line));
       if (stop >= 0) rEnd = stop;
@@ -139,6 +146,8 @@
     if (lIndex < 0) warnings.push("OS section not recognized");
     if (!od.selected) warnings.push("OD selected line not recognized");
     if (!os.selected) warnings.push("OS selected line not recognized");
+    if (od.selected && od.selected.transposed) warnings.push("OD plus cylinder transposed to minus notation");
+    if (os.selected && os.selected.transposed) warnings.push("OS plus cylinder transposed to minus notation");
     if (od.readings.length < 3) warnings.push(`OD: ${od.readings.length}/3 repeat readings recognized`);
     if (os.readings.length < 3) warnings.push(`OS: ${os.readings.length}/3 repeat readings recognized`);
 
