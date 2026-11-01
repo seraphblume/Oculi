@@ -284,8 +284,26 @@
     setFieldValue(el, digits == null ? String(value) : Number(value).toFixed(digits));
   }
 
+  function clearScannedEye(eye) {
+    for (const row of ["R1", "R2", "R3", "Sel"]) {
+      const prefix = eye + row;
+      const sphere = $(prefix + "Sph");
+      const cylinder = $(prefix + "Cyl");
+      const axis = $(prefix + "Ax");
+      setFieldValue(sphere, "");
+      sphere.dataset.sign = "-1";
+      const sign = document.querySelector('.sign[data-target="' + prefix + 'Sph"]');
+      if (sign) sign.textContent = MINUS;
+      setFieldValue(cylinder, "");
+      setFieldValue(axis, "");
+      const reliability = $(prefix + "Q");
+      if (reliability) setFieldValue(reliability, "");
+    }
+  }
+
   function applyScannedEye(eye, parsedEye) {
     if (!parsedEye) return;
+    clearScannedEye(eye);
     (parsedEye.readings || []).slice(0, 3).forEach((reading, i) => {
       const p = `${eye}R${i + 1}`;
       setSignedField(`${p}Sph`, reading.sphere);
@@ -304,6 +322,7 @@
   function applyTicketScan(result) {
     applyScannedEye("od", result.od);
     applyScannedEye("os", result.os);
+    ["vertexMm", "pdDistance", "pdNear", "nearWd"].forEach(id => setFieldValue($(id), ""));
     if (result.instrument) {
       setPlainField("vertexMm", result.instrument.vertexMm, 2);
       setPlainField("pdDistance", result.instrument.pdDistanceMm);
@@ -338,12 +357,19 @@
       const result = await ticketScan.scanImage(file, message => {
         status.textContent = scanProgressText(message);
       });
+      if (!result.od || !result.od.selected || !result.os || !result.os.selected) {
+        throw new Error("Both OD and OS selected readings are required. No values were changed.");
+      }
       const describe = eye => eye && eye.selected
         ? [eye.selected.sphere.toFixed(2), eye.selected.cylinder.toFixed(2), eye.selected.axis + "°"].join(" / ")
         : "Not recognized";
+      const pd = result.instrument || {};
       const summary = ["Review these values against the photographed ticket:",
-        "OD: " + describe(result.od), "OS: " + describe(result.os),
-        ...(result.warnings || []), "Import recognized values into the examination form?"].join("\\n");
+        "OD: " + describe(result.od) + " · " + result.od.readings.length + "/3 repeats",
+        "OS: " + describe(result.os) + " · " + result.os.readings.length + "/3 repeats",
+        "PD: distance " + (pd.pdDistanceMm == null ? "not recognized" : pd.pdDistanceMm + " mm") +
+          " · near " + (pd.pdNearMm == null ? "not recognized" : pd.pdNearMm + " mm"),
+        ...(result.warnings || []), "Import recognized values into the examination form?"].join("\n");
       if (!window.confirm(summary)) {
         status.textContent = "Cancelled · no values changed";
         return;
