@@ -147,6 +147,7 @@ const server = http.createServer(async (req, res) => {
     assert.equal(c.shadow.prediction.version, "0.3.0");
     assert.equal(c.observations.near.workingDistanceCm, 33);
     assert.equal(c.observations.near.nearPointCm, 50);
+    assert.equal(c.observations.instrument.vertexMm, 12, "refraction always records the fixed 12 mm vertex");
     assert.equal(c.input.previousRx.od.sphere, 1);
     assert.equal(c.input.previousRx.os.sphere, -1);
     assert.equal(c.input.previousRx.od.cylinder, 0);
@@ -170,7 +171,7 @@ const server = http.createServer(async (req, res) => {
 
     // Stub OCR only; exercise the production parser and all import-to-form mappings.
     await page.evaluate(() => {
-      DioptraTicketScan.scanImage = async () => DioptraTicketScan.parseTicketText("<R>\n-2.37 -1.12 178 9\n<-2.37 -1.12 178>\n<L>\n+1.37 -0.62 168 9\n<+1.37 -0.62 168>\nVD=12.0\nWD=40cm\nPD=62");
+      DioptraTicketScan.scanImage = async () => DioptraTicketScan.parseTicketText("<R>\n-2.37 -1.12 178 9\n<-2.37 -1.12 178>\n<L>\n+1.37 -0.62 168 9\n<+1.37 -0.62 168>\nVD=8.0\nWD=40cm\nPD=62");
     });
     await page.locator("#odR2Sph").selectOption("4.00");
     await page.locator("#ticketImageInput").setInputFiles({ name: "synthetic.png", mimeType: "image/png", buffer: Buffer.from("stubbed OCR") });
@@ -213,24 +214,44 @@ const server = http.createServer(async (req, res) => {
     assert.equal(scanned.input.os.sphere, 1.37);
     assert.equal(scanned.observations.near.workingDistanceCm, 40);
     assert.equal(scanned.observations.near.nearPointCm, null);
+    assert.equal(scanned.observations.instrument.vertexMm, 12, "ticket VD cannot override the fixed refraction vertex");
 
     // Tools are a separate workspace, not a shortcut around the blinded case flow.
     const beforeTools = await page.evaluate(() => JSON.stringify(DioptraStorage.listCases()));
     await page.locator("#age").fill("44");
+    await page.locator("#geniusTab").click();
+    assert.equal(await page.locator("#casePanel").isVisible(), false);
+    assert.equal(await page.locator("#actionBar").isVisible(), false);
+    assert.equal(await page.locator("#caseActions").isVisible(), false);
+    assert.equal(await page.locator("#geniusPanel h1").innerText(), "Genius");
+    assert.match(await page.locator("#geniusPanel").innerText(), /does not yet present an unvalidated prediction/i);
     await page.locator("#calculatorTab").click();
     assert.equal(await page.locator("#casePanel").isVisible(), false);
     assert.equal(await page.locator("#actionBar").isVisible(), false);
     assert.equal(await page.locator("#caseActions").isVisible(), false);
+    assert.deepEqual(await page.locator(".calculator-tabs [role=tab]").allTextContents(), ["Rx conversion", "Spherical Equivalent", "Transpositions"]);
+    assert.equal(await page.locator("#conversionControls").isVisible(), true);
     await page.locator("#calculatorForm button[type=submit]").click();
     assert.match(await page.locator("#calculatorError").innerText(), /Enter sphere/);
     for (const [id, value] of Object.entries({ calcSphere: "-1.50", calcCylinder: "-1.25", calcAxis: "180" })) await page.locator(`#${id}`).fill(value);
     await page.locator("#calculatorForm button[type=submit]").click();
-    assert.equal(await page.locator("#calcTransposed").innerText(), "-2.75 +1.25 × 090°");
+    assert.equal(await page.locator('[data-calculator-result="conversion"]').first().isVisible(), true);
+    assert.equal(await page.locator('[data-calculator-result="transpose"]').first().isVisible(), false);
+    assert.equal(await page.locator('[data-calculator-result="se"]').first().isVisible(), false);
+    await page.locator("#calculatorSeTab").click();
+    assert.equal(await page.locator("#conversionControls").isVisible(), false);
+    assert.equal(await page.locator("#vertexControls").isVisible(), false);
+    assert.equal(await page.locator("#calculatorResults").isVisible(), false, "tool changes remove stale outputs");
+    await page.locator("#calculatorForm button[type=submit]").click();
+    assert.equal(await page.locator('[data-calculator-result="se"]').first().isVisible(), true);
     assert.equal(await page.locator("#calcSE").innerText(), "-2.00 D");
     assert.match(await page.locator("#calculatorMath").textContent(), /-2\.125 D/);
     await page.evaluate(() => { Object.defineProperty(navigator, "clipboard", { configurable: true, value: { writeText: async text => { window.copiedText = text; } } }); });
     await page.locator("#copySE").click();
     assert.equal(await page.evaluate(() => window.copiedText), "-2.00 D");
+    await page.locator("#calculatorTransposeTab").click();
+    await page.locator("#calculatorForm button[type=submit]").click();
+    assert.equal(await page.locator("#calcTransposed").innerText(), "-2.75 +1.25 × 090°");
     await page.locator("#useTransposed").click();
     assert.equal(await page.locator("#calcSphere").inputValue(), "-2.75");
     assert.equal(await page.locator("#calcTransposed").innerText(), "-1.50 -1.25 × 180°");
@@ -242,18 +263,23 @@ const server = http.createServer(async (req, res) => {
     await page.locator("#calculatorPaste").fill("−2,00 +3,00 × 90");
     await page.locator("#calculatorPasteForm button").click();
     assert.equal(await page.locator("#calcTransposed").innerText(), "+1.00 -3.00 × 180°");
-    assert.equal(await page.locator("#calcSE").innerText(), "-0.50 D");
     await page.locator("#calculatorPaste").fill("1 2 x999");
     await page.locator("#calculatorPasteForm button").click();
     assert.match(await page.locator("#calculatorPasteError").innerText(), /1° to 180°/);
     assert.equal(await page.locator("#calcSphere").inputValue(), "-2.00", "invalid paste never partially applies");
-    await page.evaluate(() => { Object.defineProperty(navigator, "clipboard", { configurable: true, value: { writeText: async text => { window.copiedText = text; } } }); });
+    await page.locator("#calculatorSeTab").click();
+    await page.locator("#calculatorForm button[type=submit]").click();
+    assert.equal(await page.locator("#calcSE").innerText(), "-0.50 D");
     await page.locator("#copySE").click();
     assert.equal(await page.evaluate(() => window.copiedText), "-0.50 D");
+    await page.locator("#calculatorTransposeTab").click();
+    await page.locator("#calculatorForm button[type=submit]").click();
     await page.evaluate(() => { navigator.clipboard.writeText = async () => { throw new Error("Denied"); }; });
     await page.locator("#copyTransposed").click();
     await page.locator("#calculatorStatus").filter({ hasText: /Clipboard unavailable/ }).waitFor();
     await page.locator("#calculatorTab").focus();
+    await page.keyboard.press("ArrowLeft");
+    assert.equal(await page.locator("#geniusTab").getAttribute("aria-selected"), "true");
     await page.keyboard.press("ArrowLeft");
     assert.equal(await page.locator("#caseTab").getAttribute("aria-selected"), "true");
     assert.equal(await page.locator("#age").inputValue(), "44");
@@ -264,13 +290,12 @@ const server = http.createServer(async (req, res) => {
     assert.equal(await page.locator("#calcSphere").inputValue(), "-2.00", "case reset preserves calculator inputs");
     assert.equal(await page.locator("#calcSE").innerText(), "-0.50 D");
 
+    await page.locator("#calculatorConversionTab").click();
     await page.locator("#calculatorForm button[type=submit]").click();
     await page.locator("#calcSphereOs").fill("6");
     await page.locator("#calcCylinderOs").fill("0");
     await page.locator("#calculatorForm button[type=submit]").click();
     assert.equal(await page.locator("#calcVertexOs").innerText(), "+6.47 DS");
-    assert.equal(await page.locator("#calcTransposedOs").innerText(), "+6.00 DS");
-    assert.equal(await page.locator("#calcSEOs").innerText(), "+6.00 D");
     for (const colorScheme of ["light", "dark"]) {
       await page.emulateMedia({ colorScheme, reducedMotion: "reduce" });
       for (const width of [320, 390, 1280]) {
@@ -287,7 +312,7 @@ const server = http.createServer(async (req, res) => {
     await page.locator("#calculatorForm button[type=submit]").click();
     assert.equal(await page.locator("#calcVertex").innerText(), "-8.93 DS");
     assert.match(await page.locator("#calcVertexPlanes").innerText(), /12 mm → 0 mm/);
-    assert.match(await page.locator("#vertexAlreadyHint").innerText(), /do not apply it a second time/);
+    assert.equal(await page.locator("#vertexAlreadyHint").count(), 0, "over-explanatory calculator copy was removed");
     assert.equal(await page.locator("#calcToVertex").getAttribute("readonly"), "");
     await page.evaluate(() => { navigator.clipboard.writeText = async text => { window.copiedText = text; }; });
     await page.locator("#copyBothVertex").click();
@@ -306,7 +331,7 @@ const server = http.createServer(async (req, res) => {
     assert.equal(await page.locator("#calculatorResults").isVisible(), false);
     await page.locator("#calculatorForm button[type=submit]").click();
     assert.equal(await page.locator("#calcVertex").innerText(), "-10.00 DS");
-    assert.match(await page.locator("#calcVertexContext").innerText(), /no vertex compensation applied/);
+    assert.match(await page.locator("#calcVertexContext").innerText(), /no compensation/i);
     await page.locator("#calcToVertex").fill("12");
     await page.locator("#calculatorForm button[type=submit]").click();
     assert.equal(await page.locator("#calcVertex").innerText(), "-11.36 DS");
@@ -331,6 +356,8 @@ const server = http.createServer(async (req, res) => {
     assert.equal(await page.locator("#calcEyeResults").isVisible(), false);
     assert.equal(await page.locator("#calcVertexOs").innerText(), "-2.66 -1.83 × 180°");
     assert.match(await page.locator("#calcVertexContextOs").innerText(), /At least one principal meridian/);
+    await page.locator("#calculatorTransposeTab").click();
+    await page.locator("#calculatorForm button[type=submit]").click();
     await page.locator("#useTransposedOs").click();
     assert.equal(await page.locator("#calcSphereOs").inputValue(), "-4.75");
     await page.locator("#calculatorReset").click();
@@ -342,6 +369,8 @@ const server = http.createServer(async (req, res) => {
     await page.locator("#calcCylinder").fill("0");
     await page.locator("#calculatorForm button[type=submit]").click();
     assert.equal(await page.locator("#calcTransposed").innerText(), "+1.13 DS");
+    await page.locator("#calculatorSeTab").click();
+    await page.locator("#calculatorForm button[type=submit]").click();
     assert.equal(await page.locator("#calcSE").innerText(), "+1.25 D");
     assert.equal(await page.evaluate(() => JSON.stringify(DioptraStorage.listCases())), beforeTools);
     await page.locator("#caseTab").click();

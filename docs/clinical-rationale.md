@@ -1,6 +1,6 @@
 # Clinical rationale and scope
 
-## What Dioptra is predicting
+## What Oculi is predicting
 
 A conventional refraction moves through clinically different values. They must not be collapsed into one target:
 
@@ -30,7 +30,7 @@ A refraction usually starts from four objective observations:
 - keratometry;
 - retinoscopy.
 
-They do not measure the same thing. Dioptra keeps each raw observation with its method, eye, units and provenance. Agreement can later support confidence; disagreement triggers review rather than a silent average.
+They do not measure the same thing. Oculi keeps each raw observation with its method, eye, units and provenance. Agreement can later support confidence; disagreement triggers review rather than a silent average.
 
 Subjective refraction then adds process evidence: starting Rx, cylinder axis and power refinement, sphere refinement, best monocular VA, binocular-balance eligibility and result, dominant eye, and tentative and refined ADD.
 
@@ -49,7 +49,7 @@ Subjective refraction then adds process evidence: starting Rx, cylinder axis and
 
 ## Clinically useful roles for preliminary tests
 
-History, VA, pinhole, cover test, near point of convergence, colour vision, external examination, motility, pupils and confrontation fields come before refraction. Their safest uses in Dioptra are:
+History, VA, pinhole, cover test, near point of convergence, colour vision, external examination, motility, pupils and confrontation fields come before refraction. Their safest uses in Oculi are:
 
 - **context:** chief complaint, visual task and habitual-correction experience;
 - **data-quality checks:** was the test performed under the documented correction condition?;
@@ -80,7 +80,7 @@ A large change may be prescribed in stages. This is the main reason to keep the 
 
 ## Optical representation
 
-Spherical equivalent alone does not describe astigmatic prescriptions. Dioptra keeps S/C/A and also uses power vectors:
+Spherical equivalent alone does not describe astigmatic prescriptions. Oculi keeps S/C/A and also uses power vectors:
 
 ```text
 M   = S + C / 2
@@ -106,6 +106,6 @@ Contact-lens conversion, vertex tables for contact lenses, toric rotation, conta
 
 ## Safety position
 
-Dioptra is a research prototype, not a diagnostic or autonomous prescribing system. A review status describes evidence quality, not clinical certainty. The interface always shows source measurements, flags and reasons, keeps the clinician's exam independent and blinded, and abstains when inputs are incomplete.
+Oculi is a research prototype, not a diagnostic or autonomous prescribing system. A review status describes evidence quality, not clinical certainty. The interface always shows source measurements, flags and reasons, keeps the clinician's exam independent and blinded, and abstains when inputs are incomplete.
 
 See [references and traceability](source-register.md), the [v0.3 engine specification](v0.3-engine.md) and the [v0.3 design notes](v0.3-design-notes.md).

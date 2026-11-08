@@ -1,4 +1,4 @@
-/* Dioptra — L’Oeil's paper-and-ink palette, fine rules and quiet navigation.
+/* Oculi — L’Oeil's paper-and-ink palette, fine rules and quiet navigation.
    Clinical status colours remain semantic, not decorative. No remote assets. */
 
 :root {
@@ -711,6 +711,12 @@ details.group[open] > summary { box-shadow: inset 0 -0.5px 0 var(--separator); }
 .view-tabs { display: flex; padding: 4px; border: 1px solid var(--separator); background: var(--fill); border-radius: 999px; }
 .view-tabs button { min-height: 44px; padding: 10px 22px; border: 0; border-radius: 999px; background: none; color: var(--label-2); font-size: 14px; }
 .view-tabs button[aria-selected="true"] { background: var(--tint); color: var(--on-tint); }
+.calculator-tabs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; padding: 4px; border: 1px solid var(--separator); border-radius: 14px; background: var(--fill); }
+.calculator-tabs button { min-height: 48px; padding: 8px 12px; border: 0; border-radius: 10px; background: transparent; color: var(--label-2); font-size: 14px; }
+.calculator-tabs button[aria-selected="true"] { background: var(--thumb); color: var(--label); box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08); }
+.genius-status { max-width: 640px; margin-top: 20px; padding: 28px; border: 1px solid var(--separator); border-radius: var(--radius); background: var(--cell); }
+.genius-status h2 { margin: 0; font: 28px/1.25 var(--serif); font-weight: 400; }
+.genius-status p { margin: 10px 0 0; color: var(--label-2); font-size: 15px; }
 .eyebrow { font: 500 11px/1.4 var(--font); letter-spacing: 0.13em; text-transform: uppercase; color: var(--label-2); margin: 0 0 12px; }
 .skip-link { position: fixed; left: 12px; top: -100px; padding: 12px; z-index: 100; background: var(--tint); color: var(--on-tint); }
 .skip-link:focus { top: 12px; }
@@ -747,7 +753,7 @@ body[data-view="calculator"] #toast { display: none; }
 .calculator-original span { font-family: var(--mono); }
 .calculator-result { padding: 24px 0; border-bottom: 1px solid var(--separator); }
 .calculator-result h2 { font: 400 clamp(20px, 2.6vw, 30px)/1.4 var(--mono); letter-spacing: -0.04em; margin: 8px 0; overflow-wrap: anywhere; }
-.calculator-result #calcSE { font: 400 48px/1.2 var(--serif); }
+.calculator-result #calcSE, .calculator-result #calcSEOs { font: 400 48px/1.2 var(--serif); }
 .result-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
 .calculation-details { margin-top: 12px; }
 .calculation-details dt { font-size: 12px; color: var(--label-2); margin-top: 18px; }
@@ -758,10 +764,12 @@ body[data-view="calculator"] #toast { display: none; }
   .brand { font-size: 27px; }
   .brand-caption { display: none; }
   .view-tabs { grid-row: 2; grid-column: 1 / -1; justify-self: center; }
+  .view-tabs button { padding-left: 14px; padding-right: 14px; }
   .nav-actions { grid-row: 1; grid-column: 2; }
   .nav-button { padding: 8px 12px; font-size: 13px; }
   .content { padding-left: 18px; padding-right: 18px; }
   .calculator-layout { grid-template-columns: minmax(0, 1fr); gap: 28px; margin-top: 12px; }
+  .calculator-tabs button { padding-left: 6px; padding-right: 6px; font-size: 13px; }
   .calculator-entry { padding: 20px; }
   .calculator-fields { gap: 8px; }
   .calculator-fields input { font-size: 17px; padding: 8px; }

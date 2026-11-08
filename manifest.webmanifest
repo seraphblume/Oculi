@@ -1,6 +1,6 @@
 {
-  "name": "Project Dioptra",
-  "short_name": "Dioptra",
+  "name": "Oculi",
+  "short_name": "Oculi",
   "description": "Local-first blinded autorefractor-to-Rx research prototype.",
   "start_url": "./",
   "display": "standalone",
