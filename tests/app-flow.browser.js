@@ -224,7 +224,47 @@ const server = http.createServer(async (req, res) => {
     assert.equal(await page.locator("#actionBar").isVisible(), false);
     assert.equal(await page.locator("#caseActions").isVisible(), false);
     assert.equal(await page.locator("#geniusPanel h1").innerText(), "Genius");
-    assert.match(await page.locator("#geniusPanel").innerText(), /does not yet present an unvalidated prediction/i);
+    assert.match(await page.locator("#geniusPanel").innerText(), /not indicative of the final product or clinical guidance/i);
+    await page.locator("#geniusForm button[type=submit]").click();
+    assert.match(await page.locator("#geniusError").innerText(), /age from 1 to 120/i);
+    for (const [id, value] of Object.entries({
+      geniusAge: "42", geniusSphereOd: "-2", geniusCylinderOd: "-1", geniusAxisOd: "180",
+      geniusSphereOs: "1", geniusCylinderOs: "-.5", geniusAxisOs: "90"
+    })) await page.locator(`#${id}`).fill(value);
+    for (const id of ["geniusDiabetes", "geniusPregnancy", "geniusBlurredVision", "geniusFlashes"]) await page.locator(`#${id}`).check();
+    await page.locator("#geniusOtherSymptoms").fill("Halos");
+    await page.locator("#geniusForm button[type=submit]").click();
+    assert.equal(await page.locator("#geniusResults").isVisible(), true);
+    assert.match(await page.locator("#geniusVersion").innerText(), /v0\.4\.0-rc\.1/);
+    assert.equal(await page.locator("#geniusOdResult").innerText(), "-2.25 -1.00 × 180°");
+    assert.equal(await page.locator("#geniusOsResult").innerText(), "+0.75 -0.50 × 090°");
+    assert.equal(await page.locator("#geniusAddResult").innerText(), "+0.75 D");
+    assert.match(await page.locator("#geniusFlags").innerText(), /Unvalidated experimental RC/);
+    assert.match(await page.locator("#geniusPrescription").innerText(), /Prescription preview/);
+    assert.match(await page.locator("#geniusPrescription").innerText(), /not a prescription/i);
+    assert.equal(await page.locator("#geniusPrescriptionSphereOd").innerText(), "-2.25");
+    assert.equal(await page.locator("#geniusPrescriptionCylinderOd").innerText(), "-1.00");
+    assert.equal(await page.locator("#geniusPrescriptionAxisOd").innerText(), "180°");
+    assert.equal(await page.locator("#geniusPrescriptionSphereOs").innerText(), "+0.75");
+    assert.equal(await page.locator("#geniusPrescriptionCylinderOs").innerText(), "-0.50");
+    assert.equal(await page.locator("#geniusPrescriptionAxisOs").innerText(), "090°");
+    assert.equal(await page.locator("#geniusPrescriptionAdd").innerText(), "+0.75 D");
+    assert.equal(await page.locator("#geniusPrescriptionAge").innerText(), "42 years");
+    assert.equal(await page.locator("#geniusPrescriptionMedical").innerText(), "Diabetes, Pregnancy");
+    assert.equal(await page.locator("#geniusPrescriptionSymptoms").innerText(), "Blurred vision, Flashes, Halos");
+    await page.locator("#geniusPatientName").fill("Preview patient");
+    await page.locator("#geniusPrescriptionNotes").fill("Test output only");
+    await page.evaluate(() => { window.__geniusPrintCalls = 0; window.print = () => { window.__geniusPrintCalls += 1; }; });
+    await page.locator("#geniusPrint").click();
+    assert.equal(await page.evaluate(() => window.__geniusPrintCalls), 1, "Genius export opens the system print dialog");
+    assert.equal(await page.locator("#geniusPatientNamePrint").innerText(), "Preview patient");
+    assert.equal(await page.locator("#geniusPrescriptionNotesPrint").innerText(), "Test output only");
+    assert.equal(await page.evaluate(() => JSON.stringify(DioptraStorage.listCases())), beforeTools, "Genius never writes study cases");
+    await page.setViewportSize({ width: 320, height: 900 });
+    assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), "Genius has no mobile overflow");
+    await page.setViewportSize({ width: 1280, height: 900 });
+    await page.locator("#geniusAge").fill("43");
+    assert.equal(await page.locator("#geniusResults").isVisible(), false, "editing removes stale Genius output");
     await page.locator("#calculatorTab").click();
     assert.equal(await page.locator("#casePanel").isVisible(), false);
     assert.equal(await page.locator("#actionBar").isVisible(), false);

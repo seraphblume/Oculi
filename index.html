@@ -217,11 +217,123 @@
       <p class="eyebrow">Self-service refraction</p>
       <h1>Genius</h1>
     </div>
-    <div class="genius-status" role="note">
-      <h2>Guided refraction is in development.</h2>
-      <p>This research build does not yet present an unvalidated prediction as a self-service result.</p>
+    <aside class="genius-callout" role="note" aria-labelledby="geniusCalloutTitle">
+      <p class="eyebrow">Development preview</p>
+      <h2 id="geniusCalloutTitle">Genius is in development.</h2>
+      <p>This preview runs the experimental v0.4 RC model for testing only. Its interface and results are not indicative of the final product or clinical guidance.</p>
+    </aside>
+    <div class="genius-layout">
+      <section class="genius-entry" aria-labelledby="geniusInputTitle">
+        <div class="section-heading"><h2 id="geniusInputTitle">RC test input</h2><button class="quiet-button" id="geniusReset" type="button">Clear</button></div>
+        <form id="geniusForm" novalidate>
+          <section class="genius-context" aria-labelledby="geniusContextTitle">
+            <h3 id="geniusContextTitle">Patient context</h3>
+            <label class="genius-age" for="geniusAge">Age
+              <input id="geniusAge" type="text" inputmode="numeric" autocomplete="off" placeholder="Years" aria-describedby="geniusContextHint geniusError" />
+            </label>
+            <fieldset><legend>Medical background</legend><div class="chips">
+              <label class="chip"><input id="geniusDiabetes" type="checkbox" /><span>Diabetes</span></label>
+              <label class="chip"><input id="geniusHypertension" type="checkbox" /><span>Hypertension</span></label>
+              <label class="chip"><input id="geniusPregnancy" type="checkbox" /><span>Pregnancy</span></label>
+            </div></fieldset>
+            <fieldset><legend>Visual symptoms</legend><div class="chips">
+              <label class="chip"><input id="geniusBlurredVision" type="checkbox" /><span>Blurred vision</span></label>
+              <label class="chip"><input id="geniusHeadache" type="checkbox" /><span>Headache</span></label>
+              <label class="chip"><input id="geniusFlashes" type="checkbox" /><span>Flashes</span></label>
+              <label class="chip"><input id="geniusTearing" type="checkbox" /><span>Tearing</span></label>
+              <label class="chip"><input id="geniusIrritation" type="checkbox" /><span>Burning / irritation</span></label>
+              <label class="chip"><input id="geniusItching" type="checkbox" /><span>Itching</span></label>
+              <label class="chip"><input id="geniusDischarge" type="checkbox" /><span>Discharge</span></label>
+              <label class="chip"><input id="geniusDryEye" type="checkbox" /><span>Dry eye</span></label>
+            </div></fieldset>
+            <label class="genius-other" for="geniusOtherSymptoms">Other visual symptoms
+              <input id="geniusOtherSymptoms" type="text" autocomplete="off" maxlength="120" />
+            </label>
+            <p id="geniusContextHint" class="calculator-hint">Age is used by the RC model. Medical background and symptoms are included for review but do not alter the experimental output.</p>
+          </section>
+          <fieldset class="calculator-eye"><legend>Right eye · OD</legend><div class="calculator-fields">
+            <label for="geniusSphereOd">Sphere <span>SPH · D</span><input id="geniusSphereOd" type="text" autocomplete="off" spellcheck="false" placeholder="−2.00" aria-describedby="geniusError" /></label>
+            <label for="geniusCylinderOd">Cylinder <span>CYL · D</span><input id="geniusCylinderOd" type="text" autocomplete="off" spellcheck="false" placeholder="0.00" aria-describedby="geniusError" /></label>
+            <label for="geniusAxisOd">Axis <span>1–180°</span><input id="geniusAxisOd" type="text" inputmode="numeric" autocomplete="off" placeholder="90" aria-describedby="geniusError geniusInputHint" /></label>
+          </div></fieldset>
+          <fieldset class="calculator-eye"><legend>Left eye · OS</legend><div class="calculator-fields">
+            <label for="geniusSphereOs">Sphere <span>SPH · D</span><input id="geniusSphereOs" type="text" autocomplete="off" spellcheck="false" placeholder="−2.00" aria-describedby="geniusError" /></label>
+            <label for="geniusCylinderOs">Cylinder <span>CYL · D</span><input id="geniusCylinderOs" type="text" autocomplete="off" spellcheck="false" placeholder="0.00" aria-describedby="geniusError" /></label>
+            <label for="geniusAxisOs">Axis <span>1–180°</span><input id="geniusAxisOs" type="text" inputmode="numeric" autocomplete="off" placeholder="90" aria-describedby="geniusError geniusInputHint" /></label>
+          </div></fieldset>
+          <p id="geniusInputHint" class="calculator-hint">Enter only the selected autorefractor ticket reading for each eye. Refraction vertex is fixed at 12 mm.</p>
+          <p id="geniusError" class="calculator-error" role="status" aria-live="polite"></p>
+          <button class="button-primary" type="submit">Run RC model</button>
+        </form>
+      </section>
+      <section class="genius-output" aria-label="RC test output">
+        <div id="geniusEmpty" class="calculator-empty"><span class="empty-symbol" aria-hidden="true">◎</span><h2>RC model test</h2><p>Enter both eyes to run the preview.</p></div>
+        <div id="geniusResults" hidden>
+          <div aria-live="polite" aria-atomic="true">
+            <div class="section-heading"><h2>RC test output</h2><span id="geniusVersion" class="genius-version"></span></div>
+            <div class="genius-result-grid">
+              <div class="genius-result-card"><span>Right eye · OD</span><strong id="geniusOdResult"></strong></div>
+              <div class="genius-result-card"><span>Left eye · OS</span><strong id="geniusOsResult"></strong></div>
+              <div class="genius-result-card"><span>Tentative ADD</span><strong id="geniusAddResult"></strong></div>
+            </div>
+            <h3>Review notes</h3>
+            <ul id="geniusFlags" class="genius-flags"></ul>
+          </div>
+          <section id="geniusPrescription" class="genius-prescription" aria-labelledby="geniusPrescriptionTitle">
+            <header class="prescription-header">
+              <div>
+                <p class="eyebrow">Oculi · Genius</p>
+                <h2 id="geniusPrescriptionTitle">Prescription preview</h2>
+              </div>
+              <span class="prescription-badge">Development preview</span>
+            </header>
+            <p class="prescription-warning" role="note"><strong>Experimental output.</strong> This is not a prescription, is not clinical guidance, and is not indicative of the final product.</p>
+            <div class="prescription-meta">
+              <label for="geniusPatientName">Patient name <span>Optional · not saved</span>
+                <input id="geniusPatientName" type="text" autocomplete="off" maxlength="100" />
+                <span id="geniusPatientNamePrint" class="prescription-print-value"></span>
+              </label>
+              <label for="geniusPrescriptionDate">Date
+                <input id="geniusPrescriptionDate" type="date" />
+                <span id="geniusPrescriptionDatePrint" class="prescription-print-value"></span>
+              </label>
+            </div>
+            <div class="prescription-table-wrap">
+              <table class="prescription-table">
+                <caption>Spectacle prescription preview · minus cylinder</caption>
+                <thead><tr><th scope="col">Eye</th><th scope="col">Sphere</th><th scope="col">Cylinder</th><th scope="col">Axis</th></tr></thead>
+                <tbody>
+                  <tr><th scope="row">OD <span>Right</span></th><td id="geniusPrescriptionSphereOd"></td><td id="geniusPrescriptionCylinderOd"></td><td id="geniusPrescriptionAxisOd"></td></tr>
+                  <tr><th scope="row">OS <span>Left</span></th><td id="geniusPrescriptionSphereOs"></td><td id="geniusPrescriptionCylinderOs"></td><td id="geniusPrescriptionAxisOs"></td></tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="prescription-additional">
+              <div><span>Tentative ADD</span><strong id="geniusPrescriptionAdd"></strong></div>
+              <div><span>Refraction vertex</span><strong>12 mm</strong></div>
+            </div>
+            <div class="prescription-context">
+              <div><span>Age</span><strong id="geniusPrescriptionAge"></strong></div>
+              <div><span>Medical background</span><strong id="geniusPrescriptionMedical"></strong></div>
+              <div><span>Reported visual symptoms</span><strong id="geniusPrescriptionSymptoms"></strong></div>
+            </div>
+            <label class="prescription-notes" for="geniusPrescriptionNotes">Additional notes <span>Optional · not saved</span>
+              <textarea id="geniusPrescriptionNotes" rows="3" maxlength="500"></textarea>
+              <span id="geniusPrescriptionNotesPrint" class="prescription-print-value prescription-notes-value"></span>
+            </label>
+            <footer class="prescription-footer">
+              <span id="geniusPrescriptionVersion"></span>
+              <span>Generated by an unvalidated research prototype</span>
+            </footer>
+            <div class="prescription-actions">
+              <button id="geniusPrint" class="button-primary" type="button">Export / print preview</button>
+              <p>Use the system print dialog to save a PDF.</p>
+            </div>
+          </section>
+        </div>
+      </section>
     </div>
-    <p class="footnote">Research prototype. Not a validated medical device.</p>
+    <p class="footnote">Experimental model output is not a prescription. Nothing entered here is saved to the Clinical Study.</p>
   </section>
 
   <section class="content calculator-panel" id="calculatorPanel" role="tabpanel" aria-labelledby="calculatorTab" tabindex="0" hidden>

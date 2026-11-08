@@ -8,6 +8,7 @@
   const scrollPositions = [0, 0, 0];
   let selected = 0;
   let result = null;
+  let geniusPrediction = null;
 
   function selectTab(index) {
     if (selected === index) return;
@@ -34,6 +35,119 @@
       selectTab(next);
       tabs[next].focus();
     });
+  });
+
+  const rcEngine = window.DioptraEngineV04;
+  function invalidateGenius() {
+    geniusPrediction = null;
+    $("geniusResults").hidden = true;
+    $("geniusEmpty").hidden = false;
+    $("geniusError").textContent = "";
+  }
+  function readGeniusEye(suffix, label) {
+    const values = ["geniusSphere", "geniusCylinder", "geniusAxis"].map(id => $(id + suffix).value);
+    try {
+      const rx = optics.calculate(...values).original;
+      if (Math.abs(rx.sphere) > 30 || Math.abs(rx.cylinder) > 10) throw new Error("Power is outside the RC test range.");
+      return { sphere: rx.sphere, cylinder: rx.cylinder, axis: rx.axis ?? 180 };
+    } catch (error) {
+      throw new Error(`${label}: ${error.message}`);
+    }
+  }
+  function geniusRx(rx) {
+    return optics.formatRx({ sphere: rx.sphere, cylinder: rx.cylinder, axis: rx.cylinder === 0 ? null : rx.axis });
+  }
+  function localDate() {
+    const now = new Date();
+    const offset = now.getTimezoneOffset() * 60000;
+    return new Date(now.getTime() - offset).toISOString().slice(0, 10);
+  }
+  function renderPrescriptionEye(suffix, rx) {
+    $("geniusPrescriptionSphere" + suffix).textContent = optics.formatPower(rx.sphere);
+    $("geniusPrescriptionCylinder" + suffix).textContent = optics.formatPower(rx.cylinder);
+    $("geniusPrescriptionAxis" + suffix).textContent = rx.cylinder === 0 ? "—" : `${String(rx.axis).padStart(3, "0")}°`;
+  }
+  const geniusMedical = [["geniusDiabetes", "Diabetes"], ["geniusHypertension", "Hypertension"], ["geniusPregnancy", "Pregnancy"]];
+  const geniusSymptoms = [
+    ["geniusBlurredVision", "Blurred vision"], ["geniusHeadache", "Headache"], ["geniusFlashes", "Flashes"],
+    ["geniusTearing", "Tearing"], ["geniusIrritation", "Burning / irritation"], ["geniusItching", "Itching"],
+    ["geniusDischarge", "Discharge"], ["geniusDryEye", "Dry eye"]
+  ];
+  function checkedLabels(entries) {
+    return entries.filter(([id]) => $(id).checked).map(([, label]) => label);
+  }
+  function renderGeniusContext() {
+    const medical = checkedLabels(geniusMedical);
+    const symptoms = checkedLabels(geniusSymptoms);
+    const other = $("geniusOtherSymptoms").value.trim();
+    if (other) symptoms.push(other);
+    $("geniusPrescriptionAge").textContent = `${$("geniusAge").value.trim()} years`;
+    $("geniusPrescriptionMedical").textContent = medical.join(", ") || "None reported";
+    $("geniusPrescriptionSymptoms").textContent = symptoms.join(", ") || "None reported";
+  }
+  function renderGenius(prediction) {
+    geniusPrediction = prediction;
+    $("geniusVersion").textContent = `v${prediction.version} · ${prediction.status}`;
+    $("geniusOdResult").textContent = geniusRx(prediction.od);
+    $("geniusOsResult").textContent = geniusRx(prediction.os);
+    $("geniusAddResult").textContent = prediction.tentativeAdd == null ? "Not estimated" : prediction.tentativeAdd > 0 ? `${optics.formatPower(prediction.tentativeAdd)} D` : "None";
+    const flags = [...prediction.flags, ...prediction.od.flags, ...prediction.os.flags];
+    const unique = [...new Map(flags.map(flag => [flag.code + flag.message, flag])).values()];
+    $("geniusFlags").replaceChildren(...unique.map(flag => {
+      const li = document.createElement("li");
+      li.textContent = flag.message;
+      return li;
+    }));
+    renderPrescriptionEye("Od", prediction.od);
+    renderPrescriptionEye("Os", prediction.os);
+    renderGeniusContext();
+    $("geniusPrescriptionAdd").textContent = prediction.tentativeAdd == null ? "Not estimated" : prediction.tentativeAdd > 0 ? `${optics.formatPower(prediction.tentativeAdd)} D` : "None";
+    $("geniusPrescriptionVersion").textContent = `RC model v${prediction.version} · ${prediction.status}`;
+    if (!$("geniusPrescriptionDate").value) $("geniusPrescriptionDate").value = localDate();
+    $("geniusEmpty").hidden = true;
+    $("geniusResults").hidden = false;
+  }
+  $("geniusForm").addEventListener("submit", event => {
+    event.preventDefault();
+    invalidateGenius();
+    try {
+      const ageText = $("geniusAge").value.trim();
+      if (!/^\d{1,3}$/.test(ageText) || Number(ageText) < 1 || Number(ageText) > 120) throw new Error("Enter an age from 1 to 120.");
+      const prediction = rcEngine.predictCase({
+        age: Number(ageText),
+        instrument: { vertexMm: 12 },
+        od: readGeniusEye("Od", "Right eye · OD"),
+        os: readGeniusEye("Os", "Left eye · OS")
+      });
+      renderGenius(prediction);
+    } catch (error) {
+      $("geniusError").textContent = error.message;
+    }
+  });
+  ["geniusAge", "geniusSphereOd", "geniusCylinderOd", "geniusAxisOd", "geniusSphereOs", "geniusCylinderOs", "geniusAxisOs"]
+    .forEach(id => $(id).addEventListener("input", invalidateGenius));
+  [...geniusMedical, ...geniusSymptoms].forEach(([id]) => $(id).addEventListener("change", () => {
+    if (!$("geniusResults").hidden) renderGeniusContext();
+  }));
+  $("geniusOtherSymptoms").addEventListener("input", () => {
+    if (!$("geniusResults").hidden) renderGeniusContext();
+  });
+  $("geniusReset").addEventListener("click", () => {
+    $("geniusForm").reset();
+    $("geniusForm").querySelectorAll(".chip").forEach(chip => chip.classList.remove("on"));
+    $("geniusPatientName").value = "";
+    $("geniusPrescriptionDate").value = "";
+    $("geniusPrescriptionNotes").value = "";
+    invalidateGenius();
+    $("geniusAge").focus();
+  });
+  $("geniusPrint").addEventListener("click", () => {
+    if (!geniusPrediction) return;
+    renderGeniusContext();
+    $("geniusPatientNamePrint").textContent = $("geniusPatientName").value.trim() || "Not provided";
+    $("geniusPrescriptionDatePrint").textContent = $("geniusPrescriptionDate").value || localDate();
+    $("geniusPrescriptionNotesPrint").textContent = $("geniusPrescriptionNotes").value.trim() || "—";
+    window.print();
   });
 
   function invalidate() {

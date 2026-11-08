@@ -18,9 +18,9 @@ Refraction uses a fixed 12 mm vertex distance. Repeat readings, visual acuity, p
 
 ### Genius
 
-A dedicated home for guided self-service refraction.
+A dedicated test surface for guided self-service refraction. Refractive inputs are limited to the selected OD and OS autorefractor ticket readings. Age remains part of the RC model input, while diabetes, hypertension, pregnancy, and reported visual symptoms travel with the preview as review context without silently changing the model result. Nothing is added to the Clinical Study.
 
-Genius is visible as its own workspace, but self-service results are not enabled in this research build. Oculi does not present an unvalidated prediction as clinical guidance.
+Genius is clearly marked as a development preview. Its interface and results are not indicative of the final product or clinical guidance. Test output can be arranged in a prescription-style preview and printed or saved as a PDF; the exported preview keeps the same warning and is not an issued prescription.
 
 ### Rx conversion
 
