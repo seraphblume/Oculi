@@ -273,7 +273,7 @@ const server = http.createServer(async (req, res) => {
     assert.equal(await page.locator("#actionBar").isVisible(), false);
     assert.equal(await page.locator("#caseActions").isVisible(), false);
     assert.equal(await page.locator("#geniusPanel h1").innerText(), "Genius");
-    assert.match(await page.locator("#geniusPanel").innerText(), /not indicative of the final product or clinical guidance/i);
+    assert.match(await page.locator("#geniusPanel .title-sub").innerText(), /^Guided refraction · development preview\.$/);
     const geniusSubmit = () => page.locator("#geniusForm button[type=submit]").click();
     await geniusSubmit();
     assert.match(await page.locator("#geniusError").innerText(), /age from 1 to 120/i);
@@ -318,7 +318,8 @@ const server = http.createServer(async (req, res) => {
     assert.equal(await page.locator("#geniusOsResult").innerText(), "+0.75 −0.50 × 090°");
     assert.equal(await page.locator("#geniusAddResult").innerText(), "+0.75 D");
     const geniusFlags = await page.locator("#geniusFlags").innerText();
-    for (const text of [/Development preview/, /not Beryl's fitted offset/, /Large change from current glasses · OD/, /Refraction may fluctuate/, /Check the ADD at near/, /Repeat readings not entered/]) assert.match(geniusFlags, text);
+    for (const text of [/Large change from current glasses · OD/, /Refraction may fluctuate/, /Check the ADD at near/, /Repeat readings not entered/]) assert.match(geniusFlags, text);
+    assert.doesNotMatch(geniusFlags, /Development preview/, "the preview's watermark, badge and callout carry the warning");
     assert.doesNotMatch(geniusFlags, /Large change from current glasses · OS/);
     assert.doesNotMatch(geniusFlags, /First glasses/);
     assert.equal(await page.locator("#geniusPrescription").isVisible(), false, "no preview before verification");
@@ -350,7 +351,10 @@ const server = http.createServer(async (req, res) => {
       geniusPrescriptionAge: "42 years", geniusPrescriptionMedical: "Diabetes, Pregnancy", geniusPrescriptionSymptoms: "Blurred vision, Glare / halos, Halos"
     })) assert.equal(await page.locator(`#${id}`).innerText(), value, id);
     assert.match(await page.locator("#geniusPrescriptionOutcome").innerText(), /Refined in a trial frame · near comfortable · \+0\.25 D holds the line/);
-    assert.match(await page.locator("#geniusPrescriptionVersion").innerText(), /proposed OD −2\.25 −1\.00 × 180°/);
+    assert.match(await page.locator("#geniusPrescriptionVersion").innerText(), /^Oculi Model · proposed OD −2\.25 −1\.00 × 180°/);
+    assert.equal(await page.locator("#geniusSignatory").innerText(), "Valeria Luxe");
+    assert.equal(await page.locator("#geniusLicence").innerText(), "Pending certification");
+    assert.doesNotMatch(await page.locator("#geniusPrescription").innerText(), /research prototype/i);
     assert.match(await page.locator("#geniusPrescriptionFlags").innerText(), /Large change from current glasses · OD/);
     assert.match(await page.locator("#geniusPrescription").innerText(), /not a prescription/i);
     await page.locator("#geniusPatientName").fill("Preview patient");
