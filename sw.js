@@ -1,5 +1,5 @@
 // Network first, cache as offline fallback, so a deployed update is picked up on the next load.
-const CACHE = "dioptra-v0.4.0-rc.1-binocular-1";
+const CACHE = "oculi-v0.4.0-rc.1-workspace-tabs-1";
 const ASSETS = [
   "./",
   "./index.html",

@@ -2,13 +2,13 @@
 
 ## Purpose
 
-This register records where the ideas behind Dioptra's design come from. It also records what was deliberately kept out of the spectacle-Rx predictor. It is a provenance record, not a claim that any rule is clinically validated.
+This register records where the ideas behind Oculi's design come from. It also records what was deliberately kept out of the spectacle-Rx predictor. It is a provenance record, not a claim that any rule is clinically validated.
 
 ## Background clinical practice
 
-Dioptra's exam structure follows a conventional optometric workflow, as taught in standard optometry curricula. It relies only on general, widely taught practice and reproduces no proprietary material:
+Oculi's exam structure follows a conventional optometric workflow, as taught in standard optometry curricula. It relies only on general, widely taught practice and reproduces no proprietary material:
 
-| Topic | What Dioptra takes from it |
+| Topic | What Oculi takes from it |
 |---|---|
 | Exam sequence | History, preliminary tests, objective refraction, subjective refraction, verification. Objective readings are starting points, not prescriptions. |
 | Objective refraction | Habitual Rx (lensometry), autorefraction, keratometry and retinoscopy are distinct observations and are stored separately. |
@@ -43,7 +43,7 @@ These belong to steps **after** a spectacle refractive endpoint. They never chan
 2. Abnormal preliminary findings produce a flag or a request for clinician review. They never add or subtract dioptres.
 3. Numeric thresholds not taken from a published standard are marked *provisional*. They must be estimated and validated prospectively.
 4. Product-fitting rules stay in downstream modules and never enter the spectacle-Rx model.
-5. Raw observations and their provenance are kept, even when sources disagree. Dioptra does not silently choose a correction.
+5. Raw observations and their provenance are kept, even when sources disagree. Oculi does not silently choose a correction.
 
 ## Design hypotheses, not established claims
 

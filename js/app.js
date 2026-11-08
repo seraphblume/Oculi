@@ -7,6 +7,7 @@
   const scoring = window.DioptraScoring;
   const store = window.DioptraStorage;
   const ticketScan = window.DioptraTicketScan;
+  const REFRACTION_VERTEX_MM = 12;
 
   const EYES = [
     { id: "od", short: "OD", name: "Right eye" },
@@ -322,9 +323,8 @@
   function applyTicketScan(result) {
     applyScannedEye("od", result.od);
     applyScannedEye("os", result.os);
-    ["vertexMm", "pdDistance", "pdNear", "nearWd"].forEach(id => setFieldValue($(id), ""));
+    ["pdDistance", "pdNear", "nearWd"].forEach(id => setFieldValue($(id), ""));
     if (result.instrument) {
-      setPlainField("vertexMm", result.instrument.vertexMm, 2);
       setPlainField("pdDistance", result.instrument.pdDistanceMm);
       setPlainField("pdNear", result.instrument.pdNearMm);
     }
@@ -487,7 +487,7 @@
       return v;
     };
     const instrument = {
-      vertexMm: optional("vertexMm", 0, 25, "Vertex distance"),
+      vertexMm: REFRACTION_VERTEX_MM,
       pdDistanceMm: optional("pdDistance", 40, 85, "Distance PD"),
       pdNearMm: optional("pdNear", 35, 85, "Near PD")
     };
@@ -736,7 +736,7 @@
       <h2 class="group-header">${esc(title)}</h2>
       <div class="group">
         <div class="cmp">
-          <span class="cmp-h">${eye.short}</span><span class="cmp-h">Dioptra</span><span class="cmp-h">You</span><span class="cmp-h" style="padding-right:16px">Δ</span>
+          <span class="cmp-h">${eye.short}</span><span class="cmp-h">Oculi</span><span class="cmp-h">You</span><span class="cmp-h" style="padding-right:16px">Δ</span>
           <span class="cmp-label">SPH</span><span class="cmp-v">${fmtPower(pred.sphere)}</span><span class="cmp-v">${fmtPower(actual.sphere)}</span><span class="cmp-d">${deltaPill(s.sphereError, s.within025Sphere)}</span>
           <span class="cmp-sep"></span>
           <span class="cmp-label">CYL</span><span class="cmp-v">${fmtPower(pred.cylinder)}</span><span class="cmp-v">${fmtPower(actual.cylinder)}</span><span class="cmp-d">${deltaPill(s.cylinderError, s.within025Cylinder)}</span>
@@ -776,7 +776,7 @@
     return `
       <h2 class="group-header">Near addition</h2>
       <div class="group">
-        <div class="row"><span class="row-label">Dioptra</span><span class="row-detail num">${p ? fmtPower(p) : "None"}</span></div>
+        <div class="row"><span class="row-label">Oculi</span><span class="row-detail num">${p ? fmtPower(p) : "None"}</span></div>
         <div class="row"><span class="row-label">You</span><span class="row-detail num">${actual.add == null ? "None" : fmtPower(actual.add)}</span></div>
         ${actual.add == null ? "" : `<div class="row"><span class="row-label">Difference</span>${deltaPill(actual.add - p, ok)}</div>`}
         ${amp}
@@ -967,8 +967,8 @@
       ]
     });
     const date = new Date().toISOString().slice(0, 10);
-    if (choice === "study") download(`project-dioptra-${date}.csv`, store.toCSV(cases));
-    if (choice === "shadow") download(`project-dioptra-shadow-${date}.csv`, store.toShadowCSV(cases));
+    if (choice === "study") download(`oculi-${date}.csv`, store.toCSV(cases));
+    if (choice === "shadow") download(`oculi-engine-comparison-${date}.csv`, store.toShadowCSV(cases));
   }
 
   async function clearData() {

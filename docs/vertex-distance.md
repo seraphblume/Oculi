@@ -6,11 +6,11 @@ Use the analytic formula instead of digitizing rounded table entries:
 
 `F_target = F_source / (1 - ((sourceMm - targetMm) / 1000) * F_source)`
 
-Distances are measured from the cornea. Convert the sphere meridian and sphere-plus-cylinder meridian independently, then reconstruct cylinder as their difference. The axis does not change. Keep full precision internally. Calculators show powers to 0.01 D and do not select available contact lens powers or prescribe a fit. Printed fitting charts can contain coarse rounding, product-specific choices or errors. They are not numerical ground truth. Regression tests use independently derived exact reference values, including high powers, both signs and both meridians; no chart-matching error allowance is used.
+Distances are measured from the cornea. Convert the sphere meridian and sphere-plus-cylinder meridian independently, then reconstruct cylinder as their difference. The axis does not change. Keep full precision internally. Rx conversion shows powers to 0.01 D and does not select available contact lens powers or prescribe a fit. Printed fitting charts can contain coarse rounding, product-specific choices or errors. They are not numerical ground truth. Regression tests use independently derived exact reference values, including high powers, both signs and both meridians; no chart-matching error allowance is used.
 
 The calculator defaults to 12 → 0 mm (spectacle to corneal plane); either distance can be changed from 0 to 25 mm, including the reverse conversion. Blank, nonfinite, out-of-range distances and conversion through a focal singularity are rejected.
 
-The existing v0.3 and experimental v0.4 refraction engines already normalized each AR reading to the configured 12 mm spectacle plane before vector averaging, offsets and rounding. They now call the same `js/vertex.js` implementation as the calculator. This does not change their target to 0 mm, add a second conversion, alter calibration, or rewrite historical cases. The v0.3 500-case golden baseline and v0.2 freeze remain intact. The refraction form explains its output plane. A blank instrument distance retains the existing 12 mm assumption and flag.
+The v0.3 and experimental v0.4 engines retain their historical ability to normalize readings to the configured 12 mm spectacle plane. The current refraction workspace now fixes its input at 12 mm and does not import a ticket VD into the case. This preserves the engine target, calibration, historical cases, v0.3 golden baseline and v0.2 freeze.
 
 Sources:
 
@@ -32,7 +32,7 @@ Only application code, synthetic checks and this implementation explanation acco
 
 ## Calculator workflow and refraction scope
 
-Calculators supports separate right-eye (OD) and left-eye (OS) inputs. Either eye may be left completely blank; a partially completed eye is rejected. Both eyes share explicit source/target distances and are calculated independently. No patient-case data is imported, saved or modified. A mode/input change invalidates results; a failed eye prevents any partial result from being presented as the completed calculation.
+Rx conversion supports separate right-eye (OD) and left-eye (OS) inputs. Either eye may be left completely blank; a partially completed eye is rejected. Both eyes share explicit source/target distances and are calculated independently. No patient-case data is imported, saved or modified. A mode/input change invalidates results; a failed eye prevents any partial result from being presented as the completed calculation.
 
 - Spectacles → Contacts: enter the spectacle Rx and its measured vertex (default 12 mm); the corneal target is fixed at 0 mm.
 - Contacts → Spectacles: enter contact lens powers at 0 mm and the intended spectacle vertex (default 12 mm).
@@ -40,8 +40,8 @@ Calculators supports separate right-eye (OD) and left-eye (OS) inputs. Either ey
 
 Results label each eye and output plane, show the exact optical equivalent to 0.01 D, and separately show a nearest-quarter sphere/cylinder reference with ties toward more plus. This reference is mathematical rounding, not a brand's available powers or a fitting recommendation. The original-Rx transposition and spherical equivalent remain separate. Individual and combined conversion copies carry eye and plane labels.
 
-The main algorithm remains an autorefractor-to-spectacle estimate, normalized to its 12 mm output plane. Its ticket VD is the plane in which the device reports its powers; it is not an instruction to generate contacts. Changing this normalization would change the prediction target and invalidate calibration/comparison. No calibration, historical data, ADD or frozen engine behavior is changed by the calculator redesign.
+The main algorithm remains an autorefractor-to-spectacle estimate at a fixed 12 mm plane. Ticket VD may still be recognized by the scanner, but the refraction workspace does not apply or store it. No calibration, historical data, ADD or frozen engine behavior is changed by the calculator redesign.
 
 Illustrative checks use synthetic prescriptions and independently calculated optical values. No private source text or attachments are included. The approximate 4 D clinical guideline is checked per principal meridian; no fixed claim that every lower-power conversion is below 0.18 D is made. Available powers and fitting choices remain separate from the formula.
 
-Spectacle/phoropter vertex distances commonly fall in the 12–14 mm range. The 12 mm default is an explicit assumption, not a universal calibration. Use the device-reported or measured source distance and intended fitted spectacle distance when known; 14 mm is accepted. The engine retains its fixed 12 mm reporting plane for consistent prediction comparisons.
+The Rx conversion tool accepts explicit source and target distances from 0 to 25 mm. The refraction workspace is intentionally different: it always records 12 mm so prediction comparisons use one consistent plane.
