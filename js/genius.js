@@ -1,11 +1,12 @@
-// Genius: guided refraction preview. Screen → propose → verify in a trial frame → printable preview.
-// Nothing here is saved, and nothing reaches the Clinical Study.
+// Genius: guided refraction preview. Screen → propose → verify in a trial frame → one-page preview,
+// saved as a PDF or printed. Nothing here is saved, and nothing reaches the Clinical Study.
 (function () {
   "use strict";
   const $ = id => document.getElementById(id);
   const Rx = window.OculiRx;
   const engine = window.DioptraEngineV03; // prior offset (−0.25 D); Beryl's fitted offset belongs to one instrument and examiner
   const ENGINE_NOTE = "prior offset";
+  const MODEL_LABEL = "Oculi Model";
   const MIN_AGE = 18;
   const LARGE_CHANGE_D = 0.75;
   const EYES = [{ id: "od", key: "Od", short: "OD", name: "Right eye" }, { id: "os", key: "Os", short: "OS", name: "Left eye" }];
@@ -14,7 +15,6 @@
     ["geniusDischarge", "Discharge"], ["geniusDryEye", "Dry eye"]];
   const MEDICAL = [["geniusDiabetes", "Diabetes"], ["geniusHypertension", "Hypertension"], ["geniusPregnancy", "Pregnancy"]];
   const GENIUS_FLAG_TITLES = {
-    GENIUS_PREVIEW: "Development preview",
     FIRST_GLASSES: "First glasses",
     LARGE_CHANGE: "Large change from current glasses",
     UNSTABLE_RX: "Refraction may fluctuate",
@@ -144,7 +144,7 @@
   }
 
   function geniusFlags(prediction, current, ctx) {
-    const flags = [{ code: "GENIUS_PREVIEW", level: "review", message: "Verify in a trial frame before anything is made. The proposal uses the −0.25 D prior, not Beryl's fitted offset." }];
+    const flags = [];
     if (!current) {
       flags.push({ code: "FIRST_GLASSES", level: "review", message: "A full eye exam is recommended before first glasses are made." });
     } else {
@@ -322,22 +322,290 @@
     }
     const p = proposal.prediction;
     $("geniusPrescriptionVersion").textContent = v.outcome === "refined"
-      ? `Model v${p.version} (${ENGINE_NOTE}) proposed OD ${Rx.fmtRx(p.od)} · OS ${Rx.fmtRx(p.os)}`
-      : `Model v${p.version} · ${ENGINE_NOTE}`;
+      ? `${MODEL_LABEL} · proposed OD ${Rx.fmtRx(p.od)} · OS ${Rx.fmtRx(p.os)}`
+      : MODEL_LABEL;
     if (!$("geniusPrescriptionDate").value) $("geniusPrescriptionDate").value = localDate();
+    $("geniusExportStatus").textContent = "";
     $("geniusPrescription").hidden = false;
     setStep("verify");
     document.querySelector('#geniusStepper li[data-step="verify"] .step-dot').textContent = "✓";
     $("geniusPrescription").scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
+  // ---------------------------------------------------------------- export
+
+  function patientName() { return $("geniusPatientName").value.trim() || "Not provided"; }
+  function previewDate() { return $("geniusPrescriptionDate").value || localDate(); }
+  function previewNotes() { return $("geniusPrescriptionNotes").value.trim(); }
+
+  // The editable name, date and notes have static twins that only show in print.
+  function syncPrintValues() {
+    if (!proposal || $("geniusPrescription").hidden) return;
+    renderContext();
+    $("geniusPatientNamePrint").textContent = patientName();
+    $("geniusPrescriptionDatePrint").textContent = previewDate();
+    $("geniusPrescriptionNotesPrint").textContent = previewNotes() || "—";
+  }
+
   function print() {
     if ($("geniusPrescription").hidden) return;
-    renderContext();
-    $("geniusPatientNamePrint").textContent = $("geniusPatientName").value.trim() || "Not provided";
-    $("geniusPrescriptionDatePrint").textContent = $("geniusPrescriptionDate").value || localDate();
-    $("geniusPrescriptionNotesPrint").textContent = $("geniusPrescriptionNotes").value.trim() || "—";
+    syncPrintValues();
     window.print();
+  }
+
+  // Home-screen web apps on iOS ignore window.print(); the PDF's share sheet offers Print there instead.
+  function printSupported() {
+    return typeof window.print === "function" && window.navigator.standalone !== true;
+  }
+
+  function pdfFileName() {
+    return `oculi-genius-preview-${previewDate()}.pdf`;
+  }
+
+  // Letter where it is the usual office paper, A4 elsewhere.
+  function pageSize() {
+    const LETTER = ["US", "CA", "MX", "CL", "CO", "VE", "PH", "CR", "GT", "PA", "DO", "PR", "SV", "NI", "HN", "BZ"];
+    let region = "";
+    try { region = new Intl.Locale(navigator.language || "en-US").maximize().region || ""; } catch { region = ""; }
+    return LETTER.includes(region) ? { width: 612, height: 792 } : { width: 595.28, height: 841.89 };
+  }
+
+  function text(id) { return $(id).textContent.trim(); }
+
+  function previewData() {
+    const warning = document.querySelector("#geniusPrescription .prescription-warning");
+    const lead = warning.querySelector("strong").textContent.trim();
+    return {
+      warningLead: lead,
+      warningRest: warning.textContent.replace(lead, "").trim(),
+      caption: document.querySelector("#geniusPrescription .prescription-table caption").textContent.trim(),
+      name: patientName(),
+      date: previewDate(),
+      rows: EYES.map(eye => ({ eye: eye.short, side: eye.name.replace(" eye", ""),
+        cells: ["Sphere", "Cylinder", "Axis"].map(c => text(`geniusPrescription${c}${eye.key}`)) })),
+      add: text("geniusPrescriptionAdd"), pd: text("geniusPrescriptionPd"),
+      va: text("geniusPrescriptionVa"), outcome: text("geniusPrescriptionOutcome"),
+      age: text("geniusPrescriptionAge"), medical: text("geniusPrescriptionMedical"), symptoms: text("geniusPrescriptionSymptoms"),
+      flags: [...$("geniusPrescriptionFlags").children].map(li => li.textContent.trim()),
+      notes: previewNotes(),
+      signatory: text("geniusSignatory"), licence: text("geniusLicence"),
+      footer: text("geniusPrescriptionVersion")
+    };
+  }
+
+  // Draws the preview at scale k; returns the bottom edge so the caller can shrink it to one page.
+  function drawPdf(pdf, d, k) {
+    const M = 46, W = pdf.width, cw = W - 2 * M;
+    const ink = 0.07, muted = 0.36, rule = 0.62;
+    const sz = v => v * k;
+    let y = M;
+
+    pdf.rotatedText("NOT A PRESCRIPTION", W / 2, pdf.height / 2, 28, { font: "bold", size: 46, color: 0.93, spacing: 3 });
+
+    // Header
+    pdf.text("OCULI · GENIUS", M, y + sz(8), { size: sz(7.5), color: muted, spacing: 1.1 });
+    pdf.text("Prescription preview", M, y + sz(31), { font: "serif", size: sz(23), color: ink });
+    const badge = "NOT A PRESCRIPTION", badgeSize = sz(7), badgeW = pdf.textWidth(badge, "bold", badgeSize) + 0.6 * (badge.length - 1) + 16;
+    pdf.rect(W - M - badgeW, y + sz(14), badgeW, sz(17), { stroke: ink, width: 0.8, radius: sz(8.5) });
+    pdf.text(badge, W - M - badgeW / 2, y + sz(14) + sz(11.6), { font: "bold", size: badgeSize, color: ink, align: "center", spacing: 0.6 });
+    y += sz(42);
+    pdf.line(M, y, W - M, y, { width: 1.6, color: ink });
+
+    // Warning callout: bold lead-in, then the rest, wrapped together.
+    y += sz(12);
+    const ws = sz(8.5), lh = ws * 1.4;
+    const words = [...d.warningLead.split(/\s+/).map(w => ({ w, font: "bold" })), ...d.warningRest.split(/\s+/).map(w => ({ w, font: "regular" }))];
+    const lines = [[]];
+    let lineW = 0;
+    for (const word of words) {
+      const add = pdf.textWidth((lines[lines.length - 1].length ? " " : "") + word.w, word.font, ws);
+      if (lines[lines.length - 1].length && lineW + add > cw - 20) { lines.push([]); lineW = 0; }
+      const line = lines[lines.length - 1];
+      const piece = (line.length ? " " : "") + word.w;
+      const last = line[line.length - 1];
+      if (last && last.font === word.font) last.t += piece; else line.push({ t: piece, font: word.font });
+      lineW += pdf.textWidth(piece, word.font, ws);
+    }
+    const boxH = lines.length * lh + sz(12);
+    pdf.rect(M, y, cw, boxH, { fill: 0.95 });
+    pdf.rect(M, y, 2.2, boxH, { fill: ink });
+    lines.forEach((line, i) => {
+      let x = M + 12;
+      for (const seg of line) {
+        pdf.text(seg.t, x, y + sz(6) + ws + i * lh - 1, { font: seg.font, size: ws, color: seg.font === "bold" ? ink : 0.25 });
+        x += pdf.textWidth(seg.t, seg.font, ws);
+      }
+    });
+    y += boxH;
+
+    // Patient and date
+    y += sz(14);
+    const nameW = (cw - 18) * 2 / 3, dateX = M + nameW + 18, dateW = cw - nameW - 18;
+    pdf.text("Patient name", M, y + sz(8), { size: sz(8), color: muted });
+    pdf.text("Date", dateX, y + sz(8), { size: sz(8), color: muted });
+    const nameLines = pdf.wrap(d.name, nameW, "regular", sz(11.5));
+    nameLines.forEach((line, j) => pdf.text(line, M, y + sz(23) + j * sz(15), { size: sz(11.5), color: ink }));
+    pdf.text(d.date, dateX, y + sz(23), { size: sz(11.5), color: ink });
+    y += sz(29) + (nameLines.length - 1) * sz(15);
+    pdf.line(M, y, M + nameW, y, { color: rule });
+    pdf.line(dateX, y, dateX + dateW, y, { color: rule });
+
+    // Rx table
+    y += sz(16);
+    pdf.text(d.caption.toUpperCase(), M, y + sz(7), { size: sz(7), color: muted, spacing: 0.5 });
+    y += sz(13);
+    const eyeCol = 84, valCol = (cw - eyeCol) / 3, headH = sz(20), rowH = sz(32);
+    const cols = [M, M + eyeCol, M + eyeCol + valCol, M + eyeCol + 2 * valCol, W - M];
+    ["EYE", "SPHERE", "CYLINDER", "AXIS"].forEach((h, i) => {
+      const x = i === 0 ? cols[0] + 10 : (cols[i] + cols[i + 1]) / 2;
+      pdf.text(h, x, y + headH / 2 + sz(2.5), { size: sz(7), color: muted, align: i === 0 ? "left" : "center", spacing: 0.4 });
+    });
+    d.rows.forEach((row, r) => {
+      const top = y + headH + r * rowH;
+      pdf.text(row.eye, cols[0] + 10, top + rowH / 2 - sz(0.5), { font: "bold", size: sz(10), color: ink });
+      pdf.text(row.side, cols[0] + 10, top + rowH / 2 + sz(9.5), { size: sz(7.5), color: muted });
+      row.cells.forEach((c, i) => pdf.text(c, (cols[i + 1] + cols[i + 2]) / 2, top + rowH / 2 + sz(4.5), { size: sz(13.5), color: ink, align: "center" }));
+    });
+    const tableH = headH + 2 * rowH;
+    for (const x of cols) pdf.line(x, y, x, y + tableH, { color: rule });
+    for (const yy of [y, y + headH, y + headH + rowH, y + tableH]) pdf.line(M, yy, W - M, yy, { color: rule });
+    y += tableH;
+
+    // Boxed rows of label/value cells; values wrap and the row grows to the tallest cell.
+    function cells(items, widths, valueSize, valueFont = "regular") {
+      y += sz(11);
+      const pad = 9, vlh = valueSize * 1.35;
+      const total = widths.reduce((a, b) => a + b, 0);
+      const ws2 = widths.map(w => w / total * cw);
+      const wrapped = items.map((it, i) => pdf.wrap(it.value, ws2[i] - 2 * pad, valueFont, valueSize));
+      const h = sz(8) + sz(7) + sz(5) + Math.max(...wrapped.map(l => l.length)) * vlh + sz(4);
+      let x = M;
+      items.forEach((it, i) => {
+        pdf.text(it.label.toUpperCase(), x + pad, y + sz(8) + sz(6), { size: sz(7), color: muted, spacing: 0.4 });
+        wrapped[i].forEach((line, j) => pdf.text(line, x + pad, y + sz(8) + sz(7) + sz(5) + valueSize * 0.85 + j * vlh, { font: valueFont, size: valueSize, color: ink }));
+        if (i) pdf.line(x, y, x, y + h, { color: rule });
+        x += ws2[i];
+      });
+      pdf.rect(M, y, cw, h, { stroke: rule });
+      y += h;
+    }
+    cells([{ label: "ADD", value: d.add }, { label: "PD distance / near", value: d.pd }], [1, 1], sz(12.5));
+    cells([{ label: "Verified VA", value: d.va }, { label: "Verification", value: d.outcome }], [1, 1], sz(9.5));
+    cells([{ label: "Age", value: d.age }, { label: "Medical background", value: d.medical }, { label: "Reported symptoms", value: d.symptoms }],
+      [0.55, 1, 1.3], sz(9.5));
+
+    // Review notes
+    if (d.flags.length) {
+      y += sz(14);
+      pdf.text("REVIEW NOTES", M, y + sz(6), { size: sz(7), color: muted, spacing: 0.4 });
+      y += sz(10);
+      const fs = sz(8), flh = fs * 1.4;
+      for (const f of d.flags) {
+        const lines2 = pdf.wrap(f, cw - 12, "regular", fs);
+        pdf.text("•", M + 2, y + fs, { size: fs, color: 0.3 });
+        lines2.forEach((line, j) => pdf.text(line, M + 12, y + fs + j * flh, { size: fs, color: 0.3 }));
+        y += lines2.length * flh + sz(1.5);
+      }
+    }
+
+    // Additional notes
+    y += sz(12);
+    pdf.text("Additional notes", M, y + sz(8), { size: sz(8), color: muted });
+    y += sz(12);
+    const ns = sz(10), nlh = ns * 1.4;
+    const noteLines = pdf.wrap(d.notes || "—", cw, "regular", ns);
+    noteLines.forEach((line, j) => pdf.text(line, M, y + ns + j * nlh, { size: ns, color: ink }));
+    y += Math.max(noteLines.length * nlh, sz(30)) + sz(4);
+    pdf.line(M, y, W - M, y, { color: rule });
+
+    // Signatures
+    y += sz(36);
+    const sigW = (cw - 28) / 2;
+    [[d.signatory, "Verified by"], [d.licence, "Licence or certification"]].forEach(([value, label], i) => {
+      const x = M + i * (sigW + 28);
+      pdf.line(x, y, x + sigW, y, { width: 0.8, color: 0.2 });
+      pdf.text(value, x, y + sz(14), { size: sz(10.5), color: ink });
+      pdf.text(label, x, y + sz(25), { size: sz(7.5), color: muted });
+    });
+    y += sz(36);
+
+    // Footer
+    pdf.line(M, y, W - M, y, { color: 0.8 });
+    const footLines = pdf.wrap(d.footer, cw, "regular", sz(7.5));
+    footLines.forEach((line, j) => pdf.text(line, M, y + sz(12) + j * sz(10), { size: sz(7.5), color: muted }));
+    y += sz(12) + (footLines.length - 1) * sz(10);
+    return y;
+  }
+
+  function buildPdf() {
+    const d = previewData();
+    const size = pageSize();
+    let pdf;
+    for (let k = 1; k >= 0.6; k -= 0.05) {
+      pdf = window.OculiPdf.create(size.width, size.height);
+      if (drawPdf(pdf, d, k) <= size.height - 40) break;
+    }
+    return pdf.toBytes({ title: `Oculi Genius preview ${d.date}` });
+  }
+
+  function download(file) {
+    const url = URL.createObjectURL(file);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = file.name;
+    a.rel = "noopener";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 60000);
+  }
+
+  // Phones and tablets get the share sheet (Save to Files, Print, AirDrop); desktops download the file.
+  async function savePdf() {
+    if ($("geniusPrescription").hidden || !proposal) return;
+    const status = $("geniusExportStatus");
+    let file;
+    try {
+      syncPrintValues();
+      file = new File([buildPdf()], pdfFileName(), { type: "application/pdf" });
+    } catch (error) {
+      status.textContent = "Could not create the PDF. Try Print instead.";
+      return;
+    }
+    const touch = window.matchMedia && window.matchMedia("(pointer: coarse)").matches;
+    if (touch && navigator.canShare && navigator.canShare({ files: [file] })) {
+      try {
+        await navigator.share({ files: [file], title: "Prescription preview" });
+        status.textContent = "";
+        return;
+      } catch (error) {
+        if (error && error.name === "AbortError") return;
+      }
+    }
+    download(file);
+    status.textContent = `Saved ${file.name}`;
+  }
+
+  function resetAll() {
+    $("geniusForm").reset();
+    $("geniusPanel").querySelectorAll(".chip").forEach(chip => chip.classList.remove("on"));
+    $("geniusPanel").querySelectorAll(".field[data-sign]").forEach(el => { el.dataset.sign = "-1"; });
+    $("geniusPanel").querySelectorAll(".sign:not(.static)").forEach(b => { b.textContent = Rx.MINUS; });
+    segment("geniusGlasses", "");
+    $("geniusGlassesFields").hidden = true;
+    $("geniusGlassesFields").disabled = true;
+    ["geniusPatientName", "geniusPrescriptionDate", "geniusPrescriptionNotes"].forEach(id => { $(id).value = ""; });
+    ["geniusPatientNamePrint", "geniusPrescriptionDatePrint", "geniusPrescriptionNotesPrint", "geniusExportStatus"].forEach(id => { $(id).textContent = ""; });
+    $("geniusScanStatusRow").hidden = true;
+    resetVerification();
+    syncAxes();
+    invalidate();
+  }
+
+  function newPatient() {
+    resetAll();
+    window.scrollTo({ top: 0, behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
+    $("geniusAge").focus({ preventScroll: true });
   }
 
   // ---------------------------------------------------------------- scanner
@@ -381,6 +649,11 @@
     $("geniusForm").addEventListener("submit", propose);
     $("geniusPreview").addEventListener("click", preparePreview);
     $("geniusPrint").addEventListener("click", print);
+    $("geniusPrint").hidden = !printSupported();
+    if ($("geniusPrint").hidden) $("geniusSavePdf").textContent = "Save or Print PDF";
+    $("geniusSavePdf").addEventListener("click", savePdf);
+    $("geniusNewPatient").addEventListener("click", newPatient);
+    window.addEventListener("beforeprint", syncPrintValues);
     $("geniusScanBtn").addEventListener("click", () => $("geniusTicketInput").click());
     $("geniusTicketInput").addEventListener("change", e => { const f = e.target.files && e.target.files[0]; if (f) scan(f); });
 
@@ -411,17 +684,7 @@
       }
     });
     $("geniusReset").addEventListener("click", () => {
-      $("geniusForm").reset();
-      $("geniusPanel").querySelectorAll(".chip").forEach(chip => chip.classList.remove("on"));
-      $("geniusPanel").querySelectorAll(".field[data-sign]").forEach(el => { el.dataset.sign = "-1"; });
-      $("geniusPanel").querySelectorAll(".sign:not(.static)").forEach(b => { b.textContent = Rx.MINUS; });
-      segment("geniusGlasses", "");
-      $("geniusGlassesFields").hidden = true;
-      $("geniusGlassesFields").disabled = true;
-      ["geniusPatientName", "geniusPrescriptionDate", "geniusPrescriptionNotes"].forEach(id => { $(id).value = ""; });
-      $("geniusScanStatusRow").hidden = true;
-      syncAxes();
-      invalidate();
+      resetAll();
       $("geniusAge").focus();
     });
   }
@@ -429,5 +692,5 @@
   build();
   bind();
   setStep("screen");
-  window.OculiGenius = Object.freeze({ MIN_AGE, LARGE_CHANGE_D });
+  window.OculiGenius = Object.freeze({ MIN_AGE, LARGE_CHANGE_D, buildPdf });
 })();

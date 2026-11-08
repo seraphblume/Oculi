@@ -23,7 +23,7 @@ A guided refraction preview: **screen → propose → verify → preview**.
 - **Screen.** Any warning sign, or an age under 18, stops Genius before any proposal. Current glasses, symptoms and medical background become review notes, not dioptric changes.
 - **Propose.** The full autorefractor ticket (repeats included) runs through the v0.3 engine with its −0.25 D prior.
 - **Verify.** VA through the proposed Rx in a trial frame, near when there is an ADD, the +0.25 D test, then accepted or refined.
-- **Preview.** A printable, watermarked preview that records the verification and review notes. It is not a prescription.
+- **Preview.** A one-page, watermarked preview that records the verification and review notes. It is not a prescription. Save it as a PDF (on a phone this opens the share sheet, which also offers Print) or print it, then start the next patient with **New Patient**.
 
 Genius is clearly marked as a development preview, and nothing entered there is saved.
 
@@ -68,7 +68,8 @@ The test suite covers:
 - exports and offset fitting;
 - ticket parsing;
 - optical calculations;
-- the complete browser workflow, Genius included.
+- the PDF writer;
+- the complete browser workflow, Genius included, with one-page print and PDF export.
 
 ```sh
 node tests/v0.2-freeze.test.js
@@ -78,7 +79,9 @@ node tests/v1.0-beryl.test.js
 node tests/ticket-scan.test.js
 node tests/export-and-fit.test.js
 node tests/optical-calculators.test.js
+node tests/pdf-lite.test.js
 node tests/app-flow.browser.js
+node tests/genius-export.browser.js
 ```
 
 Continuous integration runs the same checks for every pull request.

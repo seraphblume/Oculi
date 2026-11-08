@@ -799,11 +799,17 @@ details.group[open] > summary { box-shadow: inset 0 -0.5px 0 var(--separator); }
 .prescription-notes textarea { min-height: 76px; resize: vertical; }
 .prescription-print-value { display: none; }
 .prescription-signature { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; margin-top: 36px; }
-.prescription-signature > div { display: flex; flex-direction: column; gap: 6px; color: var(--label-2); font-size: 11px; }
-.signature-line { display: block; height: 32px; border-bottom: 1px solid var(--label-2); }
+.prescription-signature > div { display: flex; flex-direction: column; gap: 4px; min-width: 0; color: var(--label-2); font-size: 11px; }
+.signature-line { display: block; height: 32px; margin-bottom: 4px; border-bottom: 1px solid var(--label-2); }
+.signature-value { color: var(--label); font-size: 14px; font-weight: 500; }
 .prescription-footer { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px 18px; margin-top: 18px; padding-top: 12px; border-top: 1px solid var(--separator); color: var(--label-2); font-size: 11px; }
-.prescription-actions { margin-top: 24px; display: flex; justify-content: center; }
-.prescription-actions .button-primary { max-width: 360px; }
+.prescription-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; max-width: 480px; margin: 28px auto 0; }
+.prescription-actions:has(#geniusPrint[hidden]) #geniusSavePdf { grid-column: 1 / -1; }
+.button-secondary { width: 100%; height: 50px; border: 0; border-radius: 14px; background: var(--fill); color: var(--label); font-size: 17px; font-weight: 600; transition: transform 100ms ease-out, opacity 100ms ease-out; }
+.button-secondary:active { transform: scale(0.98); opacity: 0.7; }
+.button-primary:disabled, .button-secondary:disabled { opacity: 0.4; }
+#geniusNewPatient { grid-column: 1 / -1; justify-self: center; min-width: 180px; margin-top: 4px; font-size: 15px; font-weight: 500; }
+.prescription-status { grid-column: 1 / -1; margin: 0; min-height: 1.4em; text-align: center; color: var(--label-2); font-size: 13px; }
 
 /* ------------------------------------------------------------------ Tools */
 
@@ -861,7 +867,7 @@ body[data-view="calculator"] #toast { display: none; }
 
 /* ------------------------------------------------------------------ responsive */
 
-@media (max-width: 759px) {
+@media screen and (max-width: 759px) {
   .navbar-inner { grid-template-columns: 1fr auto; gap: 14px; padding: 12px 20px; min-height: 0; }
   .brand { font-size: 27px; }
   .brand-caption { display: none; }
@@ -904,28 +910,46 @@ body[data-view="calculator"] #toast { display: none; }
   .calculator-tabs button { font-size: 12px; padding-left: 4px; padding-right: 4px; }
 }
 
-/* ------------------------------------------------------------------ print: the Genius preview only */
+/* ------------------------------------------------------------------ print: the Genius preview only, on one page */
 
-@page { size: A4 portrait; margin: 16mm; }
+@page { margin: 12mm; }
 @media print {
-  body[data-view="genius"] { background: #FFFFFF !important; color: #111111 !important; }
-  body[data-view="genius"] * { visibility: hidden !important; }
-  body[data-view="genius"] #geniusPrescription, body[data-view="genius"] #geniusPrescription * { visibility: visible !important; }
-  body[data-view="genius"] #geniusPrescription { position: absolute; inset: 0 auto auto 0; width: 100%; margin: 0; padding: 0; border: 0; border-radius: 0; background: #FFFFFF !important; color: #111111 !important; box-shadow: none; overflow: visible; }
-  .genius-prescription::before { color: #111111; opacity: 0.07; font-size: 84px; }
-  .prescription-header { border-color: #111111; }
+  html, body[data-view="genius"] { background: #FFFFFF !important; color: #111111 !important; }
+  body[data-view="genius"] > :not(main),
+  body[data-view="genius"] main > :not(#geniusPanel),
+  body[data-view="genius"] #geniusPanel > :not(#geniusPrescription) { display: none !important; }
+  body[data-view="genius"] main, body[data-view="genius"] #geniusPanel { display: block !important; max-width: none; margin: 0; padding: 0; }
+  body[data-view="genius"] #geniusPrescription { margin: 0; padding: 0; border: 0; border-radius: 0; background: #FFFFFF !important; color: #111111 !important; box-shadow: none; overflow: visible; break-inside: avoid; }
+  .genius-prescription::before { color: #111111; opacity: 0.06; font-size: 72px; }
+  .prescription-header { padding-bottom: 10px; border-color: #111111; }
+  .prescription-header h2 { font-size: 22px; }
+  .prescription-header .eyebrow { margin-bottom: 4px; }
   .prescription-header h2, .prescription-warning strong { color: #111111 !important; }
   .prescription-header .eyebrow, .prescription-warning, .prescription-table caption, .prescription-table thead th, .prescription-table tbody th span,
   .prescription-additional span, .prescription-verified span, .prescription-context span, .prescription-review > span, .prescription-review ul,
   .prescription-signature > div, .prescription-footer { color: #4A4A4A !important; }
-  .prescription-badge { border: 1px solid #111111; background: #FFFFFF !important; color: #111111 !important; }
-  .prescription-warning { border-color: #111111; background: #F2F2F2 !important; }
+  .prescription-badge { padding: 5px 9px; border: 1px solid #111111; background: #FFFFFF !important; color: #111111 !important; }
+  .prescription-warning { margin-top: 10px; padding: 7px 10px; border-color: #111111; background: #F2F2F2 !important; font-size: 11px; line-height: 1.4; }
+  .prescription-meta { gap: 14px; margin-top: 12px; }
   .prescription-meta input, .prescription-notes textarea { display: none; }
   .prescription-meta label > span:not(.prescription-print-value), .prescription-notes > span:not(.prescription-print-value) { display: none; }
-  .prescription-print-value { display: block; min-height: 24px; margin-top: 8px; padding: 6px 0; border-bottom: 1px solid #777777; color: #111111 !important; font: 15px/1.4 var(--font); white-space: pre-wrap; }
-  .prescription-notes-value { min-height: 64px; }
+  .prescription-print-value { display: block; min-height: 18px; margin-top: 4px; padding: 3px 0; border-bottom: 1px solid #777777; color: #111111 !important; font: 13px/1.35 var(--font); white-space: pre-wrap; overflow-wrap: anywhere; }
+  .prescription-notes-value { min-height: 34px; }
+  .prescription-table-wrap { margin-top: 14px; overflow: visible; }
+  .prescription-table caption { margin-bottom: 6px; }
+  .prescription-table th, .prescription-table td { padding: 7px 8px; }
+  .prescription-table td { font-size: 15px; }
+  .prescription-additional, .prescription-verified, .prescription-context, .prescription-review, .prescription-notes { margin-top: 10px; }
+  .prescription-additional > div, .prescription-verified > div, .prescription-context > div { padding: 7px 10px; }
+  .prescription-additional strong { margin-top: 3px; font-size: 14px; }
+  .prescription-verified strong, .prescription-context strong { margin-top: 3px; font-size: 11.5px; line-height: 1.35; }
+  .prescription-context { grid-template-columns: 70px minmax(0, 1fr) minmax(0, 1.3fr); }
+  .prescription-review ul { margin-top: 4px; font-size: 10px; line-height: 1.35; }
   .prescription-table th, .prescription-table td, .prescription-additional, .prescription-additional > div,
   .prescription-verified, .prescription-verified > div, .prescription-context, .prescription-context > div { border-color: #777777 !important; background: #FFFFFF !important; color: #111111 !important; }
-  .signature-line { border-color: #111111; }
+  .prescription-signature { gap: 24px; margin-top: 20px; }
+  .signature-line { height: 26px; border-color: #111111; }
+  .signature-value { color: #111111 !important; font-size: 12px; }
+  .prescription-footer { margin-top: 12px; padding-top: 8px; }
   .prescription-actions { display: none !important; }
 }
