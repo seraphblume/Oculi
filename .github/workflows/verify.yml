@@ -29,8 +29,11 @@ jobs:
       - name: Verify v0.3 engine and scoring
         run: node tests/v0.3-engine.test.js
 
-      - name: Verify v0.4 RC, agreement scoring and v0.3 baseline parity
+      - name: Verify frozen 0.4.0-rc.1, agreement scoring and v0.3 baseline parity
         run: node tests/v0.4-rc.test.js
+
+      - name: Verify v1.0 Beryl identity, RC parity, axis floor and exports
+        run: node tests/v1.0-beryl.test.js
 
       - name: Verify autorefractor ticket parser
         run: node tests/ticket-scan.test.js

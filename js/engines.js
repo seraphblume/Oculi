@@ -1,14 +1,15 @@
 // Project Dioptra — engine registry.
 //
-// v0.4 RC is primary; v0.3 is the fixed shadow comparator. v0.2 is retired
-// from new runs. Legacy helpers/records remain available for historical exports.
+// v1.0 "Beryl" is primary; v0.3 is the fixed shadow comparator. v0.2 and the
+// 0.4.0-rc.1 release candidate are retired from new runs; their records and source
+// remain for historical exports and parity tests.
 (function () {
   const ENGINES = {
-    "v0.4": {
-      id: "v0.4",
-      label: "v0.4 RC",
-      version: () => window.DIOPTRA_V04_CONFIG.version,
-      predictCase: input => window.DioptraEngineV04.predictCase(input)
+    "v1.0": {
+      id: "v1.0",
+      label: "Beryl",
+      version: () => window.DIOPTRA_V10_CONFIG.version,
+      predictCase: input => window.DioptraEngineV10.predictCase(input)
     },
     "v0.3": {
       id: "v0.3",
@@ -19,7 +20,7 @@
   };
 
   function primaryId() {
-    return "v0.4";
+    return "v1.0";
   }
 
   function shadowId() {

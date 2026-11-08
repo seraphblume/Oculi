@@ -10,7 +10,7 @@ Distances are measured from the cornea. Convert the sphere meridian and sphere-p
 
 The calculator defaults to 12 → 0 mm (spectacle to corneal plane); either distance can be changed from 0 to 25 mm, including the reverse conversion. Blank, nonfinite, out-of-range distances and conversion through a focal singularity are rejected.
 
-The v0.3 and experimental v0.4 engines retain their historical ability to normalize readings to the configured 12 mm spectacle plane. The current refraction workspace now fixes its input at 12 mm and does not import a ticket VD into the case. This preserves the engine target, calibration, historical cases, v0.3 golden baseline and v0.2 freeze.
+The v0.3 engine, the 0.4.0-rc.1 release candidate and v1.0 "Beryl" retain their historical ability to normalize readings to the configured 12 mm spectacle plane. The current refraction workspace now fixes its input at 12 mm and does not import a ticket VD into the case. This preserves the engine target, calibration, historical cases, v0.3 golden baseline and v0.2 freeze.
 
 Sources:
 

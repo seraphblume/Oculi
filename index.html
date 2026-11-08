@@ -23,7 +23,7 @@
       <div class="view-tabs" role="tablist" aria-label="Workspace">
         <button id="caseTab" role="tab" aria-selected="true" aria-controls="casePanel" type="button">Clinical Study</button>
         <button id="geniusTab" role="tab" aria-selected="false" aria-controls="geniusPanel" tabindex="-1" type="button">Genius</button>
-        <button id="calculatorTab" role="tab" aria-selected="false" aria-controls="calculatorPanel" tabindex="-1" type="button">Rx conversion</button>
+        <button id="calculatorTab" role="tab" aria-selected="false" aria-controls="calculatorPanel" tabindex="-1" type="button">Tools</button>
       </div>
       <div class="nav-actions" id="caseActions">
         <button id="newCaseBtn" class="nav-button" type="button">New Case</button>
@@ -34,9 +34,9 @@
   </header>
 
   <main>
+  <!-- ================================================================ Clinical Study -->
   <section class="content" id="casePanel" role="tabpanel" aria-labelledby="caseTab" tabindex="0">
     <div class="large-title">
-      <p class="eyebrow">Observe · Refract · Compare</p>
       <h1 id="caseTitle">Case</h1>
       <p id="engineLine" class="title-sub"></p>
     </div>
@@ -66,16 +66,17 @@
       </div>
 
       <fieldset id="previousRxFields" hidden disabled>
-        <h2 class="group-header">Previous prescription · minus cylinder</h2>
+        <h2 class="group-header">Previous prescription</h2>
         <div class="eye-columns">
           <section class="eye-section"><div class="group rx-table final" id="previous-od"></div></section>
           <section class="eye-section"><div class="group rx-table final" id="previous-os"></div></section>
         </div>
-        <div class="group"><label class="row"><span class="row-label">Previous ADD</span><select id="previousAdd" class="row-select"></select></label></div>
-        <div class="group"><label class="row"><span class="row-label">Time wearing this Rx</span><span class="row-value"><input id="previousWornMonths" class="row-input num short" type="number" min="0" max="600" step="1" list="rxDurationOptions" placeholder="Unknown" aria-label="Time wearing previous Rx in months" /><span class="unit">months</span></span></label></div>
+        <div class="group">
+          <label class="row"><span class="row-label">Previous ADD</span><select id="previousAdd" class="row-select"></select></label>
+          <label class="row"><span class="row-label">Time wearing this Rx</span><span class="row-value"><input id="previousWornMonths" class="row-input num short" type="number" min="0" max="600" step="1" list="rxDurationOptions" placeholder="Unknown" aria-label="Time wearing previous Rx in months" /><span class="unit">months</span></span></label>
+        </div>
         <datalist id="rxDurationOptions"><option value="3"></option><option value="6"></option><option value="12"></option><option value="18"></option><option value="24"></option><option value="36"></option><option value="60"></option><option value="120"></option></datalist>
-        <p class="group-footer">Enter the current glasses prescription for both eyes. Leave cylinder blank for a sphere-only prescription.</p>
-        <p class="group-footer">Duration is optional: blank means unknown; 0 means less than one month. It is recorded as context, not used to alter the prediction or explain reduced acuity.</p>
+        <p class="group-footer">Minus cylinder. Leave cylinder blank for sphere only. Duration is optional context: blank is unknown, 0 is under a month.</p>
       </fieldset>
 
       <h2 class="group-header">Autorefractor ticket</h2>
@@ -83,7 +84,7 @@
         <div class="row scan-row">
           <div>
             <span class="row-label">Scan ticket</span>
-            <span class="scan-caption">Take a photo or choose one from Photos. Oculi reads the values locally, then you review them before locking.</span>
+            <span class="scan-caption">Read locally. Only the numbers are kept, never the photo or the name.</span>
           </div>
           <button id="scanTicketBtn" class="scan-button" type="button">Scan</button>
           <input id="ticketImageInput" type="file" accept="image/*" capture="environment" hidden />
@@ -93,7 +94,6 @@
           <span id="scanStatus" class="row-detail">Ready</span>
         </div>
       </div>
-      <p class="group-footer">The scanner only imports refractive numbers and ticket measurements. It does not save the ticket image or patient name. Manual entry remains available.</p>
 
       <div class="eye-columns">
         <section class="eye-section" data-eye="od">
@@ -113,14 +113,19 @@
           </div>
         </section>
       </div>
-      <p class="group-footer">Copy the three readings and the bracketed line from the autorefractor ticket. Only the bracketed line is required; repeat readings help assess consistency. Q is the reliability digit printed after each reading.</p>
-
-      <h2 class="group-header">Instrument &amp; near</h2>
       <div class="group">
         <div class="row">
-          <span class="row-label">Refraction vertex</span>
-          <span class="row-detail num">12 mm</span>
+          <span class="row-label">VA measured</span>
+          <div class="segmented" id="vaCondition" data-value="" role="radiogroup" aria-label="VA measured">
+            <button type="button" data-value="unaided" role="radio">Unaided</button>
+            <button type="button" data-value="corrected" role="radio">With correction</button>
+          </div>
         </div>
+      </div>
+      <p class="group-footer">Copy the three readings and the bracketed line ‹ ›. Only the bracketed line is required. Q is the reliability digit after each reading.</p>
+
+      <h2 class="group-header">Near</h2>
+      <div class="group">
         <div class="row">
           <span class="row-label">PD distance / near</span>
           <span class="row-value">
@@ -131,7 +136,7 @@
           </span>
         </div>
         <label class="row">
-          <span class="row-label">Near working distance</span>
+          <span class="row-label">Working distance</span>
           <span class="row-value"><input id="nearWd" class="row-input num" type="text" inputmode="decimal" placeholder="400" aria-label="Near working distance in mm" /><span class="unit">mm</span></span>
         </label>
         <label class="row">
@@ -139,7 +144,7 @@
           <span class="row-value"><input id="nearPoint" class="row-input num" type="text" inputmode="decimal" placeholder="—" aria-label="Near point in mm" /><span class="unit">mm</span></span>
         </label>
       </div>
-      <p class="group-footer">Refraction uses a fixed 12 mm vertex. Near measurements are optional.</p>
+      <p class="group-footer">Optional. Refraction uses a fixed 12 mm vertex.</p>
 
       <details class="group disclosure" id="kSection">
         <summary class="row disclosure-row"><span class="row-label">Keratometry</span><span class="row-detail">Optional</span></summary>
@@ -158,6 +163,7 @@
           <div class="chips" id="medicalChips"></div>
         </div>
       </div>
+      <p id="warningNote" class="group-footer warning-footer" hidden>New flashes or floaters are a warning sign. Refer to an eye doctor before prescribing.</p>
     </fieldset>
 
     <!-- 2 · Refract ------------------------------------------------------- -->
@@ -182,10 +188,60 @@
       </div>
 
       <div class="group">
-        <label class="row"><span class="row-label">ADD</span><select id="finalAdd" class="row-select"></select></label>
+        <label class="row"><span class="row-label" id="finalAddLabel">ADD</span><select id="finalAdd" class="row-select"></select></label>
+        <div class="row">
+          <span class="row-label">Different ADD per eye</span>
+          <label class="switch"><input id="finalAddSplit" type="checkbox" role="switch" aria-label="Different ADD per eye" /><span aria-hidden="true"></span></label>
+        </div>
+        <label class="row" id="finalAddOsRow" hidden><span class="row-label">ADD · OS</span><select id="finalAddOs" class="row-select"></select></label>
         <label class="row"><span class="row-label">Note</span><input id="finalNote" class="row-input" type="text" placeholder="Optional" /></label>
       </div>
-      <p class="group-footer">Enter the prescription from your own exam. The algorithm's result stays hidden until you reveal it.</p>
+      <p class="group-footer">Enter the prescription from your own exam. The prediction stays hidden until you reveal it.</p>
+
+      <h2 class="group-header">Checks</h2>
+      <div class="group">
+        <label class="row"><span class="row-label">Final VA · OD</span><select id="finalVaOd" class="row-select"></select></label>
+        <label class="row"><span class="row-label">Final VA · OS</span><select id="finalVaOs" class="row-select"></select></label>
+        <label class="row"><span class="row-label">Final VA · both eyes</span><select id="finalVaOu" class="row-select"></select></label>
+        <div class="row">
+          <span class="row-label">+0.25 D over both eyes</span>
+          <div class="segmented" id="plusTest" data-value="" role="radiogroup" aria-label="Plus 0.25 test">
+            <button type="button" data-value="held" role="radio">Holds line</button>
+            <button type="button" data-value="blurred" role="radio">Blurs</button>
+          </div>
+        </div>
+      </div>
+      <p class="group-footer">Optional, about ten seconds. If the patient still reads the same line through +0.25 D, the Rx may carry extra minus.</p>
+
+      <h2 class="group-header">Endpoint</h2>
+      <div class="group">
+        <div class="row">
+          <span class="row-label">Prescribed Rx</span>
+          <div class="segmented" id="endpointDiffers" data-value="same" role="radiogroup" aria-label="Prescribed Rx compared with the endpoint">
+            <button type="button" data-value="same" role="radio">Same as endpoint</button>
+            <button type="button" data-value="different" role="radio">Different</button>
+          </div>
+        </div>
+      </div>
+      <fieldset id="endpointFields" hidden disabled>
+        <div class="eye-columns">
+          <section class="eye-section">
+            <h2 class="group-header">Endpoint · OD</h2>
+            <div class="group rx-table final" id="endpoint-od"></div>
+          </section>
+          <section class="eye-section">
+            <h2 class="group-header">Endpoint · OS</h2>
+            <div class="group rx-table final" id="endpoint-os"></div>
+          </section>
+        </div>
+        <div class="group">
+          <div class="row stacked">
+            <span class="row-caption">Why it differs</span>
+            <div class="chips" id="endpointReasons"></div>
+          </div>
+        </div>
+      </fieldset>
+      <p class="group-footer">The endpoint is the refined result before any prescribing decision: the most plus that gives the best acuity.</p>
     </fieldset>
 
     <!-- 3 · Compare ------------------------------------------------------- -->
@@ -194,228 +250,402 @@
     </section>
 
     <!-- Study ------------------------------------------------------------- -->
-    <h2 class="group-header study-header">Study</h2>
-    <p id="statsScope" class="group-footer"></p>
-    <div class="group">
-      <div id="stats" class="stats"></div>
-    </div>
-    <details class="group disclosure">
-      <summary class="row disclosure-row"><span class="row-label">Engine comparison</span><span class="row-detail" id="engineCompareDetail"></span></summary>
-      <div id="engineCompare" class="engine-compare"></div>
-    </details>
-    <p class="group-footer">Scores use power-vector error and an axis tolerance that tightens as cylinder grows (±14° at 0.25 D down to ±2° above 1.50 D). Don't tune either engine on a cohort that is still open.</p>
+    <section class="study" aria-labelledby="studyTitle">
+      <h2 class="group-header study-header" id="studyTitle">Study</h2>
+      <p id="statsScope" class="group-footer study-scope"></p>
+      <div class="group">
+        <div id="stats" class="stats"></div>
+      </div>
+      <details class="group disclosure">
+        <summary class="row disclosure-row"><span class="row-label">Engine comparison</span><span class="row-detail" id="engineCompareDetail"></span></summary>
+        <div id="engineCompare" class="engine-compare"></div>
+      </details>
+      <p class="group-footer">Power-vector error, with an axis tolerance that tightens as cylinder grows (±14° at 0.25 D to ±2° above 1.50 D). ±5° allows for axes recorded in 5° steps. Don't tune an engine on a cohort that is still open.</p>
 
-    <div class="group">
-      <button id="clearDataBtn" class="row row-button destructive" type="button">Delete All Cases…</button>
-    </div>
+      <div class="group">
+        <button id="clearDataBtn" class="row row-button destructive" type="button">Delete All Cases…</button>
+      </div>
+    </section>
 
-    <p class="footnote">Research prototype. Not a validated medical device and not a basis for prescribing or dispensing on its own. Data stays on this device.</p>
+    <p class="footnote">Research prototype. Not a validated medical device or a basis for prescribing on its own. Data stays on this device.</p>
   </section>
 
+  <!-- ================================================================ Genius -->
   <section class="content genius-panel" id="geniusPanel" role="tabpanel" aria-labelledby="geniusTab" tabindex="0" hidden>
     <div class="large-title">
-      <p class="eyebrow">Self-service refraction</p>
       <h1>Genius</h1>
+      <p class="title-sub">Guided refraction · development preview. Its output is not a prescription and is not indicative of the final product or clinical guidance.</p>
     </div>
-    <aside class="genius-callout" role="note" aria-labelledby="geniusCalloutTitle">
-      <p class="eyebrow">Development preview</p>
-      <h2 id="geniusCalloutTitle">Genius is in development.</h2>
-      <p>This preview runs the experimental v0.4 RC model for testing only. Its interface and results are not indicative of the final product or clinical guidance.</p>
-    </aside>
-    <div class="genius-layout">
-      <section class="genius-entry" aria-labelledby="geniusInputTitle">
-        <div class="section-heading"><h2 id="geniusInputTitle">RC test input</h2><button class="quiet-button" id="geniusReset" type="button">Clear</button></div>
-        <form id="geniusForm" novalidate>
-          <section class="genius-context" aria-labelledby="geniusContextTitle">
-            <h3 id="geniusContextTitle">Patient context</h3>
-            <label class="genius-age" for="geniusAge">Age
-              <input id="geniusAge" type="text" inputmode="numeric" autocomplete="off" placeholder="Years" aria-describedby="geniusContextHint geniusError" />
-            </label>
-            <fieldset><legend>Medical background</legend><div class="chips">
-              <label class="chip"><input id="geniusDiabetes" type="checkbox" /><span>Diabetes</span></label>
-              <label class="chip"><input id="geniusHypertension" type="checkbox" /><span>Hypertension</span></label>
-              <label class="chip"><input id="geniusPregnancy" type="checkbox" /><span>Pregnancy</span></label>
-            </div></fieldset>
-            <fieldset><legend>Visual symptoms</legend><div class="chips">
-              <label class="chip"><input id="geniusBlurredVision" type="checkbox" /><span>Blurred vision</span></label>
-              <label class="chip"><input id="geniusHeadache" type="checkbox" /><span>Headache</span></label>
-              <label class="chip"><input id="geniusFlashes" type="checkbox" /><span>Flashes</span></label>
-              <label class="chip"><input id="geniusTearing" type="checkbox" /><span>Tearing</span></label>
-              <label class="chip"><input id="geniusIrritation" type="checkbox" /><span>Burning / irritation</span></label>
-              <label class="chip"><input id="geniusItching" type="checkbox" /><span>Itching</span></label>
-              <label class="chip"><input id="geniusDischarge" type="checkbox" /><span>Discharge</span></label>
-              <label class="chip"><input id="geniusDryEye" type="checkbox" /><span>Dry eye</span></label>
-            </div></fieldset>
-            <label class="genius-other" for="geniusOtherSymptoms">Other visual symptoms
-              <input id="geniusOtherSymptoms" type="text" autocomplete="off" maxlength="120" />
-            </label>
-            <p id="geniusContextHint" class="calculator-hint">Age is used by the RC model. Medical background and symptoms are included for review but do not alter the experimental output.</p>
-          </section>
-          <fieldset class="calculator-eye"><legend>Right eye · OD</legend><div class="calculator-fields">
-            <label for="geniusSphereOd">Sphere <span>SPH · D</span><input id="geniusSphereOd" type="text" autocomplete="off" spellcheck="false" placeholder="−2.00" aria-describedby="geniusError" /></label>
-            <label for="geniusCylinderOd">Cylinder <span>CYL · D</span><input id="geniusCylinderOd" type="text" autocomplete="off" spellcheck="false" placeholder="0.00" aria-describedby="geniusError" /></label>
-            <label for="geniusAxisOd">Axis <span>1–180°</span><input id="geniusAxisOd" type="text" inputmode="numeric" autocomplete="off" placeholder="90" aria-describedby="geniusError geniusInputHint" /></label>
-          </div></fieldset>
-          <fieldset class="calculator-eye"><legend>Left eye · OS</legend><div class="calculator-fields">
-            <label for="geniusSphereOs">Sphere <span>SPH · D</span><input id="geniusSphereOs" type="text" autocomplete="off" spellcheck="false" placeholder="−2.00" aria-describedby="geniusError" /></label>
-            <label for="geniusCylinderOs">Cylinder <span>CYL · D</span><input id="geniusCylinderOs" type="text" autocomplete="off" spellcheck="false" placeholder="0.00" aria-describedby="geniusError" /></label>
-            <label for="geniusAxisOs">Axis <span>1–180°</span><input id="geniusAxisOs" type="text" inputmode="numeric" autocomplete="off" placeholder="90" aria-describedby="geniusError geniusInputHint" /></label>
-          </div></fieldset>
-          <p id="geniusInputHint" class="calculator-hint">Enter only the selected autorefractor ticket reading for each eye. Refraction vertex is fixed at 12 mm.</p>
-          <p id="geniusError" class="calculator-error" role="status" aria-live="polite"></p>
-          <button class="button-primary" type="submit">Run RC model</button>
-        </form>
-      </section>
-      <section class="genius-output" aria-label="RC test output">
-        <div id="geniusEmpty" class="calculator-empty"><span class="empty-symbol" aria-hidden="true">◎</span><h2>RC model test</h2><p>Enter both eyes to run the preview.</p></div>
-        <div id="geniusResults" hidden>
-          <div aria-live="polite" aria-atomic="true">
-            <div class="section-heading"><h2>RC test output</h2><span id="geniusVersion" class="genius-version"></span></div>
-            <div class="genius-result-grid">
-              <div class="genius-result-card"><span>Right eye · OD</span><strong id="geniusOdResult"></strong></div>
-              <div class="genius-result-card"><span>Left eye · OS</span><strong id="geniusOsResult"></strong></div>
-              <div class="genius-result-card"><span>Tentative ADD</span><strong id="geniusAddResult"></strong></div>
-            </div>
-            <h3>Review notes</h3>
-            <ul id="geniusFlags" class="genius-flags"></ul>
+
+    <ol class="stepper" id="geniusStepper" aria-label="Genius progress">
+      <li data-step="screen"><span class="step-dot">1</span>Screen</li>
+      <li data-step="propose"><span class="step-dot">2</span>Propose</li>
+      <li data-step="verify"><span class="step-dot">3</span>Verify</li>
+    </ol>
+
+    <form id="geniusForm" novalidate>
+      <h2 class="group-header">Patient</h2>
+      <div class="group">
+        <label class="row">
+          <span class="row-label">Age</span>
+          <input id="geniusAge" class="row-input num" type="text" inputmode="numeric" autocomplete="off" placeholder="Years" />
+        </label>
+        <div class="row">
+          <span class="row-label">Current glasses</span>
+          <div class="segmented" id="geniusGlasses" data-value="" role="radiogroup" aria-label="Current glasses">
+            <button type="button" data-value="none" role="radio">None</button>
+            <button type="button" data-value="yes" role="radio">Wears glasses</button>
           </div>
-          <section id="geniusPrescription" class="genius-prescription" aria-labelledby="geniusPrescriptionTitle">
-            <header class="prescription-header">
-              <div>
-                <p class="eyebrow">Oculi · Genius</p>
-                <h2 id="geniusPrescriptionTitle">Prescription preview</h2>
-              </div>
-              <span class="prescription-badge">Development preview</span>
-            </header>
-            <p class="prescription-warning" role="note"><strong>Experimental output.</strong> This is not a prescription, is not clinical guidance, and is not indicative of the final product.</p>
-            <div class="prescription-meta">
-              <label for="geniusPatientName">Patient name <span>Optional · not saved</span>
-                <input id="geniusPatientName" type="text" autocomplete="off" maxlength="100" />
-                <span id="geniusPatientNamePrint" class="prescription-print-value"></span>
-              </label>
-              <label for="geniusPrescriptionDate">Date
-                <input id="geniusPrescriptionDate" type="date" />
-                <span id="geniusPrescriptionDatePrint" class="prescription-print-value"></span>
-              </label>
-            </div>
-            <div class="prescription-table-wrap">
-              <table class="prescription-table">
-                <caption>Spectacle prescription preview · minus cylinder</caption>
-                <thead><tr><th scope="col">Eye</th><th scope="col">Sphere</th><th scope="col">Cylinder</th><th scope="col">Axis</th></tr></thead>
-                <tbody>
-                  <tr><th scope="row">OD <span>Right</span></th><td id="geniusPrescriptionSphereOd"></td><td id="geniusPrescriptionCylinderOd"></td><td id="geniusPrescriptionAxisOd"></td></tr>
-                  <tr><th scope="row">OS <span>Left</span></th><td id="geniusPrescriptionSphereOs"></td><td id="geniusPrescriptionCylinderOs"></td><td id="geniusPrescriptionAxisOs"></td></tr>
-                </tbody>
-              </table>
-            </div>
-            <div class="prescription-additional">
-              <div><span>Tentative ADD</span><strong id="geniusPrescriptionAdd"></strong></div>
-              <div><span>Refraction vertex</span><strong>12 mm</strong></div>
-            </div>
-            <div class="prescription-context">
-              <div><span>Age</span><strong id="geniusPrescriptionAge"></strong></div>
-              <div><span>Medical background</span><strong id="geniusPrescriptionMedical"></strong></div>
-              <div><span>Reported visual symptoms</span><strong id="geniusPrescriptionSymptoms"></strong></div>
-            </div>
-            <label class="prescription-notes" for="geniusPrescriptionNotes">Additional notes <span>Optional · not saved</span>
-              <textarea id="geniusPrescriptionNotes" rows="3" maxlength="500"></textarea>
-              <span id="geniusPrescriptionNotesPrint" class="prescription-print-value prescription-notes-value"></span>
-            </label>
-            <footer class="prescription-footer">
-              <span id="geniusPrescriptionVersion"></span>
-              <span>Generated by an unvalidated research prototype</span>
-            </footer>
-            <div class="prescription-actions">
-              <button id="geniusPrint" class="button-primary" type="button">Export / print preview</button>
-              <p>Use the system print dialog to save a PDF.</p>
-            </div>
+        </div>
+      </div>
+      <fieldset id="geniusGlassesFields" hidden disabled>
+        <h2 class="group-header">Current glasses · lensometer</h2>
+        <div class="eye-columns">
+          <section class="eye-section"><div class="group rx-table final" id="genius-prev-od"></div></section>
+          <section class="eye-section"><div class="group rx-table final" id="genius-prev-os"></div></section>
+        </div>
+        <div class="group"><label class="row"><span class="row-label">ADD</span><select id="geniusPrevAdd" class="row-select"></select></label></div>
+        <p class="group-footer">Minus cylinder. Leave cylinder blank for sphere only.</p>
+      </fieldset>
+
+      <h2 class="group-header">History</h2>
+      <div class="group">
+        <div class="row stacked">
+          <span class="row-caption">Symptoms</span>
+          <div class="chips">
+            <label class="chip"><input id="geniusBlurredVision" type="checkbox" /><span>Blurred vision</span></label>
+            <label class="chip"><input id="geniusHeadache" type="checkbox" /><span>Headache</span></label>
+            <label class="chip"><input id="geniusGlare" type="checkbox" /><span>Glare / halos</span></label>
+            <label class="chip"><input id="geniusTearing" type="checkbox" /><span>Tearing</span></label>
+            <label class="chip"><input id="geniusIrritation" type="checkbox" /><span>Burning / irritation</span></label>
+            <label class="chip"><input id="geniusItching" type="checkbox" /><span>Itching</span></label>
+            <label class="chip"><input id="geniusDischarge" type="checkbox" /><span>Discharge</span></label>
+            <label class="chip"><input id="geniusDryEye" type="checkbox" /><span>Dry eye</span></label>
+          </div>
+          <input id="geniusOtherSymptoms" class="inline-input" type="text" autocomplete="off" maxlength="120" placeholder="Other symptom (optional)" aria-label="Other visual symptoms" />
+        </div>
+        <div class="row stacked">
+          <span class="row-caption">Medical background</span>
+          <div class="chips">
+            <label class="chip"><input id="geniusDiabetes" type="checkbox" /><span>Diabetes</span></label>
+            <label class="chip"><input id="geniusHypertension" type="checkbox" /><span>Hypertension</span></label>
+            <label class="chip"><input id="geniusPregnancy" type="checkbox" /><span>Pregnancy</span></label>
+          </div>
+        </div>
+      </div>
+
+      <h2 class="group-header">Warning signs</h2>
+      <div class="group">
+        <div class="row stacked">
+          <div class="chips" id="geniusWarnings">
+            <label class="chip chip-warning"><input id="geniusFlashes" type="checkbox" data-warning="New flashes or floaters" /><span>New flashes or floaters</span></label>
+            <label class="chip chip-warning"><input id="geniusCurtain" type="checkbox" data-warning="A shadow or curtain in vision" /><span>Shadow or curtain in vision</span></label>
+            <label class="chip chip-warning"><input id="geniusSudden" type="checkbox" data-warning="A sudden change in vision" /><span>Sudden change in vision</span></label>
+            <label class="chip chip-warning"><input id="geniusDouble" type="checkbox" data-warning="Double vision" /><span>Double vision</span></label>
+            <label class="chip chip-warning"><input id="geniusPain" type="checkbox" data-warning="Eye pain or a red, painful eye" /><span>Eye pain or a red, painful eye</span></label>
+          </div>
+        </div>
+      </div>
+      <p class="group-footer">Any warning sign stops Genius. These need an eye doctor before any prescription.</p>
+
+      <h2 class="group-header">Autorefractor ticket</h2>
+      <div class="group">
+        <div class="row scan-row">
+          <div>
+            <span class="row-label">Scan ticket</span>
+            <span class="scan-caption">Read locally. Only the numbers are kept, never the photo or the name.</span>
+          </div>
+          <button id="geniusScanBtn" class="scan-button" type="button">Scan</button>
+          <input id="geniusTicketInput" type="file" accept="image/*" capture="environment" hidden />
+        </div>
+        <div id="geniusScanStatusRow" class="row" hidden>
+          <span class="row-label">Scanner</span>
+          <span id="geniusScanStatus" class="row-detail">Ready</span>
+        </div>
+      </div>
+      <div class="eye-columns">
+        <section class="eye-section">
+          <h2 class="group-header">Right eye · OD</h2>
+          <div class="group rx-table" id="genius-ar-od"></div>
+        </section>
+        <section class="eye-section">
+          <h2 class="group-header">Left eye · OS</h2>
+          <div class="group rx-table" id="genius-ar-os"></div>
+        </section>
+      </div>
+      <p class="group-footer">Copy the three readings and the bracketed line ‹ ›. Only the bracketed line is required; repeats let Genius check fixation.</p>
+
+      <h2 class="group-header">Near</h2>
+      <div class="group">
+        <div class="row">
+          <span class="row-label">PD distance / near</span>
+          <span class="row-value">
+            <input id="geniusPdDistance" class="row-input num short" type="text" inputmode="decimal" placeholder="—" aria-label="Distance PD" />
+            <span class="unit">/</span>
+            <input id="geniusPdNear" class="row-input num short" type="text" inputmode="decimal" placeholder="—" aria-label="Near PD" />
+            <span class="unit">mm</span>
+          </span>
+        </div>
+        <label class="row">
+          <span class="row-label">Working distance</span>
+          <span class="row-value"><input id="geniusNearWd" class="row-input num" type="text" inputmode="decimal" placeholder="400" aria-label="Near working distance in mm" /><span class="unit">mm</span></span>
+        </label>
+      </div>
+      <p class="group-footer">Refraction uses a fixed 12 mm vertex.</p>
+
+      <p id="geniusError" class="form-error" role="status" aria-live="polite"></p>
+      <div class="form-actions">
+        <button class="button-primary" type="submit">Propose Rx</button>
+        <button class="quiet-button" id="geniusReset" type="button">Clear</button>
+      </div>
+    </form>
+
+    <section id="geniusStop" class="stop-card" role="alert" hidden>
+      <p class="eyebrow">Refer</p>
+      <h2>See an eye doctor first</h2>
+      <p id="geniusStopReason"></p>
+      <p>Genius does not propose a prescription in this case.</p>
+    </section>
+
+    <section id="geniusResults" aria-labelledby="geniusResultsTitle" hidden>
+      <div aria-live="polite" aria-atomic="true">
+        <h2 class="group-header" id="geniusResultsTitle">Proposed Rx · <span id="geniusVersion"></span></h2>
+        <div class="group">
+          <div class="row"><span class="row-label">Right eye · OD</span><strong id="geniusOdResult" class="rx-value num"></strong></div>
+          <div class="row"><span class="row-label">Left eye · OS</span><strong id="geniusOsResult" class="rx-value num"></strong></div>
+          <div class="row"><span class="row-label">Tentative ADD</span><strong id="geniusAddResult" class="rx-value num"></strong></div>
+        </div>
+        <h2 class="group-header">Review notes</h2>
+        <div class="group"><ul id="geniusFlags" class="flag-list"></ul></div>
+      </div>
+
+      <h2 class="group-header">Verify in a trial frame</h2>
+      <div class="group">
+        <label class="row"><span class="row-label">VA · OD</span><select id="geniusVaOd" class="row-select"></select></label>
+        <label class="row"><span class="row-label">VA · OS</span><select id="geniusVaOs" class="row-select"></select></label>
+        <label class="row"><span class="row-label">VA · both eyes</span><select id="geniusVaOu" class="row-select"></select></label>
+        <div class="row" id="geniusNearRow" hidden>
+          <span class="row-label">Near with the ADD</span>
+          <div class="segmented" id="geniusNear" data-value="" role="radiogroup" aria-label="Near vision with the ADD">
+            <button type="button" data-value="comfortable" role="radio">Comfortable</button>
+            <button type="button" data-value="not" role="radio">Not comfortable</button>
+          </div>
+        </div>
+        <div class="row">
+          <span class="row-label">+0.25 D over both eyes</span>
+          <div class="segmented" id="geniusPlusTest" data-value="" role="radiogroup" aria-label="Plus 0.25 test">
+            <button type="button" data-value="held" role="radio">Holds line</button>
+            <button type="button" data-value="blurred" role="radio">Blurs</button>
+          </div>
+        </div>
+        <div class="row">
+          <span class="row-label">Result</span>
+          <div class="segmented" id="geniusOutcome" data-value="" role="radiogroup" aria-label="Verification result">
+            <button type="button" data-value="accepted" role="radio">Accepted</button>
+            <button type="button" data-value="refined" role="radio">Refined</button>
+          </div>
+        </div>
+      </div>
+      <p class="group-footer">Put the proposed Rx in a trial frame and check each eye, both eyes, and near when there is an ADD. Refine only if needed.</p>
+
+      <fieldset id="geniusRefineFields" hidden disabled>
+        <div class="eye-columns">
+          <section class="eye-section">
+            <h2 class="group-header">Refined Rx · OD</h2>
+            <div class="group rx-table final" id="genius-ref-od"></div>
+          </section>
+          <section class="eye-section">
+            <h2 class="group-header">Refined Rx · OS</h2>
+            <div class="group rx-table final" id="genius-ref-os"></div>
           </section>
         </div>
-      </section>
-    </div>
-    <p class="footnote">Experimental model output is not a prescription. Nothing entered here is saved to the Clinical Study.</p>
+        <div class="group"><label class="row"><span class="row-label">Refined ADD</span><select id="geniusRefAdd" class="row-select"></select></label></div>
+      </fieldset>
+
+      <p id="geniusVerifyError" class="form-error" role="status" aria-live="polite"></p>
+      <div class="form-actions">
+        <button id="geniusPreview" class="button-primary" type="button">Prepare Preview</button>
+      </div>
+    </section>
+
+    <section id="geniusPrescription" class="genius-prescription" aria-labelledby="geniusPrescriptionTitle" hidden>
+      <header class="prescription-header">
+        <div>
+          <p class="eyebrow">Oculi · Genius</p>
+          <h2 id="geniusPrescriptionTitle">Prescription preview</h2>
+        </div>
+        <span class="prescription-badge">Not a prescription</span>
+      </header>
+      <p class="prescription-warning" role="note"><strong>Development preview.</strong> This is not a prescription, is not clinical guidance, and is not indicative of the final product.</p>
+      <div class="prescription-meta">
+        <label for="geniusPatientName">Patient name <span>Optional · not saved</span>
+          <input id="geniusPatientName" type="text" autocomplete="off" maxlength="100" />
+          <span id="geniusPatientNamePrint" class="prescription-print-value"></span>
+        </label>
+        <label for="geniusPrescriptionDate">Date
+          <input id="geniusPrescriptionDate" type="date" />
+          <span id="geniusPrescriptionDatePrint" class="prescription-print-value"></span>
+        </label>
+      </div>
+      <div class="prescription-table-wrap">
+        <table class="prescription-table">
+          <caption>Spectacle Rx · minus cylinder · 12 mm vertex</caption>
+          <thead><tr><th scope="col">Eye</th><th scope="col">Sphere</th><th scope="col">Cylinder</th><th scope="col">Axis</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">OD <span>Right</span></th><td id="geniusPrescriptionSphereOd"></td><td id="geniusPrescriptionCylinderOd"></td><td id="geniusPrescriptionAxisOd"></td></tr>
+            <tr><th scope="row">OS <span>Left</span></th><td id="geniusPrescriptionSphereOs"></td><td id="geniusPrescriptionCylinderOs"></td><td id="geniusPrescriptionAxisOs"></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="prescription-additional">
+        <div><span>ADD</span><strong id="geniusPrescriptionAdd"></strong></div>
+        <div><span>PD distance / near</span><strong id="geniusPrescriptionPd"></strong></div>
+      </div>
+      <div class="prescription-verified">
+        <div><span>Verified VA</span><strong id="geniusPrescriptionVa"></strong></div>
+        <div><span>Verification</span><strong id="geniusPrescriptionOutcome"></strong></div>
+      </div>
+      <div class="prescription-context">
+        <div><span>Age</span><strong id="geniusPrescriptionAge"></strong></div>
+        <div><span>Medical background</span><strong id="geniusPrescriptionMedical"></strong></div>
+        <div><span>Reported symptoms</span><strong id="geniusPrescriptionSymptoms"></strong></div>
+      </div>
+      <div class="prescription-review">
+        <span>Review notes</span>
+        <ul id="geniusPrescriptionFlags"></ul>
+      </div>
+      <label class="prescription-notes" for="geniusPrescriptionNotes">Additional notes <span>Optional · not saved</span>
+        <textarea id="geniusPrescriptionNotes" rows="3" maxlength="500"></textarea>
+        <span id="geniusPrescriptionNotesPrint" class="prescription-print-value prescription-notes-value"></span>
+      </label>
+      <div class="prescription-signature">
+        <div><span class="signature-line"></span><span>Verified by</span></div>
+        <div><span class="signature-line"></span><span>Licence or certification</span></div>
+      </div>
+      <footer class="prescription-footer">
+        <span id="geniusPrescriptionVersion"></span>
+        <span>Generated by an unvalidated research prototype</span>
+      </footer>
+      <div class="prescription-actions">
+        <button id="geniusPrint" class="button-primary" type="button">Print or Save as PDF</button>
+      </div>
+    </section>
+
+    <p class="footnote">Nothing entered in Genius is saved or added to the Clinical Study.</p>
   </section>
 
+  <!-- ================================================================ Tools -->
   <section class="content calculator-panel" id="calculatorPanel" role="tabpanel" aria-labelledby="calculatorTab" tabindex="0" hidden>
-    <div class="large-title"><p class="eyebrow">Optical tools</p><h1>Rx conversion</h1></div>
-    <div class="calculator-tabs" role="tablist" aria-label="Rx conversion tools">
-      <button id="calculatorConversionTab" role="tab" aria-selected="true" aria-controls="calculatorToolPanel" type="button" data-calculator-tool="conversion">Rx conversion</button>
+    <div class="large-title">
+      <h1>Tools</h1>
+      <p class="title-sub">Optical calculations only. Nothing here reads or saves patient cases.</p>
+    </div>
+    <div class="calculator-tabs" role="tablist" aria-label="Optical tools">
+      <button id="calculatorConversionTab" role="tab" aria-selected="true" aria-controls="calculatorToolPanel" type="button" data-calculator-tool="conversion">Vertex</button>
       <button id="calculatorSeTab" role="tab" aria-selected="false" aria-controls="calculatorToolPanel" tabindex="-1" type="button" data-calculator-tool="se">Spherical Equivalent</button>
-      <button id="calculatorTransposeTab" role="tab" aria-selected="false" aria-controls="calculatorToolPanel" tabindex="-1" type="button" data-calculator-tool="transpose">Transpositions</button>
+      <button id="calculatorTransposeTab" role="tab" aria-selected="false" aria-controls="calculatorToolPanel" tabindex="-1" type="button" data-calculator-tool="transpose">Transposition</button>
     </div>
     <div id="calculatorToolPanel" role="tabpanel" aria-labelledby="calculatorConversionTab" tabindex="0">
     <div class="calculator-layout">
     <section class="calculator-entry" aria-labelledby="calculatorInputTitle">
-      <div class="section-heading"><h2 id="calculatorInputTitle">Prescription</h2><button class="quiet-button" id="calculatorReset" type="button">Clear</button></div>
+      <h2 class="visually-hidden" id="calculatorInputTitle">Prescription</h2>
       <form id="calculatorForm" novalidate>
         <div id="conversionControls">
-        <label class="calculator-mode" for="calcConversion">Direction
-          <select id="calcConversion"><option value="spectaclesToContacts">Spectacles → Contacts</option><option value="contactsToSpectacles">Contacts → Spectacles</option><option value="custom">Custom vertex distances</option></select>
-        </label>
-        <p id="calcInputPlane" class="calculator-hint">Enter the spectacle prescription.</p>
+          <h2 class="group-header">Direction</h2>
+          <div class="group">
+            <label class="row" for="calcConversion"><span class="row-label">Convert</span>
+              <select id="calcConversion" class="row-select"><option value="spectaclesToContacts">Spectacles → Contacts</option><option value="contactsToSpectacles">Contacts → Spectacles</option><option value="custom">Custom vertex distances</option></select>
+            </label>
+          </div>
+          <p id="calcInputPlane" class="group-footer">Enter the spectacle prescription.</p>
         </div>
-<fieldset class="calculator-eye"><legend>Right eye · OD</legend><div class="calculator-fields">
- <label for="calcSphere">Sphere <span>SPH · D</span><input id="calcSphere" type="text" autocomplete="off" spellcheck="false" placeholder="−2.00" aria-describedby="calculatorError" /></label>
- <label for="calcCylinder">Cylinder <span>CYL · D</span><input id="calcCylinder" type="text" autocomplete="off" spellcheck="false" placeholder="0.00" aria-describedby="calculatorError" /></label>
- <label for="calcAxis">Axis <span>1–180°</span><input id="calcAxis" type="text" inputmode="numeric" autocomplete="off" placeholder="90" aria-describedby="calculatorError axisHint" /></label>
- </div></fieldset><fieldset class="calculator-eye"><legend>Left eye · OS</legend><div class="calculator-fields">
- <label for="calcSphereOs">Sphere <span>SPH · D</span><input id="calcSphereOs" type="text" autocomplete="off" spellcheck="false" placeholder="−2.00" aria-describedby="calculatorError" /></label>
- <label for="calcCylinderOs">Cylinder <span>CYL · D</span><input id="calcCylinderOs" type="text" autocomplete="off" spellcheck="false" placeholder="0.00" aria-describedby="calculatorError" /></label>
- <label for="calcAxisOs">Axis <span>1–180°</span><input id="calcAxisOs" type="text" inputmode="numeric" autocomplete="off" placeholder="90" aria-describedby="calculatorError axisHint" /></label>
- </div></fieldset>
-        <p id="axisHint" class="calculator-hint">Enter 0 cylinder for sphere only. Leave an eye blank if unused.</p>
-        <div id="vertexControls" class="calculator-fields vertex-fields">
-          <label for="calcFromVertex"><span id="calcFromLabel">Spectacle vertex</span><span>mm from cornea</span><input id="calcFromVertex" type="text" inputmode="decimal" value="12" aria-describedby="calculatorError vertexHint" /></label>
-          <label for="calcToVertex"><span id="calcToLabel">Contact lens plane</span><span>mm from cornea</span><input id="calcToVertex" type="text" inputmode="decimal" value="0" readonly aria-describedby="calculatorError vertexHint" /></label>
+        <fieldset class="calculator-eye"><legend class="group-header">Right eye · OD</legend>
+          <div class="group">
+            <label class="row" for="calcSphere"><span class="row-label">Sphere</span><span class="row-value"><input id="calcSphere" class="row-input num" type="text" autocomplete="off" spellcheck="false" placeholder="−2.00" aria-describedby="calculatorError" /><span class="unit">D</span></span></label>
+            <label class="row" for="calcCylinder"><span class="row-label">Cylinder</span><span class="row-value"><input id="calcCylinder" class="row-input num" type="text" autocomplete="off" spellcheck="false" placeholder="0.00" aria-describedby="calculatorError" /><span class="unit">D</span></span></label>
+            <label class="row" for="calcAxis"><span class="row-label">Axis</span><span class="row-value"><input id="calcAxis" class="row-input num" type="text" inputmode="numeric" autocomplete="off" placeholder="90" aria-describedby="calculatorError axisHint" /><span class="unit unit-deg">°</span></span></label>
+          </div>
+        </fieldset>
+        <fieldset class="calculator-eye"><legend class="group-header">Left eye · OS</legend>
+          <div class="group">
+            <label class="row" for="calcSphereOs"><span class="row-label">Sphere</span><span class="row-value"><input id="calcSphereOs" class="row-input num" type="text" autocomplete="off" spellcheck="false" placeholder="−2.00" aria-describedby="calculatorError" /><span class="unit">D</span></span></label>
+            <label class="row" for="calcCylinderOs"><span class="row-label">Cylinder</span><span class="row-value"><input id="calcCylinderOs" class="row-input num" type="text" autocomplete="off" spellcheck="false" placeholder="0.00" aria-describedby="calculatorError" /><span class="unit">D</span></span></label>
+            <label class="row" for="calcAxisOs"><span class="row-label">Axis</span><span class="row-value"><input id="calcAxisOs" class="row-input num" type="text" inputmode="numeric" autocomplete="off" placeholder="90" aria-describedby="calculatorError axisHint" /><span class="unit unit-deg">°</span></span></label>
+          </div>
+        </fieldset>
+        <p id="axisHint" class="group-footer">Axis 1–180°. Enter 0 cylinder for sphere only. Leave an eye blank if unused.</p>
+        <div id="vertexControls">
+          <h2 class="group-header">Vertex distance</h2>
+          <div class="group">
+            <label class="row" for="calcFromVertex"><span class="row-label" id="calcFromLabel">Spectacle vertex</span><span class="row-value"><input id="calcFromVertex" class="row-input num" type="text" inputmode="decimal" value="12" aria-describedby="calculatorError vertexHint" /><span class="unit">mm</span></span></label>
+            <label class="row" for="calcToVertex"><span class="row-label" id="calcToLabel">Contact lens plane</span><span class="row-value"><input id="calcToVertex" class="row-input num" type="text" inputmode="decimal" value="0" readonly aria-describedby="calculatorError vertexHint" /><span class="unit">mm</span></span></label>
+          </div>
+          <p id="vertexHint" class="group-footer">Measured from the cornea. Applies to both eyes.</p>
         </div>
-        <p id="vertexHint" class="calculator-hint">Distances apply to both eyes.</p>
-        <p id="calculatorError" class="calculator-error" role="status" aria-live="polite"></p><button id="calculatorSubmit" class="button-primary" type="submit">Convert</button>
+        <p id="calculatorError" class="form-error" role="status" aria-live="polite"></p>
+        <div class="form-actions">
+          <button id="calculatorSubmit" class="button-primary" type="submit">Convert</button>
+          <button class="quiet-button" id="calculatorReset" type="button">Clear</button>
+        </div>
       </form>
-      <details class="calculator-paste"><summary>Paste a prescription</summary><form id="calculatorPasteForm" class="paste-form" novalidate>
-      <label for="calculatorPasteEye">Eye</label><select id="calculatorPasteEye"><option value="od">Right eye · OD</option><option value="os">Left eye · OS</option></select>
-      <label for="calculatorPaste">Sphere, cylinder × axis</label><div><input id="calculatorPaste" type="text" autocomplete="off" placeholder="−2.00 +3.00 × 90" aria-describedby="calculatorPasteError" /><button class="quiet-button" type="submit">Apply</button></div><p id="calculatorPasteError" class="calculator-error" role="status"></p></form></details>
+      <details class="group disclosure calculator-paste">
+        <summary class="row disclosure-row"><span class="row-label">Paste a prescription</span></summary>
+        <form id="calculatorPasteForm" class="paste-form" novalidate>
+          <label class="row" for="calculatorPasteEye"><span class="row-label">Eye</span><select id="calculatorPasteEye" class="row-select"><option value="od">Right eye · OD</option><option value="os">Left eye · OS</option></select></label>
+          <div class="row paste-row"><input id="calculatorPaste" class="inline-input" type="text" autocomplete="off" placeholder="−2.00 +3.00 × 90" aria-label="Sphere, cylinder × axis" aria-describedby="calculatorPasteError" /><button class="quiet-button" type="submit">Apply</button></div>
+          <p id="calculatorPasteError" class="form-error paste-error" role="status"></p>
+        </form>
+      </details>
     </section>
     <section class="calculator-output" aria-label="Calculation results" aria-live="polite" aria-atomic="true">
-    <div id="calculatorEmpty" class="calculator-empty"><span id="calculatorEmptySymbol" class="empty-symbol" aria-hidden="true">↔</span><h2 id="calculatorEmptyTitle">Rx conversion</h2><p>Enter one or both eyes.</p></div>
+    <div id="calculatorEmpty" class="calculator-empty"><span id="calculatorEmptySymbol" class="empty-symbol" aria-hidden="true">↔</span><h2 id="calculatorEmptyTitle">Vertex</h2><p>Enter one or both eyes.</p></div>
     <div id="calculatorResults" hidden>
       <div id="conversionResults">
-      <h2 id="calcSummaryTitle">Contact-plane optical equivalents</h2>
-      <p id="calcSummaryPlanes" class="calculator-hint"></p>
-      <table class="conversion-summary" aria-label="Both-eye vertex conversion"><thead><tr><th scope="col">Eye</th><th scope="col">Computed · D</th><th scope="col">0.25 D reference</th></tr></thead><tbody>
-      <tr id="calcSummaryRow"><th scope="row">OD</th><td id="calcVertex"></td><td id="calcVertexRounded"></td></tr>
-      <tr id="calcSummaryRowOs"><th scope="row">OS</th><td id="calcVertexOs"></td><td id="calcVertexRoundedOs"></td></tr>
-      </tbody></table>
-      <div class="result-actions"><button id="copyBothVertex" class="quiet-button" type="button">Copy conversion results</button></div>
+        <h2 class="group-header" id="calcSummaryTitle">Contact-plane optical equivalents</h2>
+        <div class="group">
+          <table class="conversion-summary" aria-label="Both-eye vertex conversion"><thead><tr><th scope="col">Eye</th><th scope="col">Computed</th><th scope="col">Nearest 0.25 D</th></tr></thead><tbody>
+          <tr id="calcSummaryRow"><th scope="row">OD</th><td id="calcVertex"></td><td id="calcVertexRounded"></td></tr>
+          <tr id="calcSummaryRowOs"><th scope="row">OS</th><td id="calcVertexOs"></td><td id="calcVertexRoundedOs"></td></tr>
+          </tbody></table>
+        </div>
+        <p id="calcSummaryPlanes" class="group-footer"></p>
+        <div class="result-actions"><button id="copyBothVertex" class="quiet-button" type="button">Copy Results</button></div>
       </div>
-<section id="calcEyeResults" class="calculator-eye-output" aria-label="Right eye · OD results" hidden>
- <h2 class="eye-result-title">Right eye · OD</h2>
- <p class="calculator-original">Input <span id="calcOriginal"></span></p>
- <div class="calculator-result" data-calculator-result="conversion"><p class="eyebrow" id="calcVertexTitle">Vertex conversion</p>
- <p id="calcVertexPlanes" class="calculator-hint"></p><p id="calcVertexContext" class="calculator-hint"></p>
- <p id="calcVertexMeridians" class="calculator-hint"></p>
- <button id="copyVertex" class="quiet-button" type="button">Copy conversion</button></div>
- <div class="calculator-result" data-calculator-result="transpose"><p class="eyebrow">Transposition</p><h2 id="calcTransposed"></h2>
- <p id="calcNotation" class="calculator-hint"></p><div class="result-actions"><button id="copyTransposed" class="quiet-button" type="button">Copy Rx</button><button id="useTransposed" class="quiet-button" type="button">Use as input ↔</button></div></div>
- <div class="calculator-result" data-calculator-result="se"><p class="eyebrow">Spherical Equivalent</p><h2 id="calcSE"></h2>
- <p class="calculator-hint">Nearest 0.25 D · halfway values toward more plus</p><button id="copySE" class="quiet-button" type="button">Copy SE</button></div>
- <details class="calculation-details"><summary>How it’s calculated</summary><dl id="calculatorMath"></dl><p id="calculatorRounding" class="calculator-hint"></p></details>
- </section><section id="calcEyeResultsOs" class="calculator-eye-output" aria-label="Left eye · OS results" hidden>
- <h2 class="eye-result-title">Left eye · OS</h2>
- <p class="calculator-original">Input <span id="calcOriginalOs"></span></p>
- <div class="calculator-result" data-calculator-result="conversion"><p class="eyebrow" id="calcVertexTitleOs">Vertex conversion</p>
- <p id="calcVertexPlanesOs" class="calculator-hint"></p><p id="calcVertexContextOs" class="calculator-hint"></p>
- <p id="calcVertexMeridiansOs" class="calculator-hint"></p>
- <button id="copyVertexOs" class="quiet-button" type="button">Copy conversion</button></div>
- <div class="calculator-result" data-calculator-result="transpose"><p class="eyebrow">Transposition</p><h2 id="calcTransposedOs"></h2>
- <p id="calcNotationOs" class="calculator-hint"></p><div class="result-actions"><button id="copyTransposedOs" class="quiet-button" type="button">Copy Rx</button><button id="useTransposedOs" class="quiet-button" type="button">Use as input ↔</button></div></div>
- <div class="calculator-result" data-calculator-result="se"><p class="eyebrow">Spherical Equivalent</p><h2 id="calcSEOs"></h2>
- <p class="calculator-hint">Nearest 0.25 D · halfway values toward more plus</p><button id="copySEOs" class="quiet-button" type="button">Copy SE</button></div>
- <details class="calculation-details"><summary>How it’s calculated</summary><dl id="calculatorMathOs"></dl><p id="calculatorRoundingOs" class="calculator-hint"></p></details>
- </section>
-    </div></section></div>
-    <p id="calculatorStatus" class="calculator-status" role="status" aria-live="polite"></p>
-    <p class="footnote">Optical calculations only. This workspace does not read or save patient cases.</p>
+      <section id="calcEyeResults" class="calculator-eye-output" aria-label="Right eye · OD results" hidden>
+        <h2 class="group-header eye-result-title">Right eye · OD</h2>
+        <div class="group result-card">
+          <p class="calculator-original">Input <span id="calcOriginal"></span></p>
+          <div class="calculator-result" data-calculator-result="conversion"><p class="eyebrow" id="calcVertexTitle">Vertex conversion</p>
+            <p id="calcVertexPlanes" class="calculator-hint"></p><p id="calcVertexContext" class="calculator-hint"></p>
+            <p id="calcVertexMeridians" class="calculator-hint"></p>
+            <button id="copyVertex" class="quiet-button" type="button">Copy</button></div>
+          <div class="calculator-result" data-calculator-result="transpose"><p class="eyebrow">Transposition</p><p class="result-value" id="calcTransposed"></p>
+            <p id="calcNotation" class="calculator-hint"></p><div class="result-actions"><button id="copyTransposed" class="quiet-button" type="button">Copy</button><button id="useTransposed" class="quiet-button" type="button">Use as Input</button></div></div>
+          <div class="calculator-result" data-calculator-result="se"><p class="eyebrow">Spherical equivalent</p><p class="result-value result-value-large" id="calcSE"></p>
+            <p class="calculator-hint">Nearest 0.25 D · halfway values round toward plus</p><button id="copySE" class="quiet-button" type="button">Copy</button></div>
+          <details class="calculation-details"><summary>How it’s calculated</summary><dl id="calculatorMath"></dl><p id="calculatorRounding" class="calculator-hint"></p></details>
+        </div>
+      </section>
+      <section id="calcEyeResultsOs" class="calculator-eye-output" aria-label="Left eye · OS results" hidden>
+        <h2 class="group-header eye-result-title">Left eye · OS</h2>
+        <div class="group result-card">
+          <p class="calculator-original">Input <span id="calcOriginalOs"></span></p>
+          <div class="calculator-result" data-calculator-result="conversion"><p class="eyebrow" id="calcVertexTitleOs">Vertex conversion</p>
+            <p id="calcVertexPlanesOs" class="calculator-hint"></p><p id="calcVertexContextOs" class="calculator-hint"></p>
+            <p id="calcVertexMeridiansOs" class="calculator-hint"></p>
+            <button id="copyVertexOs" class="quiet-button" type="button">Copy</button></div>
+          <div class="calculator-result" data-calculator-result="transpose"><p class="eyebrow">Transposition</p><p class="result-value" id="calcTransposedOs"></p>
+            <p id="calcNotationOs" class="calculator-hint"></p><div class="result-actions"><button id="copyTransposedOs" class="quiet-button" type="button">Copy</button><button id="useTransposedOs" class="quiet-button" type="button">Use as Input</button></div></div>
+          <div class="calculator-result" data-calculator-result="se"><p class="eyebrow">Spherical equivalent</p><p class="result-value result-value-large" id="calcSEOs"></p>
+            <p class="calculator-hint">Nearest 0.25 D · halfway values round toward plus</p><button id="copySEOs" class="quiet-button" type="button">Copy</button></div>
+          <details class="calculation-details"><summary>How it’s calculated</summary><dl id="calculatorMathOs"></dl><p id="calculatorRoundingOs" class="calculator-hint"></p></details>
+        </div>
+      </section>
     </div>
+    </section>
+    </div>
+    </div>
+    <p id="calculatorStatus" class="calculator-status" role="status" aria-live="polite"></p>
   </section>
   </main>
 
@@ -442,14 +672,16 @@
   <script src="js/algorithm.js"></script>
   <script src="js/config-v03.js"></script>
   <script src="js/engine-v03.js"></script>
-  <script src="js/config-v04.js"></script>
-  <script src="js/engine-v04.js"></script>
+  <script src="js/config-v10.js"></script>
+  <script src="js/engine-v10.js"></script>
   <script src="js/scoring.js"></script>
   <script src="js/engines.js"></script>
   <script src="js/storage.js"></script>
   <script src="js/ticket-scan.js"></script>
+  <script src="js/rx-fields.js"></script>
   <script src="js/app.js"></script>
   <script src="js/optical-calculators.js"></script>
+  <script src="js/genius.js"></script>
   <script src="js/workspace.js"></script>
 </body>
 </html>

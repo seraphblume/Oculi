@@ -59,6 +59,8 @@ Review thresholds are provisional (`js/config-v03.js`) and are not used to alter
 
 ## Endpoint and prescribing reason codes
 
+*Collected from v1.0 (entry revision `v10-beryl-1`): when the prescribed Rx differs from the endpoint, the endpoint S/C/A and at least one reason are required. See [v1.0 "Beryl"](v1.0-beryl.md).*
+
 When prescribed Rx differs from the subjective endpoint, require at least one reason:
 
 - `adaptation_large_change`

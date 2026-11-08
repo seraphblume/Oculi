@@ -30,6 +30,10 @@
     return Math.min(d, 180 - d);
   }
 
+  // Clinicians commonly record axis in 5° steps. Reported alongside the lens-tolerance rule,
+  // never instead of it, so recording resolution is not mistaken for prediction error.
+  const AXIS_RECORDING_FLOOR = 5;
+
   function axisTolerance(cylinder) {
     const c = Math.abs(Number(cylinder));
     if (!Number.isFinite(c) || c < EPS) return null;
@@ -63,6 +67,7 @@
     const axisError = bothCylinders ? axisDistance(p.axis, a.axis) : null;
     const tolerance = bothCylinders ? axisTolerance(a.cylinder) : null;
     const axisWithinTolerance = bothCylinders ? axisError <= tolerance + EPS : null;
+    const axisWithinFloor = bothCylinders ? axisError <= Math.max(tolerance, AXIS_RECORDING_FLOOR) + EPS : null;
 
     const dM = av.M - pv.M;
     const dJ0 = av.J0 - pv.J0;
@@ -78,6 +83,7 @@
       axisTolerance: tolerance,
       axisApplicable: bothCylinders,
       axisWithinTolerance,
+      axisWithinFloor,
       seError: dM,
       vectorError: { M: dM, J0: dJ0, J45: dJ45 },
       vectorErrorMagnitude: Math.hypot(dM, dJ0, dJ45),
@@ -85,7 +91,8 @@
       within025Sphere,
       within025Cylinder,
       within025SE: Math.abs(dM) <= 0.25 + EPS,
-      clinicalMatch: within025Sphere && within025Cylinder && axisWithinTolerance !== false
+      clinicalMatch: within025Sphere && within025Cylinder && axisWithinTolerance !== false,
+      clinicalMatchFloor: within025Sphere && within025Cylinder && axisWithinFloor !== false
     };
   }
 
@@ -104,10 +111,12 @@
     return {
       eyes: eyes.length,
       clinicalMatchRate: rate(eyes, s => s.clinicalMatch),
+      clinicalMatchFloorRate: rate(eyes, s => s.clinicalMatchFloor),
       sphereWithin025Rate: rate(eyes, s => s.within025Sphere),
       cylinderWithin025Rate: rate(eyes, s => s.within025Cylinder),
       seWithin025Rate: rate(eyes, s => s.within025SE),
       axisWithinToleranceRate: rate(axisEyes, s => s.axisWithinTolerance),
+      axisWithinFloorRate: rate(axisEyes, s => s.axisWithinFloor),
       axisEyes: axisEyes.length,
       meanSEBias: mean(eyes.map(s => s.seError)),
       meanAbsSEError: mean(eyes.map(s => Math.abs(s.seError))),
@@ -131,5 +140,5 @@
     return { version: "rx-agreement-1", percent: Math.round(100 * passed / checks.length), passed, total: checks.length, checks };
   }
 
-  window.DioptraScoring = { AXIS_TOLERANCE, axisTolerance, axisDistance, scoreEye, summarize, agreementCase };
+  window.DioptraScoring = { AXIS_TOLERANCE, AXIS_RECORDING_FLOOR, axisTolerance, axisDistance, scoreEye, summarize, agreementCase };
 })();

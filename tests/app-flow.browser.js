@@ -36,7 +36,7 @@ const server = http.createServer(async (req, res) => {
     });
     const url = `http://127.0.0.1:${server.address().port}`;
     await page.goto(url);
-    assert.match(await page.locator("#engineLine").innerText(), /Experimental v0.4.0-rc.1 · unvalidated/);
+    assert.match(await page.locator("#engineLine").innerText(), /Beryl 1\.0 · not clinically validated · compared with v0\.3\.0/);
     assert.equal(await page.locator("#previousRxFields").isVisible(), false);
 
     // A real old-format record must retain both engine identities and its original bytes.
@@ -73,6 +73,14 @@ const server = http.createServer(async (req, res) => {
       assert.equal(await page.locator(`#${id} option[value="20/100"]`).innerText(), "0.20 = 20/100");
     }
     await page.locator("#vaOd").selectOption("20/100");
+    await page.locator("#primaryAction").click();
+    assert.match(await page.locator("#toast").innerText(), /unaided or with correction/, "VA needs its correction condition");
+    await page.getByRole("radio", { name: "Unaided", exact: true }).click();
+    // Glare is context; new flashes or floaters are a warning sign with a visible note.
+    await page.locator("label:has([data-symptom=glareHalos])").click();
+    assert.equal(await page.locator("#warningNote").isVisible(), false);
+    await page.locator("label:has([data-symptom=flashesFloaters])").click();
+    assert.equal(await page.locator("#warningNote").isVisible(), true);
     await page.locator("#nearWd").fill("330");
     await page.locator("#nearPoint").fill("500");
     await page.getByRole("radio", { name: "Yes", exact: true }).click();
@@ -99,7 +107,10 @@ const server = http.createServer(async (req, res) => {
     await page.locator("#nearWd").fill("33");
     await page.locator("#primaryAction").click();
     assert.equal(await page.locator("body").getAttribute("data-stage"), "measure");
-    assert.match(await page.locator("#toast").innerText(), /150–1000 mm/);
+    assert.match(await page.locator("#toast").innerText(), /250–1000 mm/);
+    await page.locator("#nearWd").fill("150");
+    await page.locator("#primaryAction").click();
+    assert.match(await page.locator("#toast").innerText(), /250–1000 mm/, "a 15 cm working distance is rejected, not capped");
     await page.locator("#nearWd").fill("330");
     await page.setViewportSize({ width: 390, height: 844 });
     assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true, "mobile has no horizontal overflow");
@@ -110,16 +121,42 @@ const server = http.createServer(async (req, res) => {
       await page.screenshot({ path: path.join(process.env.DIOPTRA_SCREENSHOT_DIR, "dioptra-candidate-mobile.png"), fullPage: true });
     }
     await page.locator("#primaryAction").click();
-    assert.match(await page.locator("#lockedDetail").innerText(), /v0.4.0-rc.1/);
+    assert.match(await page.locator("#lockedDetail").innerText(), /Beryl 1\.0/);
     assert.equal(await page.locator("#agreementScore").count(), 0, "no post-exam score before final Rx");
     for (const eye of ["od", "os"]) {
       await page.locator(`#${eye}FinSph`).selectOption("2.75");
       await page.locator(`#${eye}FinCyl`).selectOption("1.25");
       await page.locator(`#${eye}FinAx`).selectOption("178");
     }
+    // Checks, per-eye ADD and an endpoint that differs from the prescribed Rx.
+    await page.locator("#finalAdd").selectOption("1.75");
+    await page.locator("label.switch").click();
+    assert.equal(await page.locator("#finalAddOsRow").isVisible(), true);
+    assert.equal(await page.locator("#finalAddLabel").innerText(), "ADD · OD");
+    await page.locator("#finalAddOs").selectOption("2.00");
+    await page.locator("#finalVaOd").selectOption("20/20");
+    await page.locator("#finalVaOs").selectOption("20/25");
+    await page.locator("#finalVaOu").selectOption("20/20");
+    await page.getByRole("radio", { name: "Holds line", exact: true }).click();
+    await page.getByRole("radio", { name: "Different", exact: true }).click();
+    assert.equal(await page.locator("#endpointFields").isVisible(), true);
+    await page.locator("#primaryAction").click();
+    assert.equal(await page.locator("body").getAttribute("data-stage"), "refract");
+    assert.match(await page.locator("#toast").innerText(), /refraction endpoint for the right eye/);
+    for (const eye of ["od", "os"]) {
+      await page.locator(`#${eye}EndSph`).selectOption("2.50");
+      await page.locator(`#${eye}EndCyl`).selectOption("1.25");
+      await page.locator(`#${eye}EndAx`).selectOption("178");
+    }
+    await page.locator("#primaryAction").click();
+    assert.match(await page.locator("#toast").innerText(), /why the prescribed Rx differs/);
+    await page.locator("label:has([data-reason=adaptation_large_change])").click();
     await page.locator("#primaryAction").click();
     assert.equal(await page.locator("body").getAttribute("data-stage"), "compare");
-    assert.match(await page.locator("#comparisonContent").innerText(), /Right eye · v0\.4\.0-rc\.1/i);
+    assert.match(await page.locator("#comparisonContent").innerText(), /Right eye · Beryl 1\.0/i);
+    assert.match(await page.locator("#comparisonContent").innerText(), /Holds the line · possible extra minus/);
+    assert.match(await page.locator("#comparisonContent").innerText(), /OD prescribed − endpoint SE\s+−0\.25 D/);
+    assert.match(await page.locator("#comparisonContent").innerText(), /New flashes or floaters were reported/);
     assert.match(await page.locator("#agreementScore").innerText(), /% · \d\/6 checks/);
     assert.match(await page.locator("#comparisonContent").innerText(), /36 months/);
     assert.match(await page.locator("#comparisonContent").innerText(), /not clinical confidence/i);
@@ -139,9 +176,20 @@ const server = http.createServer(async (req, res) => {
     assert.equal(saved.length, 2);
     assert.equal(JSON.stringify(saved[0]), historical, "historical record is untouched");
     const c = saved[1];
-    assert.equal(c.schema, "dioptra-case-3");
-    assert.equal(c.cohort, "v0.4-rc1-prospective");
-    assert.equal(c.prediction.engine, "v0.4");
+    assert.equal(c.schema, "dioptra-case-4");
+    assert.equal(c.entryRevision, "v10-beryl-1");
+    assert.equal(c.cohort, "v1.0-beryl-1");
+    assert.equal(c.prediction.engine, "v1.0");
+    assert.equal(c.prediction.name, "Beryl");
+    assert.equal(c.input.vaCondition, "unaided");
+    assert.equal(c.input.symptoms.glareHalos, true);
+    assert.equal(c.input.symptoms.flashesFloaters, true);
+    assert.equal(c.input.symptoms.flashes, undefined, "the ambiguous Flashes key is retired");
+    assert.equal(c.actual.add, 1.75);
+    assert.equal(c.actual.addOs, 2);
+    assert.deepEqual(c.actual.checks, { va: { od: "20/20", os: "20/25", ou: "20/20" }, plusTest: "held" });
+    assert.deepEqual(c.actual.endpoint.reasons, ["adaptation_large_change"]);
+    assert.equal(c.actual.endpoint.od.sphere, -2.5);
     assert.equal(c.prediction.od.axis, 178);
     assert.equal(c.prediction.tentativeAdd, 1.75);
     assert.equal(c.shadow.prediction.version, "0.3.0");
@@ -164,8 +212,9 @@ const server = http.createServer(async (req, res) => {
     assert.equal(await page.locator("#stats .stat strong").first().innerText(), "1");
     const csv = await page.evaluate(() => DioptraStorage.toShadowCSV(DioptraStorage.listCases()));
     const rows = csv.split("\n").map(r => r.split(","));
-    const recordRow = rows.find(r => r[0] === c.caseId && r[4] === "v0.4" && r[5] === "od");
-    for (const [field, value] of Object.entries({ near_wd_mm: "330", near_point_mm: "500", previous_sph: "1", previous_cyl: "0", previous_axis: "0", previous_add: "1.25", previous_rx_worn_months: "36", agreement_percent: String(c.agreement.percent), agreement_total: "6", cohort: "v0.4-rc1-prospective", record_schema: "dioptra-case-3" })) {
+    const recordRow = rows.find(r => r[0] === c.caseId && r[4] === "v1.0" && r[5] === "od");
+    for (const [field, value] of Object.entries({ near_wd_mm: "330", near_point_mm: "500", previous_sph: "1", previous_cyl: "0", previous_axis: "0", previous_add: "1.25", previous_rx_worn_months: "36", agreement_percent: String(c.agreement.percent), agreement_total: "6", cohort: "v1.0-beryl-1", record_schema: "dioptra-case-4",
+      va_condition: "unaided", final_va: "20/20", final_va_ou: "20/20", plus_test: "held", final_add_os: "2", endpoint_differs: "true", endpoint_sph: "-2.5", endpoint_reasons: "adaptation_large_change", symptom_flashes_floaters: "true" })) {
       assert.equal(recordRow[rows[0].indexOf(field)], value, field);
     }
 
@@ -225,33 +274,85 @@ const server = http.createServer(async (req, res) => {
     assert.equal(await page.locator("#caseActions").isVisible(), false);
     assert.equal(await page.locator("#geniusPanel h1").innerText(), "Genius");
     assert.match(await page.locator("#geniusPanel").innerText(), /not indicative of the final product or clinical guidance/i);
-    await page.locator("#geniusForm button[type=submit]").click();
+    const geniusSubmit = () => page.locator("#geniusForm button[type=submit]").click();
+    await geniusSubmit();
     assert.match(await page.locator("#geniusError").innerText(), /age from 1 to 120/i);
-    for (const [id, value] of Object.entries({
-      geniusAge: "42", geniusSphereOd: "-2", geniusCylinderOd: "-1", geniusAxisOd: "180",
-      geniusSphereOs: "1", geniusCylinderOs: "-.5", geniusAxisOs: "90"
-    })) await page.locator(`#${id}`).fill(value);
-    for (const id of ["geniusDiabetes", "geniusPregnancy", "geniusBlurredVision", "geniusFlashes"]) await page.locator(`label:has(#${id})`).click();
+    await page.locator("#geniusAge").fill("42");
+
+    // Warning signs and age stop Genius before any proposal.
+    await page.locator("label:has(#geniusFlashes)").click();
+    await geniusSubmit();
+    assert.equal(await page.locator("#geniusStop").isVisible(), true);
+    assert.equal(await page.locator("#geniusResults").isVisible(), false);
+    assert.match(await page.locator("#geniusStopReason").innerText(), /new flashes or floaters/);
+    await page.locator("label:has(#geniusFlashes)").click();
+    assert.equal(await page.locator("#geniusStop").isVisible(), false, "editing clears the stop");
+    await page.locator("#geniusAge").fill("16");
+    await geniusSubmit();
+    assert.match(await page.locator("#geniusStopReason").innerText(), /for adults/);
+    await page.locator("#geniusAge").fill("42");
+
+    // Current glasses are required context; a large change is flagged per eye.
+    await geniusSubmit();
+    assert.match(await page.locator("#geniusError").innerText(), /wears glasses/);
+    await page.getByRole("radio", { name: "Wears glasses", exact: true }).click();
+    assert.equal(await page.locator("#geniusGlassesFields").isVisible(), true);
+    await geniusSubmit();
+    assert.match(await page.locator("#geniusError").innerText(), /current glasses for the right eye/);
+    await page.locator("#geniusOdPrevSph").selectOption("1.00");
+    await page.locator("#geniusOsPrevSph").selectOption("0.75");
+    await page.getByRole("button", { name: "Toggle OS current glasses sphere sign" }).click();
+    assert.equal(await page.locator("#geniusOdPrevAx").inputValue(), "0", "blank cylinder is sphere only");
+    await geniusSubmit();
+    assert.match(await page.locator("#geniusError").innerText(), /bracketed/);
+    for (const [id, value] of Object.entries({ geniusOdSelSph: "2.00", geniusOdSelCyl: "1.00", geniusOdSelAx: "180", geniusOsSelSph: "1.00", geniusOsSelCyl: "0.50", geniusOsSelAx: "90" })) {
+      await page.locator(`#${id}`).selectOption(value);
+    }
+    await page.getByRole("button", { name: "Toggle OS selected sphere sign" }).click();
+    for (const id of ["geniusDiabetes", "geniusPregnancy", "geniusBlurredVision", "geniusGlare"]) await page.locator(`label:has(#${id})`).click();
     await page.locator("#geniusOtherSymptoms").fill("Halos");
-    await page.locator("#geniusForm button[type=submit]").click();
-    assert.equal(await page.locator("#geniusResults").isVisible(), true);
-    assert.match(await page.locator("#geniusVersion").innerText(), /v0\.4\.0-rc\.1/);
-    assert.equal(await page.locator("#geniusOdResult").innerText(), "-2.25 -1.00 × 180°");
-    assert.equal(await page.locator("#geniusOsResult").innerText(), "+0.75 -0.50 × 090°");
+    await geniusSubmit();
+    assert.equal(await page.locator("#geniusResults").isVisible(), true, await page.locator("#geniusError").innerText());
+    assert.match(await page.locator("#geniusVersion").textContent(), /v0\.3\.0 · prior offset/);
+    assert.equal(await page.locator("#geniusOdResult").innerText(), "−2.25 −1.00 × 180°");
+    assert.equal(await page.locator("#geniusOsResult").innerText(), "+0.75 −0.50 × 090°");
     assert.equal(await page.locator("#geniusAddResult").innerText(), "+0.75 D");
-    assert.match(await page.locator("#geniusFlags").innerText(), /Unvalidated experimental RC/);
-    assert.match(await page.locator("#geniusPrescription").innerText(), /Prescription preview/);
+    const geniusFlags = await page.locator("#geniusFlags").innerText();
+    for (const text of [/Development preview/, /not Beryl's fitted offset/, /Large change from current glasses · OD/, /Refraction may fluctuate/, /Check the ADD at near/, /Repeat readings not entered/]) assert.match(geniusFlags, text);
+    assert.doesNotMatch(geniusFlags, /Large change from current glasses · OS/);
+    assert.doesNotMatch(geniusFlags, /First glasses/);
+    assert.equal(await page.locator("#geniusPrescription").isVisible(), false, "no preview before verification");
+
+    // Verification in a trial frame is required before the preview.
+    const preview = () => page.locator("#geniusPreview").click();
+    await preview();
+    assert.match(await page.locator("#geniusVerifyError").innerText(), /VA each eye/);
+    await page.locator("#geniusVaOd").selectOption("20/20");
+    await page.locator("#geniusVaOs").selectOption("20/25");
+    assert.equal(await page.locator("#geniusNearRow").isVisible(), true, "near check appears when there is an ADD");
+    await preview();
+    assert.match(await page.locator("#geniusVerifyError").innerText(), /near vision/);
+    await page.getByRole("radio", { name: "Comfortable", exact: true }).click();
+    await preview();
+    assert.match(await page.locator("#geniusVerifyError").innerText(), /accepted or refined/);
+    await page.getByRole("radio", { name: "Refined", exact: true }).click();
+    assert.equal(await page.locator("#geniusRefineFields").isVisible(), true);
+    assert.equal(await page.locator("#geniusOdRefSph").inputValue(), "2.25", "refinement starts from the proposal");
+    assert.equal(await page.locator("#geniusRefAdd").inputValue(), "0.75");
+    await page.locator("#geniusOdRefSph").selectOption("2.00");
+    await page.getByRole("radio", { name: "Holds line", exact: true }).click();
+    await preview();
+    assert.equal(await page.locator("#geniusPrescription").isVisible(), true, await page.locator("#geniusVerifyError").innerText());
+    for (const [id, value] of Object.entries({
+      geniusPrescriptionSphereOd: "−2.00", geniusPrescriptionCylinderOd: "−1.00", geniusPrescriptionAxisOd: "180°",
+      geniusPrescriptionSphereOs: "+0.75", geniusPrescriptionCylinderOs: "−0.50", geniusPrescriptionAxisOs: "090°",
+      geniusPrescriptionAdd: "+0.75 D", geniusPrescriptionPd: "Not measured", geniusPrescriptionVa: "OD 20/20 · OS 20/25",
+      geniusPrescriptionAge: "42 years", geniusPrescriptionMedical: "Diabetes, Pregnancy", geniusPrescriptionSymptoms: "Blurred vision, Glare / halos, Halos"
+    })) assert.equal(await page.locator(`#${id}`).innerText(), value, id);
+    assert.match(await page.locator("#geniusPrescriptionOutcome").innerText(), /Refined in a trial frame · near comfortable · \+0\.25 D holds the line/);
+    assert.match(await page.locator("#geniusPrescriptionVersion").innerText(), /proposed OD −2\.25 −1\.00 × 180°/);
+    assert.match(await page.locator("#geniusPrescriptionFlags").innerText(), /Large change from current glasses · OD/);
     assert.match(await page.locator("#geniusPrescription").innerText(), /not a prescription/i);
-    assert.equal(await page.locator("#geniusPrescriptionSphereOd").innerText(), "-2.25");
-    assert.equal(await page.locator("#geniusPrescriptionCylinderOd").innerText(), "-1.00");
-    assert.equal(await page.locator("#geniusPrescriptionAxisOd").innerText(), "180°");
-    assert.equal(await page.locator("#geniusPrescriptionSphereOs").innerText(), "+0.75");
-    assert.equal(await page.locator("#geniusPrescriptionCylinderOs").innerText(), "-0.50");
-    assert.equal(await page.locator("#geniusPrescriptionAxisOs").innerText(), "090°");
-    assert.equal(await page.locator("#geniusPrescriptionAdd").innerText(), "+0.75 D");
-    assert.equal(await page.locator("#geniusPrescriptionAge").innerText(), "42 years");
-    assert.equal(await page.locator("#geniusPrescriptionMedical").innerText(), "Diabetes, Pregnancy");
-    assert.equal(await page.locator("#geniusPrescriptionSymptoms").innerText(), "Blurred vision, Flashes, Halos");
     await page.locator("#geniusPatientName").fill("Preview patient");
     await page.locator("#geniusPrescriptionNotes").fill("Test output only");
     await page.evaluate(() => { window.__geniusPrintCalls = 0; window.print = () => { window.__geniusPrintCalls += 1; }; });
@@ -263,13 +364,32 @@ const server = http.createServer(async (req, res) => {
     await page.setViewportSize({ width: 320, height: 900 });
     assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), "Genius has no mobile overflow");
     await page.setViewportSize({ width: 1280, height: 900 });
+    await page.locator("#geniusVaOs").selectOption("20/20");
+    assert.equal(await page.locator("#geniusPrescription").isVisible(), false, "verification edits hide a stale preview");
     await page.locator("#geniusAge").fill("43");
     assert.equal(await page.locator("#geniusResults").isVisible(), false, "editing removes stale Genius output");
+
+    // The ticket scanner fills Genius's own tables, repeats included.
+    await page.evaluate(() => {
+      DioptraTicketScan.scanImage = async () => DioptraTicketScan.parseTicketText("<R>\n-2.37 -1.12 178 9\n-2.50 -1.00 178 8\n<-2.37 -1.12 178>\n<L>\n+1.37 -0.62 168 9\n<+1.37 -0.62 168>\nPD=62");
+    });
+    const clinicalBeforeScan = await page.locator("#odSelSph").inputValue();
+    await page.locator("#geniusTicketInput").setInputFiles({ name: "genius.png", mimeType: "image/png", buffer: Buffer.from("stubbed OCR") });
+    await page.locator("#geniusScanStatus").filter({ hasText: /Imported/ }).waitFor();
+    assert.equal(await page.locator("#geniusOdSelSph").inputValue(), "2.37");
+    assert.equal(await page.locator("#geniusOdR2Sph").inputValue(), "2.50");
+    assert.equal(await page.locator("#geniusOdR1Q").inputValue(), "9");
+    assert.equal(await page.locator("#geniusOsSelSph").getAttribute("data-sign"), "1");
+    assert.equal(await page.locator("#geniusPdDistance").inputValue(), "62");
+    assert.equal(await page.locator("#odSelSph").inputValue(), clinicalBeforeScan, "Genius scans never touch the Clinical Study form");
+    await page.locator("#geniusReset").click();
+    assert.equal(await page.locator("#geniusAge").inputValue(), "");
+    assert.equal(await page.locator("#geniusGlassesFields").isVisible(), false);
     await page.locator("#calculatorTab").click();
     assert.equal(await page.locator("#casePanel").isVisible(), false);
     assert.equal(await page.locator("#actionBar").isVisible(), false);
     assert.equal(await page.locator("#caseActions").isVisible(), false);
-    assert.deepEqual(await page.locator(".calculator-tabs [role=tab]").allTextContents(), ["Rx conversion", "Spherical Equivalent", "Transpositions"]);
+    assert.deepEqual(await page.locator(".calculator-tabs [role=tab]").allTextContents(), ["Vertex", "Spherical Equivalent", "Transposition"]);
     assert.equal(await page.locator("#conversionControls").isVisible(), true);
     await page.locator("#calculatorForm button[type=submit]").click();
     assert.match(await page.locator("#calculatorError").innerText(), /Enter sphere/);
@@ -284,17 +404,17 @@ const server = http.createServer(async (req, res) => {
     assert.equal(await page.locator("#calculatorResults").isVisible(), false, "tool changes remove stale outputs");
     await page.locator("#calculatorForm button[type=submit]").click();
     assert.equal(await page.locator('[data-calculator-result="se"]').first().isVisible(), true);
-    assert.equal(await page.locator("#calcSE").innerText(), "-2.00 D");
-    assert.match(await page.locator("#calculatorMath").textContent(), /-2\.125 D/);
+    assert.equal(await page.locator("#calcSE").innerText(), "−2.00 D");
+    assert.match(await page.locator("#calculatorMath").textContent(), /−2\.125 D/);
     await page.evaluate(() => { Object.defineProperty(navigator, "clipboard", { configurable: true, value: { writeText: async text => { window.copiedText = text; } } }); });
     await page.locator("#copySE").click();
     assert.equal(await page.evaluate(() => window.copiedText), "-2.00 D");
     await page.locator("#calculatorTransposeTab").click();
     await page.locator("#calculatorForm button[type=submit]").click();
-    assert.equal(await page.locator("#calcTransposed").innerText(), "-2.75 +1.25 × 090°");
+    assert.equal(await page.locator("#calcTransposed").innerText(), "−2.75 +1.25 × 090°");
     await page.locator("#useTransposed").click();
     assert.equal(await page.locator("#calcSphere").inputValue(), "-2.75");
-    assert.equal(await page.locator("#calcTransposed").innerText(), "-1.50 -1.25 × 180°");
+    assert.equal(await page.locator("#calcTransposed").innerText(), "−1.50 −1.25 × 180°");
     await page.locator("#calcAxis").fill("181");
     assert.equal(await page.locator("#calculatorResults").isVisible(), false, "editing removes stale outputs");
     await page.locator("#calculatorForm button[type=submit]").click();
@@ -302,14 +422,14 @@ const server = http.createServer(async (req, res) => {
     await page.locator(".calculator-paste summary").click();
     await page.locator("#calculatorPaste").fill("−2,00 +3,00 × 90");
     await page.locator("#calculatorPasteForm button").click();
-    assert.equal(await page.locator("#calcTransposed").innerText(), "+1.00 -3.00 × 180°");
+    assert.equal(await page.locator("#calcTransposed").innerText(), "+1.00 −3.00 × 180°");
     await page.locator("#calculatorPaste").fill("1 2 x999");
     await page.locator("#calculatorPasteForm button").click();
     assert.match(await page.locator("#calculatorPasteError").innerText(), /1° to 180°/);
     assert.equal(await page.locator("#calcSphere").inputValue(), "-2.00", "invalid paste never partially applies");
     await page.locator("#calculatorSeTab").click();
     await page.locator("#calculatorForm button[type=submit]").click();
-    assert.equal(await page.locator("#calcSE").innerText(), "-0.50 D");
+    assert.equal(await page.locator("#calcSE").innerText(), "−0.50 D");
     await page.locator("#copySE").click();
     assert.equal(await page.evaluate(() => window.copiedText), "-0.50 D");
     await page.locator("#calculatorTransposeTab").click();
@@ -328,7 +448,7 @@ const server = http.createServer(async (req, res) => {
     await page.locator("#caseTab").focus();
     await page.keyboard.press("End");
     assert.equal(await page.locator("#calcSphere").inputValue(), "-2.00", "case reset preserves calculator inputs");
-    assert.equal(await page.locator("#calcSE").innerText(), "-0.50 D");
+    assert.equal(await page.locator("#calcSE").innerText(), "−0.50 D");
 
     await page.locator("#calculatorConversionTab").click();
     await page.locator("#calculatorForm button[type=submit]").click();
@@ -350,7 +470,7 @@ const server = http.createServer(async (req, res) => {
     await page.locator("#calcSphere").fill("-10");
     await page.locator("#calcCylinder").fill("0");
     await page.locator("#calculatorForm button[type=submit]").click();
-    assert.equal(await page.locator("#calcVertex").innerText(), "-8.93 DS");
+    assert.equal(await page.locator("#calcVertex").innerText(), "−8.93 DS");
     assert.match(await page.locator("#calcVertexPlanes").innerText(), /12 mm → 0 mm/);
     assert.equal(await page.locator("#vertexAlreadyHint").count(), 0, "over-explanatory calculator copy was removed");
     assert.equal(await page.locator("#calcToVertex").getAttribute("readonly"), "");
@@ -363,18 +483,18 @@ const server = http.createServer(async (req, res) => {
     assert.equal(await page.locator("#calcFromVertex").getAttribute("readonly"), "");
     assert.equal(await page.locator("#calcToVertex").inputValue(), "12");
     await page.locator("#calculatorForm button[type=submit]").click();
-    assert.equal(await page.locator("#calcVertex").innerText(), "-11.36 DS");
+    assert.equal(await page.locator("#calcVertex").innerText(), "−11.36 DS");
     assert.equal(await page.locator("#calcVertexOs").innerText(), "+5.60 DS");
     assert.match(await page.locator("#calcVertexTitle").innerText(), /Spectacle-plane/i);
     await page.locator("#calcConversion").selectOption("custom");
     await page.locator("#calcFromVertex").fill("0");
     assert.equal(await page.locator("#calculatorResults").isVisible(), false);
     await page.locator("#calculatorForm button[type=submit]").click();
-    assert.equal(await page.locator("#calcVertex").innerText(), "-10.00 DS");
+    assert.equal(await page.locator("#calcVertex").innerText(), "−10.00 DS");
     assert.match(await page.locator("#calcVertexContext").innerText(), /no compensation/i);
     await page.locator("#calcToVertex").fill("12");
     await page.locator("#calculatorForm button[type=submit]").click();
-    assert.equal(await page.locator("#calcVertex").innerText(), "-11.36 DS");
+    assert.equal(await page.locator("#calcVertex").innerText(), "−11.36 DS");
     await page.locator("#calcToVertex").fill("26");
     await page.locator("#calculatorForm button[type=submit]").click();
     assert.match(await page.locator("#calculatorError").innerText(), /0 to 25 mm/);
@@ -394,7 +514,7 @@ const server = http.createServer(async (req, res) => {
     await page.locator("#calcAxisOs").fill("180");
     await page.locator("#calculatorForm button[type=submit]").click();
     assert.equal(await page.locator("#calcEyeResults").isVisible(), false);
-    assert.equal(await page.locator("#calcVertexOs").innerText(), "-2.66 -1.83 × 180°");
+    assert.equal(await page.locator("#calcVertexOs").innerText(), "−2.66 −1.83 × 180°");
     assert.match(await page.locator("#calcVertexContextOs").innerText(), /At least one principal meridian/);
     await page.locator("#calculatorTransposeTab").click();
     await page.locator("#calculatorForm button[type=submit]").click();
@@ -450,6 +570,7 @@ const server = http.createServer(async (req, res) => {
     }
     await page.locator("#vaOd").selectOption("20/20");
     assert.equal(await page.locator("#phOs").inputValue(), "20/20", "VA rule is per eye");
+    await page.getByRole("radio", { name: "With correction", exact: true }).click();
     for (const colorScheme of ["light", "dark"]) {
       await page.emulateMedia({ colorScheme });
       for (const width of [320, 390, 1280]) {
@@ -479,7 +600,7 @@ const server = http.createServer(async (req, res) => {
     assert.equal(await page.locator("body").getAttribute("data-stage"), "compare");
     await page.locator("#primaryAction").click();
     const zeroCase = await page.evaluate(() => DioptraStorage.listCases().at(-1));
-    assert.equal(zeroCase.entryRevision, "v04-rc-rx-duration-1");
+    assert.equal(zeroCase.entryRevision, "v10-beryl-1");
     assert.equal(zeroCase.agreement.total, 4, "sphere-only axes are excluded, not free passes");
     assert.equal(zeroCase.input.od.pinhole, "");
     assert.equal(zeroCase.input.os.pinhole, "20/20");
@@ -512,7 +633,7 @@ const server = http.createServer(async (req, res) => {
     assert.equal(await page.locator("#osSelAx").isEnabled(), true);
     assert.equal(await page.locator("#odR2Ax").inputValue(), "", "unused repeat stays empty");
     assert.deepEqual(errors, []);
-    console.log("PASS: candidate form, cohort isolation, previous Rx, mm conversion, exports, scan import, calculators, tab isolation, keyboard navigation, light/dark mobile layouts");
+    console.log("PASS: Beryl case form, VA condition, checks, endpoint and per-eye ADD, cohort isolation, previous Rx, mm conversion, exports, scan import, Genius screening, verification and print, calculators, tab isolation, keyboard navigation, light/dark mobile layouts");
   } finally {
     if (browser) await browser.close();
     await new Promise(resolve => server.close(resolve));

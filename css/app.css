@@ -239,6 +239,7 @@ fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
 
 .row-value { display: inline-flex; align-items: center; gap: 6px; }
 .unit { color: var(--label-2); }
+.unit-deg { margin-left: -5px; }
 
 .row-input {
   flex: 1 1 auto;
@@ -393,7 +394,9 @@ fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
 .row-input.invalid { box-shadow: none !important; }
 .row-input.invalid::placeholder { color: var(--red); }
 .row:has(.row-input.invalid) .row-label { color: var(--red); }
-select.field { appearance: auto; -webkit-appearance: auto; text-align-last: center; font-size: 16px; cursor: pointer; }
+/* Compact numeric pickers: the filled field is the affordance, so the native chevron is dropped to keep values readable on phones. */
+select.field { appearance: none; -webkit-appearance: none; text-align: center; text-align-last: center; font-size: 16px; cursor: pointer; padding: 0 2px; }
+.power select.field { padding-right: 6px; }
 
 /* ------------------------------------------------------------------ chips */
 
@@ -701,7 +704,8 @@ details.group[open] > summary { box-shadow: inset 0 -0.5px 0 var(--separator); }
 .scan-button:active { opacity: 0.7; }
 .scan-button:disabled { opacity: 0.45; cursor: default; }
 
-/* Workspace navigation and optical tools. */
+/* ------------------------------------------------------------------ workspace navigation */
+
 :focus-visible { outline: 2px solid var(--tint); outline-offset: 3px; }
 .row-input:focus-visible, .row-select:focus-visible, .inline-input:focus-visible { outline: 2px solid var(--tint); outline-offset: 3px; }
 ::selection { background: #BEB8AD; color: #111111; }
@@ -709,146 +713,181 @@ details.group[open] > summary { box-shadow: inset 0 -0.5px 0 var(--separator); }
 .brand-caption { display: block; margin-top: 8px; font: 9px/1.2 var(--font); letter-spacing: 0.18em; color: var(--label-2); }
 .nav-actions { display: flex; justify-self: end; gap: 8px; }
 .view-tabs { display: flex; padding: 4px; border: 1px solid var(--separator); background: var(--fill); border-radius: 999px; }
-.view-tabs button { min-height: 44px; padding: 10px 22px; border: 0; border-radius: 999px; background: none; color: var(--label-2); font-size: 14px; }
+.view-tabs button { min-height: 40px; padding: 8px 20px; border: 0; border-radius: 999px; background: none; color: var(--label-2); font-size: 14px; font-weight: 500; }
 .view-tabs button[aria-selected="true"] { background: var(--tint); color: var(--on-tint); }
-.calculator-tabs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; padding: 4px; border: 1px solid var(--separator); border-radius: 14px; background: var(--fill); }
-.calculator-tabs button { min-height: 48px; padding: 8px 12px; border: 0; border-radius: 10px; background: transparent; color: var(--label-2); font-size: 14px; }
-.calculator-tabs button[aria-selected="true"] { background: var(--thumb); color: var(--label); box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08); }
-.genius-callout { margin: 8px 0 28px; padding: 20px 24px; border: 1px solid color-mix(in srgb, var(--orange) 45%, var(--separator)); border-radius: var(--radius); background: color-mix(in srgb, var(--orange) 9%, var(--cell)); }
-.genius-callout h2 { margin: 0; font: 28px/1.25 var(--serif); font-weight: 400; }
-.genius-callout p:last-child { margin: 10px 0 0; color: var(--label-2); font-size: 15px; }
-.genius-layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 32px; }
-.genius-entry { align-self: start; border: 1px solid var(--separator); border-radius: var(--radius); padding: 28px; background: var(--cell); }
-.genius-context { margin-top: 24px; padding-bottom: 24px; border-bottom: 1px solid var(--separator); }
-.genius-context h3 { margin: 0; font-size: 13px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.08em; color: var(--label-2); }
-.genius-context fieldset { min-width: 0; margin: 20px 0 0; padding: 0; border: 0; }
-.genius-context legend, .genius-other { display: block; margin-bottom: 10px; color: var(--label-2); font-size: 12px; }
-.genius-context .chip { padding: 7px 11px; font-size: 13px; }
-.genius-age { display: block; margin-top: 18px; font-size: 14px; font-weight: 500; }
-.genius-age input, .genius-other input { display: block; width: 100%; min-height: 48px; margin-top: 8px; padding: 9px 11px; border: 1px solid var(--separator); border-radius: 10px; background: var(--bg); color: var(--label); font: 18px var(--mono); }
-.genius-other { margin-top: 18px; }
-.genius-other input { font: 16px var(--font); }
-#geniusForm .button-primary { margin-top: 12px; }
-.genius-output { min-width: 0; padding: 4px 12px; }
-.genius-output .section-heading h2 { font: 24px/1.3 var(--serif); font-weight: 400; }
-.genius-version { color: var(--label-2); font-size: 12px; }
-.genius-result-grid { display: grid; gap: 1px; margin-top: 20px; border: 1px solid var(--separator); border-radius: var(--radius); overflow: hidden; background: var(--separator); }
-.genius-result-card { padding: 16px; background: var(--cell); }
-.genius-result-card span { display: block; color: var(--label-2); font-size: 12px; }
-.genius-result-card strong { display: block; margin-top: 6px; font: 24px/1.35 var(--mono); font-weight: 400; overflow-wrap: anywhere; }
-.genius-output h3 { margin: 26px 0 10px; font-size: 13px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.08em; color: var(--label-2); }
-.genius-flags { margin: 0; padding: 0; list-style: none; border-top: 1px solid var(--separator); }
-.genius-flags li { padding: 12px 0; color: var(--label-2); font-size: 14px; }
-.genius-flags li + li { border-top: 1px solid var(--separator); }
-.genius-prescription { margin-top: 32px; padding: 24px; border: 1px solid var(--separator); border-radius: var(--radius); background: var(--cell); }
+.skip-link { position: fixed; left: 12px; top: 12px; padding: 12px; z-index: 100; background: var(--tint); color: var(--on-tint); }
+.skip-link:not(:focus) { width: 1px; height: 1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.visually-hidden { position: absolute !important; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+/* ------------------------------------------------------------------ shared controls */
+
+.eyebrow { font: 500 11px/1.4 var(--font); letter-spacing: 0.13em; text-transform: uppercase; color: var(--label-2); margin: 0 0 12px; }
+.quiet-button { border: 1px solid var(--separator); border-radius: 999px; background: transparent; padding: 10px 16px; min-height: 44px; font-size: 14px; color: var(--tint); }
+.quiet-button:hover, .nav-button:hover { background: var(--fill); }
+.quiet-button:active { opacity: 0.6; }
+
+.form-actions { display: flex; align-items: center; gap: 12px; margin-top: 24px; }
+.form-actions .button-primary { flex: 1 1 auto; max-width: 360px; }
+.form-error { margin: 16px 0 0; padding: 0 var(--row-pad); color: var(--red); font-size: 15px; line-height: 1.4; }
+.form-error:empty { display: none; }
+
+.rx-value { font-weight: 600; font-size: 17px; letter-spacing: -0.01em; text-align: right; }
+
+/* iOS-style switch on a real checkbox. */
+.switch { position: relative; display: inline-flex; flex: 0 0 auto; }
+.switch input { position: absolute; inset: 0; opacity: 0; margin: 0; cursor: pointer; }
+.switch span { width: 51px; height: 31px; border-radius: 999px; background: var(--fill-strong); transition: background 200ms ease; position: relative; }
+.switch span::after { content: ""; position: absolute; top: 2px; left: 2px; width: 27px; height: 27px; border-radius: 50%; background: var(--thumb); box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15), 0 1px 1px rgba(0, 0, 0, 0.16); transition: transform 200ms ease; }
+.switch input:checked + span { background: var(--green); }
+.switch input:checked + span::after { transform: translateX(20px); }
+.switch input:focus-visible + span { outline: 2px solid var(--tint); outline-offset: 2px; }
+
+.chip-warning.on { background: var(--red); color: var(--on-tint); }
+.warning-footer { color: var(--red); }
+.invalid-row .row-label, .invalid-row .row-caption { color: var(--red); }
+.invalid-row .segmented { box-shadow: inset 0 0 0 1.5px var(--red); }
+
+/* ------------------------------------------------------------------ Study */
+
+.study { margin-top: 48px; padding-top: 8px; border-top: 1px solid var(--separator); }
+.study .study-header { margin-top: 28px; }
+.study-scope { margin-bottom: 12px; }
+
+/* ------------------------------------------------------------------ Genius */
+
+.genius-panel .title-sub, .calculator-panel .title-sub { max-width: 720px; }
+.genius-panel #geniusResults, .genius-panel #geniusStop, .genius-panel .genius-prescription { margin-top: 36px; scroll-margin-top: 120px; }
+#geniusRefineFields, #geniusGlassesFields, #endpointFields, #previousRxFields { min-width: 0; }
+
+.stop-card { padding: 24px; border-radius: var(--radius); border: 1px solid color-mix(in srgb, var(--red) 45%, var(--separator)); background: color-mix(in srgb, var(--red) 8%, var(--cell)); }
+.stop-card h2 { margin: 0; font: 400 28px/1.25 var(--serif); }
+.stop-card p { margin: 10px 0 0; color: var(--label-2); font-size: 15px; line-height: 1.45; }
+.stop-card .eyebrow { color: var(--red); margin: 0 0 8px; }
+.stop-card #geniusStopReason { color: var(--label); }
+
+/* The printable preview is a document, so it keeps document typography. */
+.genius-prescription { position: relative; padding: 28px; border: 1px solid var(--separator); border-radius: var(--radius); background: var(--cell); overflow: hidden; }
+.genius-prescription::before { content: "NOT A PRESCRIPTION"; position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%) rotate(-28deg); font: 600 clamp(36px, 7vw, 76px)/1 var(--font); letter-spacing: 0.08em; color: var(--label); opacity: 0.045; white-space: nowrap; pointer-events: none; }
 .prescription-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 18px; padding-bottom: 18px; border-bottom: 2px solid var(--label); }
-.prescription-header h2 { margin: 0; font: 30px/1.2 var(--serif); font-weight: 400; text-transform: none; letter-spacing: normal; color: var(--label); }
+.prescription-header h2 { margin: 0; font: 400 30px/1.2 var(--serif); color: var(--label); }
 .prescription-header .eyebrow { margin-bottom: 8px; }
-.prescription-badge { flex: 0 0 auto; padding: 7px 10px; border-radius: 999px; background: color-mix(in srgb, var(--orange) 18%, var(--cell)); color: var(--label); font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; }
-.prescription-warning { margin: 18px 0 0; padding: 12px 14px; border-left: 4px solid var(--orange); background: color-mix(in srgb, var(--orange) 9%, var(--cell)); color: var(--label-2); font-size: 13px; line-height: 1.5; }
+.prescription-badge { flex: 0 0 auto; padding: 7px 10px; border-radius: 999px; background: color-mix(in srgb, var(--red) 14%, var(--cell)); color: var(--label); font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; }
+.prescription-warning { margin: 18px 0 0; padding: 12px 14px; border-left: 3px solid var(--orange); background: color-mix(in srgb, var(--orange) 8%, var(--cell)); color: var(--label-2); font-size: 13px; line-height: 1.5; }
 .prescription-warning strong { color: var(--label); }
 .prescription-meta { display: grid; grid-template-columns: minmax(0, 2fr) minmax(150px, 1fr); gap: 18px; margin-top: 22px; }
 .prescription-meta label, .prescription-notes { display: block; color: var(--label-2); font-size: 12px; }
-.prescription-meta label > span:not(.prescription-print-value), .prescription-notes > span:not(.prescription-print-value) { float: right; font-size: 10px; }
+.prescription-meta label > span:not(.prescription-print-value), .prescription-notes > span:not(.prescription-print-value) { float: right; font-size: 11px; }
 .prescription-meta input, .prescription-notes textarea { display: block; width: 100%; margin-top: 8px; padding: 10px 0; border: 0; border-bottom: 1px solid var(--separator); border-radius: 0; background: transparent; color: var(--label); font: 16px/1.35 var(--font); }
 .prescription-table-wrap { margin-top: 24px; overflow-x: auto; }
-.prescription-table { width: 100%; min-width: 430px; border-collapse: collapse; table-layout: fixed; }
+.prescription-table { width: 100%; border-collapse: collapse; table-layout: fixed; }
 .prescription-table caption { margin-bottom: 10px; text-align: left; color: var(--label-2); font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; }
 .prescription-table th, .prescription-table td { padding: 14px 10px; border: 1px solid var(--separator); text-align: center; }
 .prescription-table thead th { color: var(--label-2); font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em; }
 .prescription-table tbody th { width: 84px; text-align: left; font-size: 13px; }
-.prescription-table tbody th span { display: block; margin-top: 3px; color: var(--label-2); font-size: 10px; font-weight: 400; }
-.prescription-table td { font: 17px/1.3 var(--mono); }
-.prescription-additional { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1px; margin-top: 18px; border: 1px solid var(--separator); background: var(--separator); }
-.prescription-additional > div { padding: 13px; background: var(--cell); }
-.prescription-additional span { display: block; color: var(--label-2); font-size: 10px; text-transform: uppercase; letter-spacing: 0.05em; }
-.prescription-additional strong { display: block; margin-top: 5px; font: 17px/1.3 var(--mono); font-weight: 400; }
+.prescription-table tbody th span { display: block; margin-top: 3px; color: var(--label-2); font-size: 11px; font-weight: 400; }
+.prescription-table td { font-size: 18px; font-weight: 500; font-variant-numeric: tabular-nums; }
+.prescription-additional, .prescription-verified { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); margin-top: 18px; border: 1px solid var(--separator); }
+.prescription-additional > div, .prescription-verified > div, .prescription-context > div { min-width: 0; padding: 13px; }
+.prescription-additional > div + div, .prescription-verified > div + div, .prescription-context > div + div { border-left: 1px solid var(--separator); }
+.prescription-additional span, .prescription-verified span, .prescription-context span, .prescription-review > span { display: block; color: var(--label-2); font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; }
+.prescription-additional strong { display: block; margin-top: 5px; font-size: 17px; font-weight: 500; font-variant-numeric: tabular-nums; }
+.prescription-verified strong, .prescription-context strong { display: block; margin-top: 6px; font-size: 13px; line-height: 1.45; font-weight: 500; overflow-wrap: anywhere; font-variant-numeric: tabular-nums; }
 .prescription-context { display: grid; grid-template-columns: 90px minmax(0, 1fr) minmax(0, 1.3fr); margin-top: 18px; border: 1px solid var(--separator); }
-.prescription-context > div { min-width: 0; padding: 13px; }
-.prescription-context > div + div { border-left: 1px solid var(--separator); }
-.prescription-context span { display: block; color: var(--label-2); font-size: 10px; text-transform: uppercase; letter-spacing: 0.05em; }
-.prescription-context strong { display: block; margin-top: 6px; font-size: 12px; line-height: 1.45; font-weight: 500; overflow-wrap: anywhere; }
+.prescription-review { margin-top: 18px; }
+.prescription-review ul { margin: 8px 0 0; padding-left: 18px; color: var(--label-2); font-size: 12px; line-height: 1.5; }
 .prescription-notes { margin-top: 20px; }
 .prescription-notes textarea { min-height: 76px; resize: vertical; }
 .prescription-print-value { display: none; }
-.prescription-footer { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px 18px; margin-top: 18px; padding-top: 12px; border-top: 1px solid var(--separator); color: var(--label-2); font-size: 10px; }
-.prescription-actions { margin-top: 20px; }
-.prescription-actions p { margin: 8px 0 0; text-align: center; color: var(--label-2); font-size: 11px; }
-.eyebrow { font: 500 11px/1.4 var(--font); letter-spacing: 0.13em; text-transform: uppercase; color: var(--label-2); margin: 0 0 12px; }
-.skip-link { position: fixed; left: 12px; top: -100px; padding: 12px; z-index: 100; background: var(--tint); color: var(--on-tint); }
-.skip-link:focus { top: 12px; }
+.prescription-signature { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; margin-top: 36px; }
+.prescription-signature > div { display: flex; flex-direction: column; gap: 6px; color: var(--label-2); font-size: 11px; }
+.signature-line { display: block; height: 32px; border-bottom: 1px solid var(--label-2); }
+.prescription-footer { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px 18px; margin-top: 18px; padding-top: 12px; border-top: 1px solid var(--separator); color: var(--label-2); font-size: 11px; }
+.prescription-actions { margin-top: 24px; display: flex; justify-content: center; }
+.prescription-actions .button-primary { max-width: 360px; }
+
+/* ------------------------------------------------------------------ Tools */
+
 .calculator-panel { padding-bottom: calc(48px + var(--safe-bottom)); }
 body[data-view="calculator"] #toast { display: none; }
-.calculator-layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 32px; margin-top: 24px; }
-.calculator-entry { align-self: start; border: 1px solid var(--separator); border-radius: var(--radius); padding: 28px; background: var(--cell); }
-.section-heading { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
-.section-heading h2 { margin: 0; font-size: 18px; font-weight: 500; }
-.quiet-button { border: 1px solid var(--separator); border-radius: 999px; background: transparent; padding: 10px 16px; min-height: 44px; font-size: 13px; }
-.quiet-button:hover, .nav-button:hover { background: var(--fill); }
-.calculator-hint { color: var(--label-2); font-size: 13px; line-height: 1.5; }
-.calculator-fields { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-top: 28px; }
-.calculator-fields label { min-width: 0; font-size: 14px; font-weight: 500; }
-.calculator-fields label span { display: block; color: var(--label-2); margin: 6px 0 12px; font-size: 11px; font-weight: 400; letter-spacing: 0.05em; }
-.calculator-fields input { width: 100%; min-width: 0; min-height: 56px; padding: 10px; border: 1px solid var(--separator); border-radius: 10px; background: var(--bg); font: 20px var(--mono); }
-.calculator-fields input::placeholder { color: var(--label-3); }
-.calculator-error { color: var(--red); font-size: 13px; line-height: 1.5; }
-.calculator-error:empty { display: none; }
-#calculatorForm .button-primary { margin-top: 12px; }
-.calculator-paste { border-top: 1px solid var(--separator); margin-top: 24px; padding-top: 20px; }
-.calculator-paste summary, .calculation-details summary { font-size: 14px; padding: 10px 0; }
-.calculator-paste summary::after, .calculation-details summary::after { content: "+"; float: right; }
-.calculator-paste[open] summary::after, .calculation-details[open] summary::after { content: "−"; }
-.paste-form label { display: block; margin: 12px 0 8px; font-size: 12px; color: var(--label-2); }
-.paste-form > div { display: flex; gap: 8px; }
-.paste-form input { width: 100%; min-width: 0; padding: 12px; background: var(--bg); border: 1px solid var(--separator); border-radius: 10px; font-size: 16px; }
-.calculator-output { min-width: 0; padding: 4px 12px; }
-.calculator-empty { display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; min-height: 370px; }
-.empty-symbol { font: 64px/1 var(--serif); color: var(--label-3); }
-.calculator-empty h2 { font: 28px/1.3 var(--serif); margin: 20px 0 8px; }
-.calculator-empty p { font-size: 14px; line-height: 1.5; color: var(--label-2); }
-.calculator-original { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 12px; margin: 0; font-size: 12px; color: var(--label-2); padding: 0 0 18px; border-bottom: 1px solid var(--separator); }
-.calculator-original span { font-family: var(--mono); }
-.calculator-result { padding: 24px 0; border-bottom: 1px solid var(--separator); }
-.calculator-result h2 { font: 400 clamp(20px, 2.6vw, 30px)/1.4 var(--mono); letter-spacing: -0.04em; margin: 8px 0; overflow-wrap: anywhere; }
-.calculator-result #calcSE, .calculator-result #calcSEOs { font: 400 48px/1.2 var(--serif); }
-.result-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
-.calculation-details { margin-top: 12px; }
-.calculation-details dt { font-size: 12px; color: var(--label-2); margin-top: 18px; }
-.calculation-details dd { margin: 6px 0 0; font: 13px/1.6 var(--mono); overflow-wrap: anywhere; }
-.calculator-status { min-height: 1.5em; font-size: 14px; margin-top: 24px; text-align: center; }
+.calculator-tabs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 2px; padding: 2px; border-radius: 9px; background: var(--fill); max-width: 560px; }
+.calculator-tabs button { min-height: 32px; padding: 6px 12px; border: 0; border-radius: 7px; background: transparent; color: var(--label); font-size: 13px; font-weight: 500; }
+.calculator-tabs button[aria-selected="true"] { background: var(--thumb); font-weight: 600; box-shadow: 0 3px 8px rgba(0, 0, 0, 0.12), 0 3px 1px rgba(0, 0, 0, 0.04); }
+.calculator-layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 40px; margin-top: 8px; }
+.calculator-entry { align-self: start; min-width: 0; }
+.calculator-eye { border: 0; padding: 0; margin: 0; min-width: 0; }
+.calculator-eye > legend { float: left; width: 100%; padding: 0 var(--row-pad); }
+.calculator-eye > legend + .group { clear: both; }
+.calculator-entry .row-input { max-width: 120px; }
+.calculator-entry .row-value .row-input { max-width: 96px; }
+.vertex-fields input[readonly], #calcToVertex[readonly], #calcFromVertex[readonly] { color: var(--label-2); }
+.calculator-paste { margin-top: 28px; }
+.paste-form .row-select { max-width: 60%; }
+.paste-row { gap: 8px; }
+.paste-row .inline-input { flex: 1 1 auto; min-width: 0; }
+.paste-error { padding-bottom: 12px; }
+.calculator-hint { margin: 6px 0 0; color: var(--label-2); font-size: 13px; line-height: 1.45; }
+.calculator-output { min-width: 0; }
+.calculator-empty { display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; min-height: 360px; margin-top: 28px; border: 1px dashed var(--separator); border-radius: var(--radius); }
+.empty-symbol { font: 56px/1 var(--serif); color: var(--label-3); }
+.calculator-empty h2 { font: 400 26px/1.3 var(--serif); margin: 18px 0 6px; }
+.calculator-empty p { margin: 0; font-size: 15px; color: var(--label-2); }
+.result-card { padding: 4px var(--row-pad) 8px; }
+.calculator-original { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 12px; margin: 0; padding: 12px 0; font-size: 13px; color: var(--label-2); border-bottom: 0.5px solid var(--separator); }
+.calculator-original span { color: var(--label); font-variant-numeric: tabular-nums; }
+.calculator-result { padding: 16px 0; }
+.calculator-result + .calculator-result { border-top: 0.5px solid var(--separator); }
+.calculator-result .eyebrow { margin-bottom: 6px; }
+.result-value { margin: 4px 0 6px; font-size: clamp(22px, 2.6vw, 28px); font-weight: 600; letter-spacing: -0.01em; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.result-value-large { font: 400 48px/1.15 var(--serif); }
+.result-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.calculator-result > .quiet-button { margin-top: 12px; }
+.calculation-details { padding: 8px 0 12px; border-top: 0.5px solid var(--separator); }
+.calculation-details summary { font-size: 14px; padding: 10px 0; color: var(--tint); }
+.calculation-details summary::after { content: "+"; float: right; color: var(--label-3); }
+.calculation-details[open] summary::after { content: "−"; }
+.calculation-details dt { font-size: 12px; color: var(--label-2); margin-top: 14px; }
+.calculation-details dd { margin: 4px 0 0; font-size: 14px; line-height: 1.5; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.calculator-status { min-height: 1.5em; font-size: 14px; margin-top: 24px; text-align: center; color: var(--label-2); }
+.calculator-eye-output + .calculator-eye-output { margin-top: 8px; }
+.conversion-summary { width: 100%; border-collapse: collapse; table-layout: fixed; }
+.conversion-summary th, .conversion-summary td { padding: 12px 8px; text-align: left; overflow-wrap: anywhere; }
+.conversion-summary th:first-child, .conversion-summary td:first-child { padding-left: var(--row-pad); }
+.conversion-summary tr + tr > * { box-shadow: inset 0 0.5px 0 var(--separator); }
+.conversion-summary thead th { color: var(--label-2); font-size: 12px; font-weight: 500; }
+.conversion-summary th:first-child { width: 56px; }
+.conversion-summary td { font-size: 16px; font-variant-numeric: tabular-nums; }
+.conversion-summary th[scope="row"] { color: var(--label); font-weight: 600; }
+#conversionResults .result-actions { padding: 0 var(--row-pad); }
+
+/* ------------------------------------------------------------------ responsive */
+
 @media (max-width: 759px) {
-  .navbar-inner { grid-template-columns: 1fr auto; gap: 16px; padding: 14px 20px; }
+  .navbar-inner { grid-template-columns: 1fr auto; gap: 14px; padding: 12px 20px; min-height: 0; }
   .brand { font-size: 27px; }
   .brand-caption { display: none; }
-  .view-tabs { grid-row: 2; grid-column: 1 / -1; justify-self: center; }
-  .view-tabs button { padding-left: 14px; padding-right: 14px; }
+  .view-tabs { grid-row: 2; grid-column: 1 / -1; justify-self: stretch; }
+  .view-tabs button { flex: 1 1 0; padding-left: 10px; padding-right: 10px; }
   .nav-actions { grid-row: 1; grid-column: 2; }
   .nav-button { padding: 8px 12px; font-size: 13px; }
   .content { padding-left: 18px; padding-right: 18px; }
-  .calculator-layout { grid-template-columns: minmax(0, 1fr); gap: 28px; margin-top: 12px; }
-  .genius-layout { grid-template-columns: minmax(0, 1fr); gap: 28px; }
-  .genius-entry { padding: 20px; }
-  .genius-output { padding: 0 4px; }
-  .genius-prescription { padding: 18px; }
+  .calculator-layout { grid-template-columns: minmax(0, 1fr); gap: 8px; }
+  .calculator-empty { min-height: 200px; }
+  .genius-prescription { padding: 20px; }
   .prescription-header { display: block; }
   .prescription-badge { display: inline-block; margin-top: 14px; }
-  .prescription-meta { grid-template-columns: minmax(0, 1fr); }
-  .prescription-context { grid-template-columns: minmax(0, 1fr); }
-  .prescription-context > div + div { border-left: 0; border-top: 1px solid var(--separator); }
-  .prescription-table { min-width: 0; }
+  .prescription-meta, .prescription-signature { grid-template-columns: minmax(0, 1fr); }
+  .prescription-context, .prescription-verified { grid-template-columns: minmax(0, 1fr); }
+  .prescription-context > div + div, .prescription-verified > div + div { border-left: 0; border-top: 1px solid var(--separator); }
   .prescription-table th, .prescription-table td { padding: 12px 4px; }
-  .prescription-table thead th { font-size: 9px; letter-spacing: 0.02em; }
+  .prescription-table thead th { font-size: 10px; letter-spacing: 0.02em; }
   .prescription-table tbody th { width: 52px; font-size: 12px; }
-  .prescription-table td { font-size: 13px; }
-  .calculator-tabs button { padding-left: 6px; padding-right: 6px; font-size: 13px; }
-  .calculator-entry { padding: 20px; }
-  .calculator-fields { gap: 8px; }
-  .calculator-fields input { font-size: 17px; padding: 8px; }
-  .calculator-output { padding: 0 4px; }
-  .calculator-empty { min-height: 240px; }
+  .prescription-table td { font-size: 15px; }
   .row > .row-label:first-child { white-space: normal; }
   .stepper { gap: 12px; font-size: 14px; }
   .cmp { column-gap: 8px; grid-template-columns: minmax(0, 1fr) auto auto 76px; }
+  .row:has(.segmented) { flex-wrap: wrap; }
+  .row:has(.segmented) .segmented { margin-left: auto; }
+  .form-actions .button-primary { max-width: none; }
 }
 @media (prefers-contrast: more) {
   :root { --separator: #6B6760; }
@@ -857,51 +896,36 @@ body[data-view="calculator"] #toast { display: none; }
   .navbar-inner { grid-template-columns: minmax(0, 1fr) auto; gap: 12px; padding-left: 16px; padding-right: 16px; }
   .brand { font-size: 25px; }
   .nav-button { padding-left: 10px; padding-right: 10px; }
+  .view-tabs button { font-size: 13px; padding-left: 6px; padding-right: 6px; }
   .stepper { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
   .stepper li { flex-direction: column; gap: 6px; font-size: 13px; }
   .row { flex-wrap: wrap; }
   .row-value { min-width: 0; max-width: 100%; }
+  .calculator-tabs button { font-size: 12px; padding-left: 4px; padding-right: 4px; }
 }
+
+/* ------------------------------------------------------------------ print: the Genius preview only */
 
 @page { size: A4 portrait; margin: 16mm; }
 @media print {
   body[data-view="genius"] { background: #FFFFFF !important; color: #111111 !important; }
   body[data-view="genius"] * { visibility: hidden !important; }
   body[data-view="genius"] #geniusPrescription, body[data-view="genius"] #geniusPrescription * { visibility: visible !important; }
-  body[data-view="genius"] #geniusPrescription { position: absolute; inset: 0 auto auto 0; width: 100%; margin: 0; padding: 0; border: 0; border-radius: 0; background: #FFFFFF !important; color: #111111 !important; box-shadow: none; }
+  body[data-view="genius"] #geniusPrescription { position: absolute; inset: 0 auto auto 0; width: 100%; margin: 0; padding: 0; border: 0; border-radius: 0; background: #FFFFFF !important; color: #111111 !important; box-shadow: none; overflow: visible; }
+  .genius-prescription::before { color: #111111; opacity: 0.07; font-size: 84px; }
   .prescription-header { border-color: #111111; }
   .prescription-header h2, .prescription-warning strong { color: #111111 !important; }
-  .prescription-header .eyebrow, .prescription-warning, .prescription-table caption, .prescription-table thead th, .prescription-table tbody th span, .prescription-additional span, .prescription-footer { color: #4A4A4A !important; }
+  .prescription-header .eyebrow, .prescription-warning, .prescription-table caption, .prescription-table thead th, .prescription-table tbody th span,
+  .prescription-additional span, .prescription-verified span, .prescription-context span, .prescription-review > span, .prescription-review ul,
+  .prescription-signature > div, .prescription-footer { color: #4A4A4A !important; }
   .prescription-badge { border: 1px solid #111111; background: #FFFFFF !important; color: #111111 !important; }
   .prescription-warning { border-color: #111111; background: #F2F2F2 !important; }
   .prescription-meta input, .prescription-notes textarea { display: none; }
   .prescription-meta label > span:not(.prescription-print-value), .prescription-notes > span:not(.prescription-print-value) { display: none; }
   .prescription-print-value { display: block; min-height: 24px; margin-top: 8px; padding: 6px 0; border-bottom: 1px solid #777777; color: #111111 !important; font: 15px/1.4 var(--font); white-space: pre-wrap; }
   .prescription-notes-value { min-height: 64px; }
-  .prescription-table { min-width: 0; }
-  .prescription-table th, .prescription-table td, .prescription-additional, .prescription-additional > div { border-color: #777777; background: #FFFFFF !important; color: #111111 !important; }
-  .prescription-context, .prescription-context > div { border-color: #777777; background: #FFFFFF !important; color: #111111 !important; }
-  .prescription-additional { gap: 0; }
-  .prescription-additional > div + div { border-left: 1px solid #777777; }
+  .prescription-table th, .prescription-table td, .prescription-additional, .prescription-additional > div,
+  .prescription-verified, .prescription-verified > div, .prescription-context, .prescription-context > div { border-color: #777777 !important; background: #FFFFFF !important; color: #111111 !important; }
+  .signature-line { border-color: #111111; }
   .prescription-actions { display: none !important; }
 }
-
-/* Prescription calculator: explicit planes and independently labelled eyes. */
-.calculator-eye { border: 0; padding: 0; margin: 28px 0 0; min-width: 0; }
-.calculator-eye legend, .eye-result-title { font-size: 17px; font-weight: 600; }
-.calculator-eye .calculator-fields { margin-top: 12px; }
-.calculator-mode { display: block; margin-top: 20px; font-size: 14px; }
-.calculator-mode select, #calculatorPasteEye { display: block; width: 100%; min-height: 48px; margin-top: 8px; padding: 10px; background: var(--bg); color: var(--label); border: 1px solid var(--separator); border-radius: 10px; font: inherit; }
-.vertex-fields { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-.vertex-fields label > span:first-child { font-size: 13px; color: var(--label); font-weight: 500; letter-spacing: normal; }
-.vertex-fields input[readonly] { color: var(--label-2); background: var(--cell); }
-.calculator-eye-output { margin-top: 24px; }
-.calculator-eye-output + .calculator-eye-output { border-top: 2px solid var(--separator); padding-top: 24px; margin-top: 36px; }
-
-.conversion-summary { width: 100%; border-collapse: collapse; table-layout: fixed; margin: 20px 0; }
-.conversion-summary th, .conversion-summary td { padding: 14px 8px; text-align: left; border-bottom: 1px solid var(--separator); overflow-wrap: anywhere; }
-.conversion-summary th { color: var(--label-2); font-size: 12px; font-weight: 500; }
-.conversion-summary th:first-child { width: 40px; }
-.conversion-summary td { font: 15px/1.5 var(--mono); }
-.conversion-summary th[scope="row"] { color: var(--label); font-weight: 600; }
-#calcSummaryTitle { font: 400 24px/1.3 var(--serif); }
