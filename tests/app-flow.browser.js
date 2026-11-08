@@ -231,7 +231,7 @@ const server = http.createServer(async (req, res) => {
       geniusAge: "42", geniusSphereOd: "-2", geniusCylinderOd: "-1", geniusAxisOd: "180",
       geniusSphereOs: "1", geniusCylinderOs: "-.5", geniusAxisOs: "90"
     })) await page.locator(`#${id}`).fill(value);
-    for (const id of ["geniusDiabetes", "geniusPregnancy", "geniusBlurredVision", "geniusFlashes"]) await page.locator(`#${id}`).check();
+    for (const id of ["geniusDiabetes", "geniusPregnancy", "geniusBlurredVision", "geniusFlashes"]) await page.locator(`label:has(#${id})`).click();
     await page.locator("#geniusOtherSymptoms").fill("Halos");
     await page.locator("#geniusForm button[type=submit]").click();
     assert.equal(await page.locator("#geniusResults").isVisible(), true);
