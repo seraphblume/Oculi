@@ -10,25 +10,28 @@ Oculi brings clinical comparison and essential prescription tools into one calm,
 
 A blinded comparison workflow for structured research.
 
-1. Record the autorefractor readings.
-2. Complete the refraction without seeing Oculi’s prediction.
-3. Reveal and compare the results.
+1. **Measure.** Record the autorefractor ticket, visual acuity and whether it was measured unaided or with correction, plus history.
+2. **Refract.** Complete your own exam without seeing Oculi's prediction. Record the final Rx, the final VA, the +0.25 D test, and the endpoint whenever the prescribed Rx differs from it.
+3. **Compare.** Reveal the prediction and save the case.
 
-Refraction uses a fixed 12 mm vertex distance. Repeat readings, visual acuity, previous prescription, keratometry, near measurements, and review flags remain available without crowding the primary flow.
+The active engine is **v1.0 "Beryl"**, with the unchanged v0.3 engine as a paired comparator. Refraction uses a fixed 12 mm vertex. Repeat readings, previous prescription, keratometry, near measurements and review flags stay available without crowding the main flow.
 
 ### Genius
 
-A dedicated test surface for guided self-service refraction. Refractive inputs are limited to the selected OD and OS autorefractor ticket readings. Age remains part of the RC model input, while diabetes, hypertension, pregnancy, and reported visual symptoms travel with the preview as review context without silently changing the model result. Nothing is added to the Clinical Study.
+A guided refraction preview: **screen → propose → verify → preview**.
 
-Genius is clearly marked as a development preview. Its interface and results are not indicative of the final product or clinical guidance. Test output can be arranged in a prescription-style preview and printed or saved as a PDF; the exported preview keeps the same warning and is not an issued prescription.
+- **Screen.** Any warning sign, or an age under 18, stops Genius before any proposal. Current glasses, symptoms and medical background become review notes, not dioptric changes.
+- **Propose.** The full autorefractor ticket (repeats included) runs through the v0.3 engine with its −0.25 D prior.
+- **Verify.** VA through the proposed Rx in a trial frame, near when there is an ADD, the +0.25 D test, then accepted or refined.
+- **Preview.** A printable, watermarked preview that records the verification and review notes. It is not a prescription.
 
-### Rx conversion
+Genius is clearly marked as a development preview, and nothing entered there is saved.
 
-Three tools. Three uncluttered views.
+### Tools
 
-- **Rx conversion** — convert spectacle and contact-lens planes, including custom vertex distances.
-- **Spherical Equivalent** — calculate and copy the nearest quarter-diopter value.
-- **Transpositions** — switch cylinder notation without changing the optical prescription.
+- **Vertex.** Convert between spectacle and contact-lens planes, including custom vertex distances.
+- **Spherical Equivalent.** Calculate and copy the nearest quarter-dioptre value.
+- **Transposition.** Switch cylinder notation without changing the optical prescription.
 
 Right and left eyes can be entered together. Calculator work stays separate from patient cases and is not saved.
 
@@ -42,7 +45,7 @@ Ticket scanning reads an autorefractor image in the browser. The image and patie
 
 Oculi is an experimental research prototype. It is not a validated medical device and must not be the sole basis for prescribing, dispensing, diagnosis, or treatment.
 
-The current study compares the experimental v0.4 release candidate with the unchanged v0.3 engine. Historical records stay intact, and new results remain separated from earlier cohorts. Agreement scores describe differences within defined software tolerances; they are not clinical confidence scores.
+v1.0 "Beryl" keeps the dioptric rules first released as 0.4.0-rc.1 under a release identifier and a new cohort. **1.0 is not a validation claim.** Historical records stay intact, and new results are kept separate from earlier cohorts. Agreement scores describe differences within defined software tolerances; they are not clinical confidence scores. See [`docs/v1.0-beryl.md`](docs/v1.0-beryl.md).
 
 ## Run Oculi
 
@@ -58,12 +61,20 @@ Then visit `http://localhost:8000`.
 
 ## Verify changes
 
-The test suite covers the frozen engine contract, current and comparison engines, exports, ticket parsing, optical calculations, and the complete browser workflow.
+The test suite covers:
+- the frozen engine contracts;
+- Beryl's parity with the release candidate;
+- the comparison engine;
+- exports and offset fitting;
+- ticket parsing;
+- optical calculations;
+- the complete browser workflow, Genius included.
 
 ```sh
 node tests/v0.2-freeze.test.js
 node tests/v0.3-engine.test.js
 node tests/v0.4-rc.test.js
+node tests/v1.0-beryl.test.js
 node tests/ticket-scan.test.js
 node tests/export-and-fit.test.js
 node tests/optical-calculators.test.js
@@ -74,4 +85,4 @@ Continuous integration runs the same checks for every pull request.
 
 ## Learn more
 
-Detailed research notes, engine behavior, data definitions, and source references remain available in [`docs/`](docs/).
+Detailed research notes, engine behaviour, data definitions and source references are in [`docs/`](docs/).

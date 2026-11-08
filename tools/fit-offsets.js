@@ -13,8 +13,8 @@
 // Leave-one-case-out cross-validation compares three options on the same data:
 // no offset, one global offset, and the stratified offsets.
 //
-// Refuses to fit on v0.2 (Cohort B) cases unless --cohort-closed is passed, so thresholds
-// are never selected from a cohort that is still collecting.
+// Refuses to fit on v0.2 (Cohort B) or v1.0 (Beryl) cases unless --cohort-closed is passed,
+// so thresholds are never selected from a cohort that is still collecting.
 
 const fs = require("node:fs");
 const path = require("node:path");
@@ -154,8 +154,10 @@ function main() {
     console.error("No usable eyes found (need age, autorefractor SE and final SE).");
     process.exit(1);
   }
-  if (!args.cohortClosed && eyes.some(e => String(e.version).startsWith("0.2"))) {
-    console.error("This export contains v0.2 (Cohort B) cases. Close and export the cohort, then re-run with --cohort-closed.");
+  // Cohorts that may still be collecting: Cohort B (v0.2) and the Beryl prospective cohort (v1.0).
+  const open = [["0.2", "v0.2 (Cohort B)"], ["1.0", "v1.0 Beryl"]].filter(([prefix]) => eyes.some(e => String(e.version).startsWith(prefix)));
+  if (!args.cohortClosed && open.length) {
+    console.error(`This export contains ${open.map(o => o[1]).join(" and ")} cases. Close and export the cohort, then re-run with --cohort-closed.`);
     process.exit(2);
   }
 

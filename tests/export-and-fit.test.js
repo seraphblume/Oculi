@@ -13,7 +13,7 @@ const { spawnSync } = require("node:child_process");
 const root = path.resolve(__dirname, "..");
 const sandbox = { window: {} };
 vm.createContext(sandbox);
-for (const f of ["js/vertex.js", "js/config.js", "js/algorithm.js", "js/config-v03.js", "js/engine-v03.js", "js/config-v04.js", "js/engine-v04.js", "js/scoring.js", "js/engines.js", "js/storage.js"]) {
+for (const f of ["js/vertex.js", "js/config.js", "js/algorithm.js", "js/config-v03.js", "js/engine-v03.js", "js/config-v10.js", "js/engine-v10.js", "js/scoring.js", "js/engines.js", "js/storage.js"]) {
   vm.runInContext(fs.readFileSync(path.join(root, f), "utf8"), sandbox, { filename: f });
 }
 const w = sandbox.window;
@@ -78,7 +78,11 @@ assert.ok(lines[0].includes("ar_centre_m"));
 const shadowFile = path.join(tmp, "shadow.csv");
 fs.writeFileSync(shadowFile, shadowCsv);
 
-const fit = spawnSync(process.execPath, [path.join(root, "tools/fit-offsets.js"), shadowFile], { encoding: "utf8" });
+// Guard: the Beryl cohort is open, so fitting needs an explicit --cohort-closed.
+const berylGuard = spawnSync(process.execPath, [path.join(root, "tools/fit-offsets.js"), shadowFile], { encoding: "utf8" });
+assert.equal(berylGuard.status, 2);
+assert.match(berylGuard.stderr, /v1\.0 Beryl/);
+const fit = spawnSync(process.execPath, [path.join(root, "tools/fit-offsets.js"), shadowFile, "--cohort-closed"], { encoding: "utf8" });
 assert.equal(fit.status, 0, fit.stderr);
 const snippet = JSON.parse(fit.stdout.slice(fit.stdout.indexOf("{")));
 assert.ok(snippet.sphereOffsets.myopiaEmmetropia.under40 < -0.2, "young myopes need more minus (shrunk toward global)");

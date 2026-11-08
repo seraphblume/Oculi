@@ -138,6 +138,9 @@
     return Number.isFinite(x) ? Number(x.toFixed(digits)) : "";
   }
 
+  // Records whose post-exam agreement is scored (the 0.4.0-rc.1 cohort onwards).
+  const SCORED_SCHEMAS = ["dioptra-case-3", "dioptra-case-4"];
+
   function toShadowCSV(cases) {
     const scoring = window.DioptraScoring;
     const headers = [
@@ -153,7 +156,10 @@
       "keratometry_disagreement","ametropia","astigmatism","flags","status",
       "record_schema","cohort","near_wd_mm","near_point_mm",
       "previous_sph","previous_cyl","previous_axis","previous_add",
-      "previous_rx_worn_months","agreement_percent","agreement_passed","agreement_total","agreement_version","entry_revision"
+      "previous_rx_worn_months","agreement_percent","agreement_passed","agreement_total","agreement_version","entry_revision",
+      "axis_within_floor","clinical_match_floor","va_condition","final_va","final_va_ou","plus_test","final_add_os",
+      "endpoint_differs","endpoint_sph","endpoint_cyl","endpoint_axis","endpoint_reasons",
+      "symptom_glare_halos","symptom_flashes_floaters"
     ];
 
     const rows = [];
@@ -166,7 +172,9 @@
         const source = [c.prediction, c.shadow && c.shadow.prediction].find(p => engineId(p) === variant.split(":")[0]);
         // Retain the legacy evidence fallback for historical v0.2 exports.
         const evidence = source && source.od.evidence ? source : v03;
-        const agreement = c.schema === "dioptra-case-3" ? scoring.agreementCase(prediction, c.actual) : null;
+        const agreement = SCORED_SCHEMAS.includes(c.schema) ? scoring.agreementCase(prediction, c.actual) : null;
+        const checks = c.actual.checks || null;
+        const endpoint = c.actual.endpoint || null;
         for (const eye of ["od", "os"]) {
           const pred = prediction[eye];
           const actual = c.actual[eye];
@@ -201,7 +209,18 @@
             previous ? previous.add : "",
             previous && previous.wornMonths != null ? previous.wornMonths : "",
             agreement ? agreement.percent : "", agreement ? agreement.passed : "", agreement ? agreement.total : "",
-            agreement ? agreement.version : "", c.entryRevision || ""
+            agreement ? agreement.version : "", c.entryRevision || "",
+            s.axisWithinFloor == null ? "" : s.axisWithinFloor, s.clinicalMatchFloor,
+            c.input.vaCondition || "",
+            checks && checks.va ? checks.va[eye] || "" : "", checks && checks.va ? checks.va.ou || "" : "",
+            checks ? checks.plusTest || "" : "",
+            "addOs" in c.actual ? (c.actual.addOs == null ? "" : c.actual.addOs) : "",
+            "endpoint" in c.actual ? Boolean(endpoint) : "",
+            endpoint && endpoint[eye] ? endpoint[eye].sphere : "",
+            endpoint && endpoint[eye] ? endpoint[eye].cylinder : "",
+            endpoint && endpoint[eye] ? endpoint[eye].axis : "",
+            endpoint ? endpoint.reasons.join(" ") : "",
+            symptomValue(c, "glareHalos"), symptomValue(c, "flashesFloaters")
           ]);
         }
       }

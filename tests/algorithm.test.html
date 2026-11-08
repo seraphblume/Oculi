@@ -5,6 +5,7 @@
 <script src="../js/config.js"></script><script src="../js/algorithm.js"></script>
 <script src="../js/vertex.js"></script>
 <script src="../js/config-v03.js"></script><script src="../js/engine-v03.js"></script>
+<script src="../js/config-v10.js"></script><script src="../js/engine-v10.js"></script>
 <script src="../js/scoring.js"></script><script src="../js/engines.js"></script>
 <script>
 const out=document.getElementById("out");
@@ -29,7 +30,7 @@ test("v0.2 SE budget",()=>{
   os:{sphere:0.37,cylinder:-0.37,axis:90,va:"20/20",pinhole:"20/20"}});
  if(Math.abs(p.od.seShiftFromAR)>0.2500001)throw new Error(p.od.seShiftFromAR);
 });
-test("v0.3 candidate is primary by default",()=>{eq(DioptraEngines.primaryId(),"v0.3");eq(DioptraEngines.shadowId(),"v0.2");eq(DIOPTRA_V03_CONFIG.ui.finalAxisStep,1)});
+test("v1.0 Beryl is primary with v0.3 as comparator",()=>{eq(DioptraEngines.primaryId(),"v1.0");eq(DioptraEngines.shadowId(),"v0.3");eq(DIOPTRA_V03_CONFIG.ui.finalAxisStep,1)});
 test("v0.3 keeps 1° axis above 0.75 D",()=>{
  const p=DioptraEngineV03.predictCase(sample);
  eq(p.od.sphere,-2.75); eq(p.od.axis,178); eq(p.os.axis,168);

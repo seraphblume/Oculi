@@ -8,7 +8,7 @@
   const scrollPositions = [0, 0, 0];
   let selected = 0;
   let result = null;
-  let geniusPrediction = null;
+  const show$ = window.OculiRx.displayMinus; // typographic minus on screen; copied text stays ASCII
 
   function selectTab(index) {
     if (selected === index) return;
@@ -35,119 +35,6 @@
       selectTab(next);
       tabs[next].focus();
     });
-  });
-
-  const rcEngine = window.DioptraEngineV04;
-  function invalidateGenius() {
-    geniusPrediction = null;
-    $("geniusResults").hidden = true;
-    $("geniusEmpty").hidden = false;
-    $("geniusError").textContent = "";
-  }
-  function readGeniusEye(suffix, label) {
-    const values = ["geniusSphere", "geniusCylinder", "geniusAxis"].map(id => $(id + suffix).value);
-    try {
-      const rx = optics.calculate(...values).original;
-      if (Math.abs(rx.sphere) > 30 || Math.abs(rx.cylinder) > 10) throw new Error("Power is outside the RC test range.");
-      return { sphere: rx.sphere, cylinder: rx.cylinder, axis: rx.axis ?? 180 };
-    } catch (error) {
-      throw new Error(`${label}: ${error.message}`);
-    }
-  }
-  function geniusRx(rx) {
-    return optics.formatRx({ sphere: rx.sphere, cylinder: rx.cylinder, axis: rx.cylinder === 0 ? null : rx.axis });
-  }
-  function localDate() {
-    const now = new Date();
-    const offset = now.getTimezoneOffset() * 60000;
-    return new Date(now.getTime() - offset).toISOString().slice(0, 10);
-  }
-  function renderPrescriptionEye(suffix, rx) {
-    $("geniusPrescriptionSphere" + suffix).textContent = optics.formatPower(rx.sphere);
-    $("geniusPrescriptionCylinder" + suffix).textContent = optics.formatPower(rx.cylinder);
-    $("geniusPrescriptionAxis" + suffix).textContent = rx.cylinder === 0 ? "—" : `${String(rx.axis).padStart(3, "0")}°`;
-  }
-  const geniusMedical = [["geniusDiabetes", "Diabetes"], ["geniusHypertension", "Hypertension"], ["geniusPregnancy", "Pregnancy"]];
-  const geniusSymptoms = [
-    ["geniusBlurredVision", "Blurred vision"], ["geniusHeadache", "Headache"], ["geniusFlashes", "Flashes"],
-    ["geniusTearing", "Tearing"], ["geniusIrritation", "Burning / irritation"], ["geniusItching", "Itching"],
-    ["geniusDischarge", "Discharge"], ["geniusDryEye", "Dry eye"]
-  ];
-  function checkedLabels(entries) {
-    return entries.filter(([id]) => $(id).checked).map(([, label]) => label);
-  }
-  function renderGeniusContext() {
-    const medical = checkedLabels(geniusMedical);
-    const symptoms = checkedLabels(geniusSymptoms);
-    const other = $("geniusOtherSymptoms").value.trim();
-    if (other) symptoms.push(other);
-    $("geniusPrescriptionAge").textContent = `${$("geniusAge").value.trim()} years`;
-    $("geniusPrescriptionMedical").textContent = medical.join(", ") || "None reported";
-    $("geniusPrescriptionSymptoms").textContent = symptoms.join(", ") || "None reported";
-  }
-  function renderGenius(prediction) {
-    geniusPrediction = prediction;
-    $("geniusVersion").textContent = `v${prediction.version} · ${prediction.status}`;
-    $("geniusOdResult").textContent = geniusRx(prediction.od);
-    $("geniusOsResult").textContent = geniusRx(prediction.os);
-    $("geniusAddResult").textContent = prediction.tentativeAdd == null ? "Not estimated" : prediction.tentativeAdd > 0 ? `${optics.formatPower(prediction.tentativeAdd)} D` : "None";
-    const flags = [...prediction.flags, ...prediction.od.flags, ...prediction.os.flags];
-    const unique = [...new Map(flags.map(flag => [flag.code + flag.message, flag])).values()];
-    $("geniusFlags").replaceChildren(...unique.map(flag => {
-      const li = document.createElement("li");
-      li.textContent = flag.message;
-      return li;
-    }));
-    renderPrescriptionEye("Od", prediction.od);
-    renderPrescriptionEye("Os", prediction.os);
-    renderGeniusContext();
-    $("geniusPrescriptionAdd").textContent = prediction.tentativeAdd == null ? "Not estimated" : prediction.tentativeAdd > 0 ? `${optics.formatPower(prediction.tentativeAdd)} D` : "None";
-    $("geniusPrescriptionVersion").textContent = `RC model v${prediction.version} · ${prediction.status}`;
-    if (!$("geniusPrescriptionDate").value) $("geniusPrescriptionDate").value = localDate();
-    $("geniusEmpty").hidden = true;
-    $("geniusResults").hidden = false;
-  }
-  $("geniusForm").addEventListener("submit", event => {
-    event.preventDefault();
-    invalidateGenius();
-    try {
-      const ageText = $("geniusAge").value.trim();
-      if (!/^\d{1,3}$/.test(ageText) || Number(ageText) < 1 || Number(ageText) > 120) throw new Error("Enter an age from 1 to 120.");
-      const prediction = rcEngine.predictCase({
-        age: Number(ageText),
-        instrument: { vertexMm: 12 },
-        od: readGeniusEye("Od", "Right eye · OD"),
-        os: readGeniusEye("Os", "Left eye · OS")
-      });
-      renderGenius(prediction);
-    } catch (error) {
-      $("geniusError").textContent = error.message;
-    }
-  });
-  ["geniusAge", "geniusSphereOd", "geniusCylinderOd", "geniusAxisOd", "geniusSphereOs", "geniusCylinderOs", "geniusAxisOs"]
-    .forEach(id => $(id).addEventListener("input", invalidateGenius));
-  [...geniusMedical, ...geniusSymptoms].forEach(([id]) => $(id).addEventListener("change", () => {
-    if (!$("geniusResults").hidden) renderGeniusContext();
-  }));
-  $("geniusOtherSymptoms").addEventListener("input", () => {
-    if (!$("geniusResults").hidden) renderGeniusContext();
-  });
-  $("geniusReset").addEventListener("click", () => {
-    $("geniusForm").reset();
-    $("geniusForm").querySelectorAll(".chip").forEach(chip => chip.classList.remove("on"));
-    $("geniusPatientName").value = "";
-    $("geniusPrescriptionDate").value = "";
-    $("geniusPrescriptionNotes").value = "";
-    invalidateGenius();
-    $("geniusAge").focus();
-  });
-  $("geniusPrint").addEventListener("click", () => {
-    if (!geniusPrediction) return;
-    renderGeniusContext();
-    $("geniusPatientNamePrint").textContent = $("geniusPatientName").value.trim() || "Not provided";
-    $("geniusPrescriptionDatePrint").textContent = $("geniusPrescriptionDate").value || localDate();
-    $("geniusPrescriptionNotesPrint").textContent = $("geniusPrescriptionNotes").value.trim() || "—";
-    window.print();
   });
 
   function invalidate() {
@@ -189,9 +76,9 @@
     });
     $("calculatorToolPanel").setAttribute("aria-labelledby", active.id);
     const config = {
-      conversion: { button: "Convert", symbol: "↔", title: "Rx conversion" },
+      conversion: { button: "Convert", symbol: "↔", title: "Vertex" },
       se: { button: "Calculate SE", symbol: "¼", title: "Spherical Equivalent" },
-      transpose: { button: "Transpose", symbol: "±", title: "Transpositions" }
+      transpose: { button: "Transpose", symbol: "±", title: "Transposition" }
     }[tool];
     $("calculatorSubmit").textContent = config.button;
     $("calculatorEmptySymbol").textContent = config.symbol;
@@ -225,18 +112,18 @@
   function renderEye(eye, next, from, to) {
     const get = id => $(id + eye.suffix);
     const { original: o, transposed: t, se, converted } = next;
-    get("calcOriginal").textContent = optics.formatRx(o);
-    get("calcTransposed").textContent = optics.formatRx(t);
+    get("calcOriginal").textContent = show$(optics.formatRx(o));
+    get("calcTransposed").textContent = show$(optics.formatRx(t));
     get("calcNotation").textContent = t.cylinder === 0 ? "Sphere only · axis not applicable" : t.cylinder < 0 ? "Minus-cylinder notation" : "Plus-cylinder notation";
-    get("calcSE").textContent = `${f(next.roundedSE)} D`;
+    get("calcSE").textContent = show$(`${f(next.roundedSE)} D`);
     if (calculatorTool === "conversion") {
       get("calcVertexTitle").textContent = mode() === "custom" ? "Vertex optical equivalent" : mode() === "contactsToSpectacles" ? "Spectacle-plane optical equivalent" : "Contact-plane optical equivalent";
-      get("calcVertex").textContent = displayRx(converted);
+      get("calcVertex").textContent = show$(displayRx(converted));
       get("calcVertexPlanes").textContent = `${Number(from)} mm → ${Number(to)} mm from cornea`;
       get("calcVertexContext").textContent = Number(from) === Number(to) ? "Same plane · no compensation"
         : Math.max(Math.abs(o.sphere), Math.abs(o.sphere + o.cylinder)) >= 4 ? "At least one principal meridian is ±4.00 D or greater." : "Both principal meridians are below ±4.00 D.";
-      get("calcVertexMeridians").textContent = `Principal powers: ${converted.sphere.toFixed(2)} D / ${(converted.sphere + converted.cylinder).toFixed(2)} D`;
-      get("calcVertexRounded").textContent = optics.formatRx({ ...converted, sphere: quarter(converted.sphere), cylinder: quarter(converted.cylinder) });
+      get("calcVertexMeridians").textContent = show$(`Principal powers: ${converted.sphere.toFixed(2)} D / ${(converted.sphere + converted.cylinder).toFixed(2)} D`);
+      get("calcVertexRounded").textContent = show$(optics.formatRx({ ...converted, sphere: quarter(converted.sphere), cylinder: quarter(converted.cylinder) }));
     }
     const rows = calculatorTool === "conversion" ? [
       ["Formula (each meridian)", "F₂ = F₁ / [1 − ((source mm − target mm) / 1000) × F₁]"],
@@ -251,12 +138,12 @@
     ];
     get("calculatorMath").replaceChildren(...rows.flatMap(([label, value]) => {
       const dt = document.createElement("dt"); dt.textContent = label;
-      const dd = document.createElement("dd"); dd.textContent = value;
+      const dd = document.createElement("dd"); dd.textContent = show$(value);
       return [dt, dd];
     }));
     get("calculatorRounding").hidden = calculatorTool !== "se";
     get("calculatorRounding").textContent = next.lowerQuarter === next.upperQuarter ? "Exact 0.25 D increment."
-      : `Adjacent values: ${f(next.lowerQuarter)} D and ${f(next.upperQuarter)} D.`;
+      : show$(`Adjacent values: ${f(next.lowerQuarter)} D and ${f(next.upperQuarter)} D.`);
   }
   function show(next) {
     const from = $("calcFromVertex").value.trim().replace(",", "."), to = $("calcToVertex").value.trim().replace(",", ".");

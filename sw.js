@@ -1,5 +1,5 @@
 // Network first, cache as offline fallback, so a deployed update is picked up on the next load.
-const CACHE = "oculi-v0.4.0-rc.1-workspace-tabs-1";
+const CACHE = "oculi-v1.0.0-beryl-1";
 const ASSETS = [
   "./",
   "./index.html",
@@ -9,14 +9,16 @@ const ASSETS = [
   "./js/algorithm.js",
   "./js/config-v03.js",
   "./js/engine-v03.js",
-  "./js/config-v04.js",
-  "./js/engine-v04.js",
+  "./js/config-v10.js",
+  "./js/engine-v10.js",
   "./js/scoring.js",
   "./js/engines.js",
   "./js/storage.js",
   "./js/ticket-scan.js",
+  "./js/rx-fields.js",
   "./js/app.js",
   "./js/optical-calculators.js",
+  "./js/genius.js",
   "./js/workspace.js",
   "./manifest.webmanifest",
   "./assets/icon.svg",

@@ -11,7 +11,7 @@ function load(files) {
   return context.window;
 }
 const baseFiles = ["js/vertex.js", "js/config.js", "js/algorithm.js", "js/config-v03.js"];
-const w = load([...baseFiles, "js/engine-v03.js", "js/config-v04.js", "js/engine-v04.js", "js/scoring.js", "js/engines.js", "js/storage.js"]);
+const w = load([...baseFiles, "js/engine-v03.js", "js/config-v04.js", "js/engine-v04.js", "js/config-v10.js", "js/engine-v10.js", "js/scoring.js", "js/engines.js", "js/storage.js"]);
 const eye = (sphere = -2, cylinder = -1, axis = 90) => ({ sphere, cylinder, axis });
 const input = age => ({ age, instrument: { vertexMm: 12 }, od: eye(), os: eye() });
 const withoutTime = p => { const copy = JSON.parse(JSON.stringify(p)); delete copy.lockedAt; return copy; };
@@ -40,21 +40,20 @@ for (let i = 0; i < 500; i++) {
 const configBefore = JSON.stringify(w.DIOPTRA_V03_CONFIG);
 assert.equal(w.DIOPTRA_V04_CONFIG.sphereOffsets.myopiaEmmetropia.under40, -.50);
 assert.equal(w.DIOPTRA_V04_CONFIG.sphereOffsets.myopiaEmmetropia["40plus"], -.30);
+// 0.4.0-rc.1 is retired from new runs (v1.0 "Beryl" carries its calibration); the frozen
+// source stays testable so historical records and the v1.0 parity test have a reference.
+const runRc = inp => ({ primary: { id: "v0.4", prediction: w.DioptraEngineV04.predictCase(inp) }, shadow: { id: "v0.3", prediction: w.DioptraEngineV03.predictCase(inp) } });
+assert.equal(w.DioptraEngines.primaryId(), "v1.0", "the RC is no longer the primary engine");
 for (const age of [9, 17, 17.9, 18, 39, 39.9, 40, 75]) {
-  const run = w.DioptraEngines.run(input(age));
-  assert.equal(run.primary.id, "v0.4");
+  const run = runRc(input(age));
   assert.equal(run.primary.prediction.version, "0.4.0-rc.1");
-  assert.equal(run.shadow.id, "v0.3");
   assert.equal(run.primary.prediction.od.stratum.offset, age < 18 ? -.25 : age < 40 ? -.50 : -.30);
   assert.equal(run.shadow.prediction.od.stratum.offset, -.25);
   assert.equal(run.primary.prediction.status, "review");
   assert.ok(run.primary.prediction.flags.some(f => f.code === "EXPERIMENTAL_RC"));
   assert.equal(run.primary.prediction.flags.some(f => f.code === "PEDIATRIC_PRIOR"), age < 18);
-  assert.deepEqual(withoutTime(run.shadow.prediction), withoutTime(w.DioptraEngineV03.predictCase(input(age))));
 }
 assert.equal(JSON.stringify(w.DIOPTRA_V03_CONFIG), configBefore, "no global config mutation");
-w.DioptraAlgorithm.predictCase = () => { throw new Error("Retired engine must not run"); };
-w.DioptraEngines.run(input(30));
 for (const sphere of [1.25, 3.5]) {
   const p = w.DioptraEngineV04.predictCase({ ...input(35), od: eye(sphere, 0), os: eye(sphere, 0) });
   assert.equal(p.od.stratum.offset, -.25);
@@ -80,7 +79,7 @@ assert.equal(score(p, null), null);
 assert.equal(score(p, { od: eye(NaN), os: eye() }), null);
 assert.equal(score(p, { ...p, add: 3 }).percent, 100, "ADD is separate");
 
-const run = w.DioptraEngines.run(input(30));
+const run = runRc(input(30));
 const record = { schema: "dioptra-case-3", cohort: w.DIOPTRA_V04_CONFIG.cohort, caseId: "S1", savedAt: "2026-10-23T12:00:00Z", input: { ...input(30), previousRxKnown: "yes", previousRx: { od: eye(), os: eye(), add: null, wornMonths: 24 } }, prediction: run.primary.prediction, actual: { ...p, add: null }, shadow: { prediction: run.shadow.prediction } };
 const csv = w.DioptraStorage.toShadowCSV([record]);
 const [header, ...rows] = csv.split("\n").map(r => r.split(","));
@@ -106,4 +105,4 @@ const oldCsv = w.DioptraStorage.toShadowCSV([oldRecord]).split("\n").map(r => r.
 assert.equal(oldCsv.length - 1, 8, "old v0.3 primary and its three estimators remain exportable");
 assert.equal(oldCsv[1][oldCsv[0].indexOf("agreement_percent")], "", "do not fabricate a historical score");
 assert.equal(JSON.stringify(oldRecord), oldBefore);
-console.log("PASS: v0.4 RC offsets, prior fallbacks, baseline parity, engine retirement, history isolation, agreement and exports");
+console.log("PASS: frozen 0.4.0-rc.1 offsets, prior fallbacks, baseline parity, engine retirement, history isolation, agreement and exports");
