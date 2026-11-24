@@ -574,7 +574,11 @@ const server = http.createServer(async (req, res) => {
       await page.emulateMedia({ colorScheme, reducedMotion: "reduce" });
       for (const width of [320, 390, 1280]) {
         await page.setViewportSize({ width, height: 900 });
-        assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), `${colorScheme} calculator overflow at ${width}`);
+        await page.evaluate(() => document.fonts.ready);
+        const calcOverflow = await page.evaluate(() => ({ scroll: document.documentElement.scrollWidth,
+          over: [...document.querySelectorAll("body *")].filter(e => e.getBoundingClientRect().width && e.getBoundingClientRect().right > innerWidth + 1)
+            .map(e => `${e.tagName}#${e.id}.${String(e.className).split(" ")[0]}:${Math.round(e.getBoundingClientRect().right)}`).slice(0, 8) }));
+        assert.ok(calcOverflow.scroll <= width, `${colorScheme} calculator overflow at ${width}: ${JSON.stringify(calcOverflow)}`);
         if (process.env.DIOPTRA_SCREENSHOT_DIR && width !== 320) {
           await page.locator(".calculator-paste summary").evaluate(el => { el.parentElement.open = false; });
           await page.screenshot({ path: path.join(process.env.DIOPTRA_SCREENSHOT_DIR, `calculator-${colorScheme}-${width}.png`), fullPage: true });

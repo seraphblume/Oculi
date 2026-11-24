@@ -266,3 +266,10 @@ select:disabled, input:disabled { opacity: 0.45; }
   .view-tabs { gap: 0; justify-content: space-between; }
   .view-tabs button { white-space: nowrap; font-size: 12px; padding-left: 6px; padding-right: 6px; }
 }
+/* Mono capitals run wide: tab labels wrap rather than push past a narrow screen. */
+.calculator-tabs button { white-space: normal; overflow-wrap: anywhere; line-height: 1.2; min-width: 0; }
+.calculator-panel details > summary { min-width: 0; }
+@media (max-width: 400px) {
+  .calculator-tabs button { font-size: 11px; padding-left: 4px; padding-right: 4px; }
+}
+.group > .disclosure-row { padding-right: 4px; } /* room for the turned chevron */
