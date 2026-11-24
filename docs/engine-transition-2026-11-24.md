@@ -6,25 +6,27 @@ Date: 2026-11-24 (America/Mexico_City)
 
 | Current release | Frozen source rules | Runtime role | Cohort |
 |---|---|---|---|
-| Beryl v1.1.1 (`beryl-v1.1.1`) | v0.3.0 | Primary base model | `beryl-v1.1.1-1` |
-| Heliodor v1.1 (`heliodor-v1.1`) | former Beryl v1.0.0 | Paired comparator | `heliodor-v1.1-1` |
-| Goshenite v1.0 (`goshenite-v1.0`) | Beryl v1.1.1 plus a future learned candidate ranker | Research-only, untrained, not in the runtime registry | none |
+| Beryl v1.1 (`beryl-v1.1`) | v0.3.0 | Primary base model | `beryl-v1.1-1` |
+| Heliodor v1.0 (`heliodor-v1.0`) | former Beryl v1.0.0 | Paired comparator | `heliodor-v1.0-1` |
+| Goshenite v1.0 (`goshenite-v1.0`) | Beryl v1.1 plus a future learned candidate ranker | Research-only, untrained, not in the runtime registry | none |
 
 Historical records are not relabelled. The v0.3.0, 0.4.0-rc.1 and v1.0.0 Beryl files remain frozen for audit and parity tests. Namespaced engine IDs avoid confusing Goshenite v1.0 with the historical numeric `v1.0` engine ID.
 
-The transition does not change dioptric rules. Beryl v1.1.1 is regression-tested against v0.3.0, and Heliodor v1.1 is regression-tested against former Beryl v1.0. Every active result remains marked unvalidated and requires an independent examination.
+The transition does not change dioptric rules. Beryl v1.1 is regression-tested against v0.3.0, and Heliodor v1.0 is regression-tested against former Beryl v1.0. Every active result remains marked unvalidated and requires an independent examination.
 
 ## Dataset audit
 
-The five reviewed CSVs are cumulative or reformatted snapshots, not five independent datasets:
+Case IDs restart at RX-0001 in every cohort, so an ID only identifies a case inside its own export. Exams were matched across exports by age plus both eyes' autorefractor sphere, cylinder and axis:
 
-| Export | Rows | Unique cases | Interpretation |
+| Export | Rows | Distinct exams | Overlap |
 |---|---:|---:|---|
-| 2026-09 study | 25 | 25 | v0.1.0 case snapshot |
-| 2026-10 study | 53 | 53 | v0.3.0 case snapshot; contains all 25 September case IDs |
+| 2026-09 study (v0.1.0) | 25 | 24 | 16 re-entered in October under new IDs |
+| 2026-10 study (v0.3.0) | 53 | 53 | includes the 16 September exams |
 | 2026-10 comparison | 530 | 53 | 5 variants × 2 eyes × 53 cases |
-| 2026-11 study | 33 | 33 | v1.0.0 case snapshot; all 33 IDs also occur in the October snapshot |
+| 2026-11 study (v1.0.0) | 33 | 32 | RX-0005 and RX-0021 are one exam saved twice; 2 exams also appear in October |
 | 2026-11 comparison | 528 | 33 | 8 variants × 2 eyes × 33 cases |
+
+Across the three study exports there are 91 distinct exams by this match. Matching on readings is a heuristic: two different patients with identical age and readings would be merged.
 
 The comparison rows are repeated analytical views. They are not independent observations. Case ID, not eye/variant row, is the minimum split unit.
 
@@ -42,7 +44,7 @@ No export contains a patient-tolerance follow-up outcome or an optometrist ratin
 
 Goshenite should initially be an offline candidate ranker, not an unconstrained prescription generator:
 
-1. Beryl v1.1.1 produces the locked base prediction.
+1. Beryl v1.1 produces the locked base prediction.
 2. A fixed, clinician-reviewed candidate set is generated from deterministic existing candidates. No arbitrary continuous Rx is produced.
 3. Only features available before the independent subjective endpoint may enter the model. Patient tolerance, clinician score, final Rx, endpoint reasons and post-dispensing information are labels or audit fields, never inference-time features.
 4. The research model ranks candidates. It remains invisible to the clinician during data collection and cannot change the saved clinical result.
@@ -61,7 +63,7 @@ The machine-readable collection contract is `docs/goshenite-training-record.sche
 - Lock the clinical protocol, inclusion/exclusion criteria, follow-up window, score rubric and adverse-event handling before reviewing outcomes.
 - Obtain appropriate ethics, consent, privacy, security and medical-device/regulatory review for the intended jurisdiction and use.
 - Keep direct identifiers out of research exports. Maintain access controls, an audit log and a documented deletion/retention policy.
-- Freeze Beryl v1.1.1 and the candidate-generation rules before collection.
+- Freeze Beryl v1.1 and the candidate-generation rules before collection.
 
 ### Gate 1 — data readiness
 
@@ -75,7 +77,7 @@ The machine-readable collection contract is `docs/goshenite-training-record.sche
 
 - Deduplicate by case ID and split by patient, clinician and site, with a later-time holdout.
 - Fit once inside the development partition. Do not select features, thresholds or candidate bounds on the test partition.
-- Compare against Beryl v1.1.1 and a no-model policy. Report confidence intervals, missingness, site/clinician heterogeneity and subgroup results.
+- Compare against Beryl v1.1 and a no-model policy. Report confidence intervals, missingness, site/clinician heterogeneity and subgroup results.
 - Reject the model if any safety subgroup worsens materially, if calibration is unstable, or if performance depends on final/outcome leakage.
 
 ### Gate 3 — silent prospective validation

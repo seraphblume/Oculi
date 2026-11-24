@@ -4,7 +4,7 @@
   "use strict";
   const $ = id => document.getElementById(id);
   const Rx = window.OculiRx;
-  const engine = window.OculiEngineBerylV111; // unchanged v0.3.0 rules under the Beryl release identity
+  const engine = window.OculiEngineBerylV11; // unchanged v0.3.0 rules under the Beryl release identity
   const ENGINE_NOTE = "Beryl base model · unvalidated";
   const MODEL_LABEL = "Oculi Model";
   const MIN_AGE = 18;

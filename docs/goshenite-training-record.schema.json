@@ -32,8 +32,8 @@
       "additionalProperties": false,
       "required": ["id", "version", "predictionLockedBeforeEndpoint"],
       "properties": {
-        "id": { "const": "beryl-v1.1.1" },
-        "version": { "const": "1.1.1" },
+        "id": { "const": "beryl-v1.1" },
+        "version": { "const": "1.1.0" },
         "predictionLockedBeforeEndpoint": { "const": true }
       }
     },

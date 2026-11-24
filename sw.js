@@ -1,5 +1,5 @@
 // Network first, cache as offline fallback, so a deployed update is picked up on the next load.
-const CACHE = "oculi-engine-transition-beryl-v1.1.1-1";
+const CACHE = "oculi-engine-transition-beryl-v1.1-1";
 const ASSETS = [
   "./",
   "./index.html",
@@ -11,10 +11,10 @@ const ASSETS = [
   "./js/engine-v03.js",
   "./js/config-v10.js",
   "./js/engine-v10.js",
-  "./js/config-beryl-v111.js",
-  "./js/engine-beryl-v111.js",
-  "./js/config-heliodor-v11.js",
-  "./js/engine-heliodor-v11.js",
+  "./js/config-beryl-v11.js",
+  "./js/engine-beryl-v11.js",
+  "./js/config-heliodor-v10.js",
+  "./js/engine-heliodor-v10.js",
   "./js/goshenite-research.js",
   "./js/scoring.js",
   "./js/engines.js",

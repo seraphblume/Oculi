@@ -1,6 +1,6 @@
 # Proposed v0.3 data collection
 
-Status: **partly collected historical design, with the implemented fields carried forward.** Records created under v0.3 use `dioptra-case-2` and cohort `v0.3-candidate-1`; they remain readable and unchanged. Beryl v1.1.1 preserves the same underlying observation rules under a new cohort and record revision. Remaining fields below are design only; the proposed schema is not a runtime record format.
+Status: **partly collected historical design, with the implemented fields carried forward.** Records created under v0.3 use `dioptra-case-2` and cohort `v0.3-candidate-1`; they remain readable and unchanged. Beryl v1.1 preserves the same underlying observation rules under a new cohort and record revision. Remaining fields below are design only; the proposed schema is not a runtime record format.
 
 Machine-readable draft: [`data-collection-v0.3.schema.json`](data-collection-v0.3.schema.json)
 

@@ -14,14 +14,14 @@ A blinded comparison workflow for structured research.
 2. **Refract.** Complete your own exam without seeing Oculi's prediction. Record the final Rx, the final VA, the +0.25 D test, and the endpoint whenever the prescribed Rx differs from it.
 3. **Compare.** Reveal the prediction and save the case.
 
-The active base engine is **Beryl v1.1.1**, which preserves the v0.3.0 rules. **Heliodor v1.1** preserves the former Beryl v1.0 rules as a paired comparator. Refraction uses a fixed 12 mm vertex. Repeat readings, previous prescription, keratometry, near measurements and review flags stay available without crowding the main flow.
+The active base engine is **Beryl v1.1**, which preserves the v0.3.0 rules. **Heliodor v1.0** preserves the former Beryl v1.0 rules as a paired comparator. Refraction uses a fixed 12 mm vertex. Repeat readings, previous prescription, keratometry, near measurements and review flags stay available without crowding the main flow.
 
 ### Genius
 
 A guided refraction preview: **screen → propose → verify → preview**.
 
 - **Screen.** Any warning sign, or an age under 18, stops Genius before any proposal. Current glasses, symptoms and medical background become review notes, not dioptric changes.
-- **Propose.** The full autorefractor ticket (repeats included) runs through Beryl v1.1.1 with its unchanged −0.25 D prior.
+- **Propose.** The full autorefractor ticket (repeats included) runs through Beryl v1.1 with its unchanged −0.25 D prior.
 - **Verify.** VA through the proposed Rx in a trial frame, near when there is an ADD, the +0.25 D test, then accepted or refined.
 - **Preview.** A one-page, watermarked preview that records the verification and review notes. It is not a prescription. Save it as a PDF (on a phone this opens the share sheet, which also offers Print) or print it, then start the next patient with **New Patient**.
 
@@ -45,7 +45,7 @@ Ticket scanning reads an autorefractor image in the browser. The image and patie
 
 Oculi is an experimental research prototype. It is not a validated medical device and must not be the sole basis for prescribing, dispensing, diagnosis, or treatment.
 
-Beryl v1.1.1 is a release identity for the unchanged v0.3.0 rules. Heliodor v1.1 is a release identity for the former Beryl v1.0 rules. Historical records keep their original identities. **Version numbers and gemstone names are not validation claims.** Agreement scores describe differences within defined software tolerances; they are not clinical confidence scores.
+Beryl v1.1 is a release identity for the unchanged v0.3.0 rules. Heliodor v1.0 is a release identity for the former Beryl v1.0 rules. Historical records keep their original identities. **Version numbers and gemstone names are not validation claims.** Agreement scores describe differences within defined software tolerances; they are not clinical confidence scores.
 
 Goshenite v1.0 is an untrained research manifest only. It is not in the runtime engine registry and cannot produce a tuned recommendation. The outcome contract, training boundaries, prospective validation gates and naming lineage are documented in [`docs/engine-transition-2026-11-24.md`](docs/engine-transition-2026-11-24.md).
 
@@ -66,7 +66,7 @@ Then visit `http://localhost:8000`.
 The test suite covers:
 - the frozen engine contracts;
 - historical Beryl v1.0 parity with the release candidate;
-- Beryl v1.1.1 parity with v0.3.0 and Heliodor v1.1 parity with historical Beryl v1.0;
+- Beryl v1.1 parity with v0.3.0 and Heliodor v1.0 parity with historical Beryl v1.0;
 - the comparison engine;
 - exports and offset fitting;
 - ticket parsing;

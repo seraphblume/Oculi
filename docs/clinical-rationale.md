@@ -19,7 +19,7 @@ The long-term targets are:
 
 A difference between these two is not automatically model error. It is a prescribing decision that needs an explicit reason code.
 
-The historical v0.2.0 study predicts from the selected autorefractor S/C/A and compares with the clinician's final Rx. Beryl v1.1.1 preserves the v0.3.0 rules and still targets the final Rx, while storing the richer evidence needed to separate the two targets later.
+The historical v0.2.0 study predicts from the selected autorefractor S/C/A and compares with the clinician's final Rx. Beryl v1.1 preserves the v0.3.0 rules and still targets the final Rx, while storing the richer evidence needed to separate the two targets later.
 
 ## Evidence sources to keep separate
 

@@ -1,7 +1,7 @@
 (function () {
   const $ = id => document.getElementById(id);
   const cfg = window.DIOPTRA_CONFIG;
-  const activeCfg = window.OCULI_BERYL_V111_CONFIG;
+  const activeCfg = window.OCULI_BERYL_V11_CONFIG;
   const Rx = window.OculiRx;
   const alg = window.DioptraAlgorithm;
   const engines = window.DioptraEngines;
@@ -488,7 +488,7 @@
     const run = state.run;
     const record = {
       schema: "dioptra-case-5",
-      entryRevision: "beryl-v111-1",
+      entryRevision: "beryl-v11-1",
       cohort: activeCfg.cohort,
       caseId: state.input.caseId,
       savedAt: new Date().toISOString(),

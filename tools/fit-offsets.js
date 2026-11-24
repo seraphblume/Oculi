@@ -158,7 +158,7 @@ function main() {
   const open = [
     ["0.2", "v0.2 (Cohort B)"],
     ["1.0", "historical v1.0 Beryl"],
-    ["1.1.1", "Beryl v1.1.1"]
+    ["1.1", "Beryl v1.1"]
   ].filter(([prefix]) => eyes.some(e => String(e.version).startsWith(prefix)));
   if (!args.cohortClosed && open.length) {
     console.error(`This export contains ${open.map(o => o[1]).join(" and ")} cases. Close and export the cohort, then re-run with --cohort-closed.`);

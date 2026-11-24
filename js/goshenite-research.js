@@ -5,7 +5,7 @@
     id: "goshenite-v1.0",
     name: "Goshenite",
     version: "1.0.0",
-    baseEngine: "beryl-v1.1.1",
+    baseEngine: "beryl-v1.1",
     status: "research-only-untrained",
     outcomeSchema: "goshenite-training-1",
     deploymentEligible: false,
@@ -17,7 +17,7 @@
   function createBaselineSnapshot(input) {
     return {
       manifest: { ...manifest },
-      baseline: window.OculiEngineBerylV111.predictCase(input),
+      baseline: window.OculiEngineBerylV11.predictCase(input),
       tunedPrediction: null
     };
   }

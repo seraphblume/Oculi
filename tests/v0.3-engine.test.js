@@ -16,7 +16,7 @@ function load(overrides) {
   }
   if (overrides) overrides(sandbox.window.DIOPTRA_V03_CONFIG);
   for (const file of ["js/engine-v03.js", "js/config-v10.js", "js/engine-v10.js",
-    "js/config-beryl-v111.js", "js/engine-beryl-v111.js", "js/config-heliodor-v11.js", "js/engine-heliodor-v11.js",
+    "js/config-beryl-v11.js", "js/engine-beryl-v11.js", "js/config-heliodor-v10.js", "js/engine-heliodor-v10.js",
     "js/scoring.js", "js/engines.js"]) {
     vm.runInContext(fs.readFileSync(path.join(root, file), "utf8"), sandbox, { filename: file });
   }
@@ -47,8 +47,8 @@ test("default configuration is the active v0.3 candidate with unchanged prior of
     for (const v of Object.values(bands)) near(v, -0.25, EPS, "prior offset");
   }
   assert.equal(cfg.lowCylinder.dropAtOrBelow, null);
-  assert.equal(w.DioptraEngines.primaryId(), "beryl-v1.1.1");
-  assert.equal(w.DioptraEngines.shadowId(), "heliodor-v1.1");
+  assert.equal(w.DioptraEngines.primaryId(), "beryl-v1.1");
+  assert.equal(w.DioptraEngines.shadowId(), "heliodor-v1.0");
 });
 
 test("power vectors round-trip", () => {
@@ -272,23 +272,23 @@ test("ANSI-style axis tolerance and cylinder-aware scoring", () => {
   near(sum.axisWithinToleranceRate, 0.5, EPS, "axis rate");
 });
 
-test("engine registry promotes Beryl v1.1.1 with Heliodor v1.1 as comparator", () => {
+test("engine registry promotes Beryl v1.1 with Heliodor v1.0 as comparator", () => {
   const run = w.DioptraEngines.run({ age: 30, od: eye(-1, -0.5, 90), os: eye(-1, -0.5, 90) });
-  assert.equal(run.primary.id, "beryl-v1.1.1");
-  assert.equal(run.primary.prediction.version, "1.1.1");
-  assert.equal(run.shadow.id, "heliodor-v1.1");
-  assert.equal(run.shadow.prediction.version, "1.1.0");
+  assert.equal(run.primary.id, "beryl-v1.1");
+  assert.equal(run.primary.prediction.version, "1.1.0");
+  assert.equal(run.shadow.id, "heliodor-v1.0");
+  assert.equal(run.shadow.prediction.version, "1.0.0");
 
   const historical = load(c => { c.mode = "shadow"; });
   const run2 = historical.DioptraEngines.run({ age: 30, od: eye(-1, -0.5, 90), os: eye(-1, -0.5, 90) });
-  assert.equal(run2.primary.id, "beryl-v1.1.1");
-  assert.equal(run2.shadow.id, "heliodor-v1.1");
+  assert.equal(run2.primary.id, "beryl-v1.1");
+  assert.equal(run2.shadow.id, "heliodor-v1.0");
   assert.equal(historical.DioptraEngines.ENGINES["v0.2"], undefined);
 });
 
 test("a Heliodor shadow failure never substitutes for or blocks Beryl", () => {
   const isolated = load();
-  isolated.OculiEngineHeliodorV11.predictCase = () => { throw new Error("Synthetic shadow failure"); };
+  isolated.OculiEngineHeliodorV10.predictCase = () => { throw new Error("Synthetic shadow failure"); };
   const run = isolated.DioptraEngines.run({ age: 30, od: eye(-1, -1, 178), os: eye(-1, -1, 168) });
   assert.equal(run.primary.prediction.od.axis, 178);
   assert.equal(run.shadow.prediction, null);

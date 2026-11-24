@@ -177,9 +177,9 @@ const server = http.createServer(async (req, res) => {
     assert.equal(JSON.stringify(saved[0]), historical, "historical record is untouched");
     const c = saved[1];
     assert.equal(c.schema, "dioptra-case-5");
-    assert.equal(c.entryRevision, "beryl-v111-1");
-    assert.equal(c.cohort, "beryl-v1.1.1-1");
-    assert.equal(c.prediction.engine, "beryl-v1.1.1");
+    assert.equal(c.entryRevision, "beryl-v11-1");
+    assert.equal(c.cohort, "beryl-v1.1-1");
+    assert.equal(c.prediction.engine, "beryl-v1.1");
     assert.equal(c.prediction.name, "Beryl");
     assert.equal(c.input.vaCondition, "unaided");
     assert.equal(c.input.symptoms.glareHalos, true);
@@ -192,8 +192,8 @@ const server = http.createServer(async (req, res) => {
     assert.equal(c.actual.endpoint.od.sphere, -2.5);
     assert.equal(c.prediction.od.axis, 178);
     assert.equal(c.prediction.tentativeAdd, 1.75);
-    assert.equal(c.shadow.prediction.version, "1.1.0");
-    assert.equal(c.shadow.prediction.engine, "heliodor-v1.1");
+    assert.equal(c.shadow.prediction.version, "1.0.0");
+    assert.equal(c.shadow.prediction.engine, "heliodor-v1.0");
     assert.equal(c.observations.near.workingDistanceCm, 33);
     assert.equal(c.observations.near.nearPointCm, 50);
     assert.equal(c.observations.instrument.vertexMm, 12, "refraction always records the fixed 12 mm vertex");
@@ -213,8 +213,8 @@ const server = http.createServer(async (req, res) => {
     assert.equal(await page.locator("#stats .stat strong").first().innerText(), "1");
     const csv = await page.evaluate(() => DioptraStorage.toShadowCSV(DioptraStorage.listCases()));
     const rows = csv.split("\n").map(r => r.split(","));
-    const recordRow = rows.find(r => r[0] === c.caseId && r[4] === "beryl-v1.1.1" && r[5] === "od");
-    for (const [field, value] of Object.entries({ near_wd_mm: "330", near_point_mm: "500", previous_sph: "1", previous_cyl: "0", previous_axis: "0", previous_add: "1.25", previous_rx_worn_months: "36", agreement_percent: String(c.agreement.percent), agreement_total: "6", cohort: "beryl-v1.1.1-1", record_schema: "dioptra-case-5",
+    const recordRow = rows.find(r => r[0] === c.caseId && r[4] === "beryl-v1.1" && r[5] === "od");
+    for (const [field, value] of Object.entries({ near_wd_mm: "330", near_point_mm: "500", previous_sph: "1", previous_cyl: "0", previous_axis: "0", previous_add: "1.25", previous_rx_worn_months: "36", agreement_percent: String(c.agreement.percent), agreement_total: "6", cohort: "beryl-v1.1-1", record_schema: "dioptra-case-5",
       va_condition: "unaided", final_va: "20/20", final_va_ou: "20/20", plus_test: "held", final_add_os: "2", endpoint_differs: "true", endpoint_sph: "-2.5", endpoint_reasons: "adaptation_large_change", symptom_flashes_floaters: "true" })) {
       assert.equal(recordRow[rows[0].indexOf(field)], value, field);
     }
@@ -605,7 +605,7 @@ const server = http.createServer(async (req, res) => {
     assert.equal(await page.locator("body").getAttribute("data-stage"), "compare");
     await page.locator("#primaryAction").click();
     const zeroCase = await page.evaluate(() => DioptraStorage.listCases().at(-1));
-    assert.equal(zeroCase.entryRevision, "beryl-v111-1");
+    assert.equal(zeroCase.entryRevision, "beryl-v11-1");
     assert.equal(zeroCase.agreement.total, 4, "sphere-only axes are excluded, not free passes");
     assert.equal(zeroCase.input.od.pinhole, "");
     assert.equal(zeroCase.input.os.pinhole, "20/20");
@@ -638,7 +638,7 @@ const server = http.createServer(async (req, res) => {
     assert.equal(await page.locator("#osSelAx").isEnabled(), true);
     assert.equal(await page.locator("#odR2Ax").inputValue(), "", "unused repeat stays empty");
     assert.deepEqual(errors, []);
-    console.log("PASS: Beryl v1.1.1 case form, Heliodor comparison, VA condition, checks, endpoint and per-eye ADD, cohort isolation, previous Rx, exports, Genius, calculators and layouts");
+    console.log("PASS: Beryl v1.1 case form, Heliodor comparison, VA condition, checks, endpoint and per-eye ADD, cohort isolation, previous Rx, exports, Genius, calculators and layouts");
   } finally {
     if (browser) await browser.close();
     await new Promise(resolve => server.close(resolve));

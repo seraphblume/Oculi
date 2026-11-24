@@ -12,7 +12,7 @@ function load(files) {
 }
 const baseFiles = ["js/vertex.js", "js/config.js", "js/algorithm.js", "js/config-v03.js"];
 const w = load([...baseFiles, "js/engine-v03.js", "js/config-v04.js", "js/engine-v04.js", "js/config-v10.js", "js/engine-v10.js",
-  "js/config-beryl-v111.js", "js/engine-beryl-v111.js", "js/config-heliodor-v11.js", "js/engine-heliodor-v11.js",
+  "js/config-beryl-v11.js", "js/engine-beryl-v11.js", "js/config-heliodor-v10.js", "js/engine-heliodor-v10.js",
   "js/scoring.js", "js/engines.js", "js/storage.js"]);
 const eye = (sphere = -2, cylinder = -1, axis = 90) => ({ sphere, cylinder, axis });
 const input = age => ({ age, instrument: { vertexMm: 12 }, od: eye(), os: eye() });
@@ -45,7 +45,7 @@ assert.equal(w.DIOPTRA_V04_CONFIG.sphereOffsets.myopiaEmmetropia["40plus"], -.30
 // 0.4.0-rc.1 is retired from new runs (v1.0 "Beryl" carries its calibration); the frozen
 // source stays testable so historical records and the v1.0 parity test have a reference.
 const runRc = inp => ({ primary: { id: "v0.4", prediction: w.DioptraEngineV04.predictCase(inp) }, shadow: { id: "v0.3", prediction: w.DioptraEngineV03.predictCase(inp) } });
-assert.equal(w.DioptraEngines.primaryId(), "beryl-v1.1.1", "the RC is no longer the primary engine");
+assert.equal(w.DioptraEngines.primaryId(), "beryl-v1.1", "the RC is no longer the primary engine");
 for (const age of [9, 17, 17.9, 18, 39, 39.9, 40, 75]) {
   const run = runRc(input(age));
   assert.equal(run.primary.prediction.version, "0.4.0-rc.1");

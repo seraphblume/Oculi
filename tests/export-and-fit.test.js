@@ -14,7 +14,7 @@ const root = path.resolve(__dirname, "..");
 const sandbox = { window: {} };
 vm.createContext(sandbox);
 for (const f of ["js/vertex.js", "js/config.js", "js/algorithm.js", "js/config-v03.js", "js/engine-v03.js", "js/config-v10.js", "js/engine-v10.js",
-  "js/config-beryl-v111.js", "js/engine-beryl-v111.js", "js/config-heliodor-v11.js", "js/engine-heliodor-v11.js",
+  "js/config-beryl-v11.js", "js/engine-beryl-v11.js", "js/config-heliodor-v10.js", "js/engine-heliodor-v10.js",
   "js/scoring.js", "js/engines.js", "js/storage.js"]) {
   vm.runInContext(fs.readFileSync(path.join(root, f), "utf8"), sandbox, { filename: f });
 }
@@ -83,7 +83,7 @@ fs.writeFileSync(shadowFile, shadowCsv);
 // Guard: the Beryl cohort is open, so fitting needs an explicit --cohort-closed.
 const berylGuard = spawnSync(process.execPath, [path.join(root, "tools/fit-offsets.js"), shadowFile], { encoding: "utf8" });
 assert.equal(berylGuard.status, 2);
-assert.match(berylGuard.stderr, /Beryl v1\.1\.1/);
+assert.match(berylGuard.stderr, /Beryl v1\.1 /);
 const fit = spawnSync(process.execPath, [path.join(root, "tools/fit-offsets.js"), shadowFile, "--cohort-closed"], { encoding: "utf8" });
 assert.equal(fit.status, 0, fit.stderr);
 const snippet = JSON.parse(fit.stdout.slice(fit.stdout.indexOf("{")));

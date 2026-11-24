@@ -1,6 +1,6 @@
-// Heliodor v1.1: the unchanged former Beryl v1.0 prediction path under a new identity.
+// Beryl v1.1: the unchanged v0.3.0 prediction path under a new release identity.
 (function () {
-  const cfg = window.OCULI_HELIODOR_V11_CONFIG;
+  const cfg = window.OCULI_BERYL_V11_CONFIG;
   const engine = window.DioptraEngineFactory(cfg);
   const EPS = 1e-9;
 
@@ -10,20 +10,13 @@
     prediction.flags.unshift({
       code: "UNVALIDATED",
       level: "review",
-      message: "Heliodor is an unvalidated research comparator. Complete an independent examination; do not prescribe from this result alone."
+      message: "Beryl is an unvalidated research model. Complete an independent examination; do not prescribe from this result alone."
     });
     if (Number(input.age) < 18) {
       prediction.flags.push({
-        code: "PEDIATRIC_PRIOR",
+        code: "PEDIATRIC_RESEARCH_ONLY",
         level: "review",
-        message: "Under 18: fitted offsets are not applied; the prior is retained. This is not pediatric validation."
-      });
-    }
-    if ([prediction.od, prediction.os].some(eye => eye.stratum.refractiveState !== "myopiaEmmetropia")) {
-      prediction.flags.push({
-        code: "SPARSE_CALIBRATION",
-        level: "review",
-        message: "Hyperopic calibration data are sparse; original prior offsets are retained."
+        message: "Under 18: this release has no pediatric validation and requires a full independent examination."
       });
     }
     if (prediction.tentativeAdd != null && prediction.tentativeAdd >= cfg.add.maxAdd - EPS) {
@@ -39,5 +32,5 @@
     return prediction;
   }
 
-  window.OculiEngineHeliodorV11 = { ...engine, predictCase };
+  window.OculiEngineBerylV11 = { ...engine, predictCase };
 })();

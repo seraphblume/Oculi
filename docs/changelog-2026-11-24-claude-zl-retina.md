@@ -6,15 +6,15 @@ This document is the continuation brief for Claude or another maintainer. It rec
 
 ### Engine identities
 
-- Released the unchanged v0.3.0 rules under the new identity **Beryl v1.1.1** (`beryl-v1.1.1`).
-- Released the unchanged former Beryl v1.0 rules under the new identity **Heliodor v1.1** (`heliodor-v1.1`).
+- Released the unchanged v0.3.0 rules under the new identity **Beryl v1.1** (`beryl-v1.1`).
+- Released the unchanged former Beryl v1.0 rules under the new identity **Heliodor v1.0** (`heliodor-v1.0`).
 - Kept historical v0.3.0, 0.4.0-rc.1 and v1.0.0 records and source identities intact.
 - Added parity tests so the naming transition cannot silently alter the optical output.
 - Kept every current result marked unvalidated and subject to independent clinician review.
 
 ### Goshenite v1.0 safety boundary
 
-- Added an untrained, research-only Goshenite manifest based on Beryl v1.1.1.
+- Added an untrained, research-only Goshenite manifest based on Beryl v1.1.
 - Deliberately excluded Goshenite from the runtime engine registry. It cannot issue a tuned recommendation.
 - Added an aggregate-only CSV readiness audit and a machine-readable outcome contract.
 - Documented the required retrospective, silent prospective and independent external validation gates.
@@ -22,16 +22,16 @@ This document is the continuation brief for Claude or another maintainer. It rec
 
 ### Genius
 
-- Genius now calls the Beryl v1.1.1 wrapper while preserving the v0.3.0 optical rules.
+- Genius now calls the Beryl v1.1 wrapper while preserving the v0.3.0 optical rules.
 - The UI identifies the model as unvalidated.
 - Genius remains ephemeral: its entries do not enter the Clinical Study or persistent storage.
 
 ## Files added
 
-- `js/config-beryl-v111.js`
-- `js/engine-beryl-v111.js`
-- `js/config-heliodor-v11.js`
-- `js/engine-heliodor-v11.js`
+- `js/config-beryl-v11.js`
+- `js/engine-beryl-v11.js`
+- `js/config-heliodor-v10.js`
+- `js/engine-heliodor-v10.js`
 - `js/goshenite-research.js`
 - `docs/engine-transition-2026-11-24.md`
 - `docs/goshenite-training-record.schema.json`

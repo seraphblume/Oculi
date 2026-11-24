@@ -9,8 +9,8 @@ const window = {};
 const context = vm.createContext({ window });
 for (const file of [
   "js/vertex.js", "js/config.js", "js/algorithm.js", "js/config-v03.js", "js/engine-v03.js",
-  "js/config-v10.js", "js/engine-v10.js", "js/config-beryl-v111.js", "js/engine-beryl-v111.js",
-  "js/config-heliodor-v11.js", "js/engine-heliodor-v11.js", "js/goshenite-research.js",
+  "js/config-v10.js", "js/engine-v10.js", "js/config-beryl-v11.js", "js/engine-beryl-v11.js",
+  "js/config-heliodor-v10.js", "js/engine-heliodor-v10.js", "js/goshenite-research.js",
   "js/scoring.js", "js/engines.js"
 ]) vm.runInContext(fs.readFileSync(path.join(root, file), "utf8"), context, { filename: file });
 
@@ -33,14 +33,14 @@ for (let i = 0; i < 200; i++) {
     od: { ...od, readings: [od, od, od] },
     os: { ...os, readings: [os, os, os] }
   };
-  assert.deepEqual(optics(window.OculiEngineBerylV111.predictCase(input)), optics(window.DioptraEngineV03.predictCase(input)), `Beryl parity ${i}`);
-  assert.deepEqual(optics(window.OculiEngineHeliodorV11.predictCase(input)), optics(window.DioptraEngineV10.predictCase(input)), `Heliodor parity ${i}`);
+  assert.deepEqual(optics(window.OculiEngineBerylV11.predictCase(input)), optics(window.DioptraEngineV03.predictCase(input)), `Beryl parity ${i}`);
+  assert.deepEqual(optics(window.OculiEngineHeliodorV10.predictCase(input)), optics(window.DioptraEngineV10.predictCase(input)), `Heliodor parity ${i}`);
 }
 
-assert.equal(window.OCULI_BERYL_V111_CONFIG.lineage.rulesFrom, "v0.3.0");
-assert.equal(window.OCULI_HELIODOR_V11_CONFIG.lineage.rulesFrom, "v1.0.0 Beryl");
-assert.equal(window.DioptraEngines.primaryId(), "beryl-v1.1.1");
-assert.equal(window.DioptraEngines.shadowId(), "heliodor-v1.1");
+assert.equal(window.OCULI_BERYL_V11_CONFIG.lineage.rulesFrom, "v0.3.0");
+assert.equal(window.OCULI_HELIODOR_V10_CONFIG.lineage.rulesFrom, "v1.0.0 Beryl");
+assert.equal(window.DioptraEngines.primaryId(), "beryl-v1.1");
+assert.equal(window.DioptraEngines.shadowId(), "heliodor-v1.0");
 assert.equal(window.DioptraEngines.ENGINES["goshenite-v1.0"], undefined, "untrained Goshenite must not be runnable");
 assert.equal(window.OculiGosheniteResearch.manifest.deploymentEligible, false);
 assert.equal(window.OculiGosheniteResearch.manifest.clinicalUseAllowed, false);
@@ -48,6 +48,6 @@ assert.equal(window.OculiGosheniteResearch.manifest.clinicalUseAllowed, false);
 const schema = JSON.parse(fs.readFileSync(path.join(root, "docs/goshenite-training-record.schema.json"), "utf8"));
 assert.ok(schema.required.includes("clinicianAssessment"));
 assert.ok(schema.required.includes("patientTolerance"));
-assert.equal(schema.properties.baseEngine.properties.id.const, "beryl-v1.1.1");
+assert.equal(schema.properties.baseEngine.properties.id.const, "beryl-v1.1");
 
 console.log("PASS: Beryl and Heliodor identities preserve frozen optics; Goshenite remains research-only");
