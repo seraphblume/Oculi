@@ -126,6 +126,8 @@ async function genius(page, worst) {
         assert.ok((await page.locator("#geniusPrescriptionFlags li").count()) >= 6, "worst case carries many review notes");
       }
       await page.evaluate(() => window.dispatchEvent(new Event("beforeprint")));
+      // Measure with IBM Plex loaded, as a real print would; never with the fallback font.
+      assert.equal(await page.evaluate(async () => { await document.fonts.ready; return [...document.fonts].filter(f => f.status === "loaded" && /IBM Plex/.test(f.family)).length; }), 3, "Plex is loaded before printing");
       for (const format of ["Letter", "A4"]) {
         const bytes = await page.pdf({ format, margin: { top: "12mm", right: "12mm", bottom: "12mm", left: "12mm" }, printBackground: true });
         if (process.env.DIOPTRA_SCREENSHOT_DIR) await fs.writeFile(path.join(process.env.DIOPTRA_SCREENSHOT_DIR, `print-${worst ? "long" : "short"}-${format}.pdf`), bytes);
