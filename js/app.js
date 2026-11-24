@@ -45,6 +45,26 @@
 
   const FLAG_TITLES = Rx.FLAG_TITLES;
 
+  // Goshenite outcome 1: the optometrist's rating of the locked proposal (docs/goshenite-outcomes.md).
+  const RATING_SCALE = "optometrist-acceptability-1";
+  const DISPOSITIONS = {
+    5: "acceptable_without_change",
+    4: "acceptable_with_minor_change",
+    3: "meaningful_change",
+    2: "major_change",
+    1: "reject"
+  };
+  // Goshenite outcome 2: tolerance at follow-up. These statuses carry a usable label.
+  const FOLLOW_UP_SCALE = "patient-tolerance-1";
+  const LABELLED_STATUSES = ["tolerated", "minor_symptoms", "intolerant", "not_worn"];
+  const NO_ACTION_STATUSES = ["not_dispensed", "lost_to_follow_up"];
+  const FOLLOW_UP_DUE_DAYS = 7;
+  const FOLLOW_UP_PREVIEW = 5;
+  const STATUS_TEXT = {
+    tolerated: "Tolerated", minor_symptoms: "Minor symptoms", intolerant: "Not tolerated",
+    not_worn: "Not worn", not_dispensed: "Glasses not made", lost_to_follow_up: "No contact"
+  };
+
 
   const state = {
     stage: "measure",
@@ -486,6 +506,13 @@
 
   function save() {
     const run = state.run;
+    const score = Number($("optometristScore").dataset.value);
+    if (!DISPOSITIONS[score]) {
+      $("optometristScore").closest(".row").classList.add("invalid-row");
+      $("optometristScore").scrollIntoView({ behavior: "smooth", block: "center" });
+      toast("Rate the proposal before saving.", true);
+      return;
+    }
     const record = {
       schema: "dioptra-case-5",
       entryRevision: "beryl-v11-1",
@@ -498,6 +525,14 @@
       comparison: state.comparison,
       agreement: scoring.agreementCase(run.primary.prediction, state.actual),
       observations: state.observations,
+      assessment: {
+        scaleVersion: RATING_SCALE,
+        score,
+        disposition: DISPOSITIONS[score],
+        engine: run.primary.id,
+        ratedAt: new Date().toISOString()
+      },
+      followUp: null,
       shadow: {
         shadowOnly: true,
         schema: "dioptra-shadow-1",
@@ -530,7 +565,7 @@
     $("casePanel").querySelectorAll(".field[data-sign]").forEach(el => { el.dataset.sign = "-1"; });
     $("casePanel").querySelectorAll(".sign:not(.static)").forEach(b => { b.textContent = MINUS; });
     document.querySelectorAll(".invalid").forEach(el => el.classList.remove("invalid"));
-    ["previousRxKnown", "vaCondition", "plusTest"].forEach(id => setSegment($(id), ""));
+    ["previousRxKnown", "vaCondition", "plusTest", "optometristScore"].forEach(id => setSegment($(id), ""));
     setSegment($("endpointDiffers"), "same");
     $("finalAddOsRow").hidden = true;
     $("finalAddLabel").textContent = "ADD";
@@ -741,6 +776,106 @@
     ].map(([value, label]) => `<div class="stat"><strong>${value}</strong><span>${label}</span></div>`).join("");
 
     renderEngineCompare(cases);
+    renderFollowUps(allCases);
+  }
+
+  // ------------------------------------------------------------------ follow-ups
+
+  const followUpView = { expanded: false, target: null };
+
+  function daysSince(iso, now = Date.now()) {
+    return Math.max(0, Math.floor((now - Date.parse(iso)) / 86400000));
+  }
+
+  function renderFollowUps(allCases) {
+    const pending = allCases.filter(c => c.actual && !c.followUp)
+      .sort((a, b) => Date.parse(a.savedAt) - Date.parse(b.savedAt));
+    const complete = allCases.filter(c => c.assessment && c.followUp && LABELLED_STATUSES.includes(c.followUp.status)).length;
+    const due = pending.filter(c => daysSince(c.savedAt) >= FOLLOW_UP_DUE_DAYS).length;
+    const shown = followUpView.expanded ? pending : pending.slice(0, FOLLOW_UP_PREVIEW);
+    let html = `<div class="row"><span class="row-label">Goshenite training set</span><span class="row-detail num" id="gosheniteCount">${complete} of ${allCases.length} complete</span></div>`;
+    if (!pending.length) {
+      html += `<div class="row"><span class="row-label">No follow-ups pending</span></div>`;
+    }
+    html += shown.map(c => {
+      const days = daysSince(c.savedAt);
+      const when = days >= FOLLOW_UP_DUE_DAYS ? `${days} days · due` : `due in ${FOLLOW_UP_DUE_DAYS - days} day${FOLLOW_UP_DUE_DAYS - days === 1 ? "" : "s"}`;
+      const cohort = c.cohort === activeCfg.cohort ? "" : ` · ${esc(c.cohort || "earlier")}`;
+      return `<button class="row row-button follow-up-row" type="button" data-case="${esc(c.caseId)}" data-saved="${esc(c.savedAt)}">
+        <span class="row-label">${esc(c.caseId)} · ${esc(c.input.age)} y${cohort}</span><span class="row-detail${days >= FOLLOW_UP_DUE_DAYS ? " due" : ""}">${when}</span></button>`;
+    }).join("");
+    if (pending.length > FOLLOW_UP_PREVIEW) {
+      html += `<button class="row row-button" type="button" id="followUpToggle">${followUpView.expanded ? "Show fewer" : `Show all ${pending.length}`}</button>`;
+    }
+    $("followUpList").innerHTML = html;
+    $("followUpFooter").textContent = `${due} due now, ${pending.length} pending. Ask how the new glasses are going one to four weeks after the exam. Tolerance and your rating are what Goshenite learns from; neither ever feeds a prediction.`;
+  }
+
+  function setChoice(list, value) {
+    list.dataset.value = value;
+    list.querySelectorAll("button").forEach(b => b.setAttribute("aria-checked", String(b.dataset.value === value)));
+    if (list.id === "fuStatus") {
+      const skip = NO_ACTION_STATUSES.includes(value);
+      $("fuAction").hidden = skip;
+      $("fuActionLabel").hidden = skip;
+      if (skip) setChoice($("fuAction"), "");
+    }
+  }
+
+  function openFollowUp(caseId, savedAt) {
+    const c = store.listCases().find(x => x.caseId === caseId && x.savedAt === savedAt);
+    if (!c) return;
+    followUpView.target = { caseId, savedAt };
+    const days = daysSince(savedAt);
+    const rating = c.assessment ? ` · rated ${c.assessment.score}` : "";
+    $("followUpTitle").textContent = `Follow-up · ${caseId}`;
+    $("followUpMeta").textContent = `${c.input.age} years · examined ${days} day${days === 1 ? "" : "s"} ago${rating}`;
+    ["fuStatus", "fuAction", "fuMethod"].forEach(id => setChoice($(id), ""));
+    $("fuNote").value = "";
+    $("fuError").hidden = true;
+    $("followUpDialog").showModal();
+  }
+
+  function readFollowUp() {
+    const status = $("fuStatus").dataset.value;
+    const action = $("fuAction").dataset.value;
+    const method = $("fuMethod").dataset.value;
+    if (!status) return { error: "Choose how the glasses are going." };
+    if (!NO_ACTION_STATUSES.includes(status) && !action) return { error: "Choose what was done, or Nothing." };
+    if (status !== "lost_to_follow_up" && !method) return { error: "Choose how you asked." };
+    const { savedAt } = followUpView.target;
+    return {
+      followUp: {
+        scaleVersion: FOLLOW_UP_SCALE,
+        status,
+        action: action || (status === "lost_to_follow_up" ? "unknown" : "none"),
+        collectionMethod: method || "other",
+        followUpDays: daysSince(savedAt),
+        assessedAt: new Date().toISOString(),
+        note: $("fuNote").value.trim() || null
+      }
+    };
+  }
+
+  function saveFollowUp(e) {
+    const submitter = e.submitter;
+    if (!submitter || submitter.value !== "save") return;
+    const { followUp, error } = readFollowUp();
+    if (error) {
+      e.preventDefault();
+      $("fuError").textContent = error;
+      $("fuError").hidden = false;
+      return;
+    }
+    const { caseId, savedAt } = followUpView.target;
+    try {
+      store.updateCase(caseId, savedAt, { followUp });
+    } catch (err) {
+      toast(err.message, true);
+      return;
+    }
+    updateStats();
+    toast(`${caseId} · ${STATUS_TEXT[followUp.status].toLowerCase()}`);
   }
 
   function predictionFor(c, id) {
@@ -971,6 +1106,23 @@
     $("newCaseBtn").addEventListener("click", newCase);
     $("exportBtn").addEventListener("click", exportData);
     $("clearDataBtn").addEventListener("click", clearData);
+
+    $("followUpList").addEventListener("click", e => {
+      const row = e.target.closest(".follow-up-row");
+      if (row) openFollowUp(row.dataset.case, row.dataset.saved);
+      if (e.target.closest("#followUpToggle")) {
+        followUpView.expanded = !followUpView.expanded;
+        updateStats();
+      }
+    });
+    $("followUpDialog").addEventListener("click", e => {
+      const choice = e.target.closest(".choice-list button");
+      if (choice) {
+        setChoice(choice.parentElement, choice.dataset.value);
+        $("fuError").hidden = true;
+      }
+    });
+    $("followUpForm").addEventListener("submit", saveFollowUp);
   }
 
   // ------------------------------------------------------------------ init
@@ -982,9 +1134,10 @@
   populateSelects();
   syncEntryRules();
   bindControls();
-  ["previousRxKnown", "vaCondition", "plusTest"].forEach(id => setSegment($(id), ""));
+  ["previousRxKnown", "vaCondition", "plusTest", "optometristScore"].forEach(id => setSegment($(id), ""));
   setSegment($("endpointDiffers"), "same");
   setCaseId(newCaseId());
+  $("ratingEngine").textContent = engineLabel(engines.primaryId());
 
   $("engineLine").textContent = `${engineLabel(engines.primaryId())} · not clinically validated · compared with ${engineLabel(engines.shadowId())}`;
 

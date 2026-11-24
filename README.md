@@ -12,20 +12,34 @@ A blinded comparison workflow for structured research.
 
 1. **Measure.** Record the autorefractor ticket, visual acuity and whether it was measured unaided or with correction, plus history.
 2. **Refract.** Complete your own exam without seeing Oculi's prediction. Record the final Rx, the final VA, the +0.25 D test, and the endpoint whenever the prescribed Rx differs from it.
-3. **Compare.** Reveal the prediction and save the case.
+3. **Compare.** Reveal the prediction, rate it 1–5 against what you would prescribe, and save the case.
+
+**Follow-ups.** The Study section lists saved cases waiting for a follow-up. One to four weeks after the exam, record how the glasses are going (tolerated, minor symptoms, not tolerated, not worn, glasses not made, no contact), what was done, and how you asked. The rating and the follow-up are the two outcomes Goshenite will learn from; neither is ever an input to a prediction.
 
 The active base engine is **Beryl v1.1**, which preserves the v0.3.0 rules. **Heliodor v1.0** preserves the former Beryl v1.0 rules as a paired comparator. Refraction uses a fixed 12 mm vertex. Repeat readings, previous prescription, keratometry, near measurements and review flags stay available without crowding the main flow.
 
 ### Genius
 
-A guided refraction preview: **screen → propose → verify → preview**.
+A visual assessment followed by a guided refraction preview. The assessment follows the paper *Evaluación visual 3.0*:
 
-- **Screen.** Any warning sign, or an age under 18, stops Genius before any proposal. Current glasses, symptoms and medical background become review notes, not dioptric changes.
-- **Propose.** The full autorefractor ticket (repeats included) runs through Beryl v1.1 with its unchanged −0.25 D prior.
+- **Patient.** Name (never saved), age or birthdate (the age fills in), current glasses.
+- **History.** Symptoms, medical background and warning signs.
+- **1 · Visual acuity.** Distance and near, without and with glasses, for OD, OS and OU; pinhole for OD and OS.
+- **2 · Initial refraction.** The current glasses from the lensometer and the autorefractor ticket, with near working distance and PD.
+- **3 · Pre-diagnosis.** Myopia, hyperopia, astigmatism, presbyopia or no refractive error, ticked from the ticket and age; every box can be changed.
+- **4 · Vision comparison.** The same letter chart, side by side, as seen through the current correction and through a full correction, rendered by ZL Retina (below). Distance or near, either eye.
+
+The assessment works at any age, so a guardian can see a child's comparison. The Rx proposal that follows is for adults: **propose → verify → preview**.
+
+- **Propose.** Any warning sign, or an age under 18, stops Genius here. The full autorefractor ticket runs through Beryl v1.1. Current glasses, symptoms and medical background become review notes, not dioptric changes.
 - **Verify.** VA through the proposed Rx in a trial frame, near when there is an ADD, the +0.25 D test, then accepted or refined.
-- **Preview.** A one-page, watermarked preview that records the verification and review notes. It is not a prescription. Save it as a PDF (on a phone this opens the share sheet, which also offers Print) or print it, then start the next patient with **New Patient**.
+- **Preview.** A one-page, watermarked preview set as a ZepheniaLabs document. It is not a prescription. Save it as a PDF or print it, then start the next patient with **New Patient**.
 
 Genius is clearly marked as a development preview, and nothing entered there is saved.
+
+#### ZL Retina
+
+`js/zl-retina.js` is a line-for-line port of the studio's `zl_retina` 0.1.0 package: scalar diffraction through a 4 mm pupil, convolved in linear light. `tests/zl-retina.test.js` checks it against output from the Python package itself. The comparison renders off the main thread and is monochromatic, because the eye's chromatic fringes are real but not perceived. Young eyes are allowed to focus through hyperopia (Hofstetter's minimum amplitude, 15 − 0.25 × age); cylinder is never focused away. The full correction shown is Beryl's estimate before the exam. The picture illustrates focus only: it cannot show how a patient perceives, and says nothing about eye health.
 
 ### Tools
 
@@ -47,7 +61,15 @@ Oculi is an experimental research prototype. It is not a validated medical devic
 
 Beryl v1.1 is a release identity for the unchanged v0.3.0 rules. Heliodor v1.0 is a release identity for the former Beryl v1.0 rules. Historical records keep their original identities. **Version numbers and gemstone names are not validation claims.** Agreement scores describe differences within defined software tolerances; they are not clinical confidence scores.
 
-Goshenite v1.0 is an untrained research manifest only. It is not in the runtime engine registry and cannot produce a tuned recommendation. The outcome contract, training boundaries, prospective validation gates and naming lineage are documented in [`docs/engine-transition-2026-11-24.md`](docs/engine-transition-2026-11-24.md).
+Goshenite v1.0 is the planned flagship: a learned layer on Beryl v1.1, tuned on the optometrist's rating and the patient's tolerance at follow-up. Neither outcome existed in earlier exports, so Oculi now collects both; Goshenite stays untrained and outside the runtime engine registry until enough follow-ups are in. The outcome contract, training boundaries, prospective validation gates and naming lineage are documented in [`docs/engine-transition-2026-11-24.md`](docs/engine-transition-2026-11-24.md).
+
+## Design
+
+Working screens follow the platform: system font, system grouped colours and the system tint, since Oculi has no product colour yet. The ZepheniaLabs look appears only on studio surfaces: the first-run splash, the About sheet's header (tap **Oculi**), and the printed preview, set in labs-indigo on white. Tokens, fonts and the glyph-field engine come from the ZLDesignSystem package; refresh them with
+
+```sh
+node tools/sync-zl-design.js ~/ZepheniaLabs/Workspace/Packages/ZLDesignSystem
+```
 
 ## Run Oculi
 
@@ -72,6 +94,7 @@ The test suite covers:
 - ticket parsing;
 - optical calculations;
 - the PDF writer;
+- ZL Retina parity with the Python package, and the comparison's defocus model;
 - the complete browser workflow, Genius included, with one-page print and PDF export.
 
 ```sh
@@ -84,6 +107,8 @@ node tests/ticket-scan.test.js
 node tests/export-and-fit.test.js
 node tests/optical-calculators.test.js
 node tests/pdf-lite.test.js
+node tests/zl-retina.test.js
+node tests/vision-compare.test.js
 node tests/app-flow.browser.js
 node tests/genius-export.browser.js
 ```

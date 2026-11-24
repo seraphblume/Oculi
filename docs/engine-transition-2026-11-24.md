@@ -103,6 +103,8 @@ Until Gates 0–4 are complete, Goshenite must remain research-only and untraine
 
 ## Zl_retina and Genius
 
+> Superseded the same day: the source was in the studio's local package collection and is now integrated as Genius section 4. See `docs/changelog-2026-11-24-claude-zl-retina.md` and `docs/goshenite-outcomes.md`. The original note follows.
+
 No `Zl_retina` source was present in the Oculi repository, its public branches, commit history or publicly discoverable GitHub repositories during this review. No simulation code was added without inspectable source and licensing.
 
 If the source becomes available, integration needs a separate review of its optical assumptions, supported conditions, browser performance, privacy and license. The patient-facing view must be labelled as an illustrative comparison, not a faithful simulation of an individual patient's perception, and it must not diagnose retinal disease or imply that a correction is safe. Regression tests should verify that the demo cannot alter a Clinical Study or Genius Rx.

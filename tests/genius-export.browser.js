@@ -100,6 +100,7 @@ async function genius(page, worst) {
 
     // ------------------------------------------------------------ desktop
     const desktop = await browser.newContext({ viewport: { width: 1280, height: 900 }, serviceWorkers: "block", acceptDownloads: true, locale: "es-MX" });
+    await desktop.addInitScript(() => localStorage.setItem("oculi-zl-first-run", "seen"));
     const page = await desktop.newPage();
     const errors = [];
     page.on("pageerror", err => errors.push(err.message));
@@ -153,6 +154,7 @@ async function genius(page, worst) {
 
     // A4 elsewhere.
     const a4 = await browser.newContext({ viewport: { width: 1280, height: 900 }, serviceWorkers: "block", locale: "en-GB" });
+    await a4.addInitScript(() => localStorage.setItem("oculi-zl-first-run", "seen"));
     const a4Page = await a4.newPage();
     await a4Page.goto(url);
     await genius(a4Page, false);
@@ -162,16 +164,17 @@ async function genius(page, worst) {
 
     // New Patient starts over.
     await page.locator("#geniusNewPatient").click();
-    for (const id of ["geniusAge", "geniusPatientName", "geniusPrescriptionNotes", "geniusPdDistance", "geniusOdSelSph"]) assert.equal(await page.locator(`#${id}`).inputValue(), "", id);
-    for (const id of ["geniusResults", "geniusPrescription", "geniusGlassesFields"]) assert.equal(await page.locator(`#${id}`).isVisible(), false, id);
+    for (const id of ["geniusName", "geniusAge", "geniusBirthdate", "geniusPatientName", "geniusPrescriptionNotes", "geniusPdDistance", "geniusOdSelSph"]) assert.equal(await page.locator(`#${id}`).inputValue(), "", id);
+    for (const id of ["geniusResults", "geniusPrescription", "geniusGlassesFields", "geniusCompare"]) assert.equal(await page.locator(`#${id}`).isVisible(), false, id);
     assert.equal(await page.locator("#geniusPanel .chip.on").count(), 0);
     assert.equal(await page.locator('#geniusStepper li[data-step="screen"]').getAttribute("class"), "current");
-    assert.equal(await page.evaluate(() => document.activeElement.id), "geniusAge");
+    assert.equal(await page.evaluate(() => document.activeElement.id), "geniusName");
     assert.deepEqual(errors, []);
     await desktop.close();
 
     // ------------------------------------------------------------ phone, added to the home screen
     const phone = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 3, isMobile: true, hasTouch: true, serviceWorkers: "block" });
+    await phone.addInitScript(() => localStorage.setItem("oculi-zl-first-run", "seen"));
     await phone.addInitScript(() => {
       Object.defineProperty(navigator, "standalone", { value: true, configurable: true });
       navigator.canShare = data => !!(data && data.files && data.files.every(f => f.type === "application/pdf"));

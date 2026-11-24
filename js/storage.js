@@ -15,6 +15,30 @@
 
   function clearCases() { localStorage.removeItem(KEY); }
 
+  // Case IDs restart with each cohort, so a record is addressed by ID and save time together.
+  function updateCase(caseId, savedAt, patch) {
+    const cases = listCases();
+    const index = cases.findIndex(c => c.caseId === caseId && c.savedAt === savedAt);
+    if (index < 0) throw new Error(`Case ${caseId} is no longer on this device.`);
+    cases[index] = { ...cases[index], ...patch };
+    localStorage.setItem(KEY, JSON.stringify(cases));
+    return cases[index];
+  }
+
+  // Goshenite's two outcomes. Neither is ever an input to a prediction.
+  function outcomeFields(c) {
+    const a = c.assessment || {};
+    const f = c.followUp || {};
+    return [
+      a.score ?? "", a.disposition || "",
+      f.status || "", f.action || "", f.followUpDays ?? "", f.collectionMethod || "", f.assessedAt || "", f.note || ""
+    ];
+  }
+  const OUTCOME_HEADERS = [
+    "optometrist_score","optometrist_disposition",
+    "tolerance_status","tolerance_action","tolerance_days","tolerance_method","tolerance_assessed_at","tolerance_note"
+  ];
+
   function csvEscape(value) {
     const text = value == null ? "" : String(value);
     if (/[",\n]/.test(text)) return '"' + text.replaceAll('"', '""') + '"';
@@ -67,7 +91,8 @@
       "os_within_025_sph","os_within_025_cyl","os_within_5_axis","os_within_025_se",
       "symptoms_text","symptom_tearing","symptom_blurred_vision","symptom_burning_irritation","symptom_itching",
       "symptom_discharge","symptom_infection","symptom_headache","symptom_flashes","symptom_dry_eye",
-      "symptom_other","symptom_other_text","diabetes","hypertension","pregnancy","previous_rx_known","final_note"
+      "symptom_other","symptom_other_text","diabetes","hypertension","pregnancy","previous_rx_known","final_note",
+      ...OUTCOME_HEADERS
     ];
 
     const rows = cases.map(c => {
@@ -96,7 +121,8 @@
         symptomValue(c,"headache"), symptomValue(c,"flashes"), symptomValue(c,"dryEye"),
         symptomValue(c,"other"), (c.input.symptoms && c.input.symptoms.otherText) || "",
         medicalValue(c,"diabetes"), medicalValue(c,"hypertension"), medicalValue(c,"pregnancy"),
-        c.input.previousRxKnown, c.actual.note
+        c.input.previousRxKnown, c.actual.note,
+        ...outcomeFields(c)
       ];
     });
 
@@ -159,7 +185,8 @@
       "previous_rx_worn_months","agreement_percent","agreement_passed","agreement_total","agreement_version","entry_revision",
       "axis_within_floor","clinical_match_floor","va_condition","final_va","final_va_ou","plus_test","final_add_os",
       "endpoint_differs","endpoint_sph","endpoint_cyl","endpoint_axis","endpoint_reasons",
-      "symptom_glare_halos","symptom_flashes_floaters"
+      "symptom_glare_halos","symptom_flashes_floaters",
+      ...OUTCOME_HEADERS
     ];
 
     const rows = [];
@@ -220,7 +247,8 @@
             endpoint && endpoint[eye] ? endpoint[eye].cylinder : "",
             endpoint && endpoint[eye] ? endpoint[eye].axis : "",
             endpoint ? endpoint.reasons.join(" ") : "",
-            symptomValue(c, "glareHalos"), symptomValue(c, "flashesFloaters")
+            symptomValue(c, "glareHalos"), symptomValue(c, "flashesFloaters"),
+            ...outcomeFields(c)
           ]);
         }
       }
@@ -228,5 +256,5 @@
     return [headers, ...rows].map(r => r.map(csvEscape).join(",")).join("\n");
   }
 
-  window.DioptraStorage = { listCases, saveCase, clearCases, toCSV, toShadowCSV };
+  window.DioptraStorage = { updateCase, OUTCOME_HEADERS, listCases, saveCase, clearCases, toCSV, toShadowCSV };
 })();

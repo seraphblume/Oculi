@@ -9,6 +9,7 @@
   const MODEL_LABEL = "Oculi Model";
   const MIN_AGE = 18;
   const LARGE_CHANGE_D = 0.75;
+  const LABS_INDIGO = [21 / 255, 19 / 255, 88 / 255]; // #151358, fixed in every theme
   const EYES = [{ id: "od", key: "Od", short: "OD", name: "Right eye" }, { id: "os", key: "Os", short: "OS", name: "Left eye" }];
   const SYMPTOMS = [["geniusBlurredVision", "Blurred vision"], ["geniusHeadache", "Headache"], ["geniusGlare", "Glare / halos"],
     ["geniusTearing", "Tearing"], ["geniusIrritation", "Burning / irritation"], ["geniusItching", "Itching"],
@@ -21,6 +22,11 @@
     CHECK_ADD: "Check the ADD at near"
   };
 
+  const Vision = window.OculiVisionCompare;
+  const VA_SELECTS = ["Dist", "Near"].flatMap(k => ["Sc", "Cc"].flatMap(c => ["Od", "Os", "Ou"].map(e => `geniusVa${k}${c}${e}`)))
+    .concat(["geniusPinholeOd", "geniusPinholeOs"]);
+  const DX_THRESHOLD = { myopia: -0.5, hyperopia: 0.5, astigmatism: 0.5, presbyopiaAge: 40 };
+
   let proposal = null; // { prediction, flags, context }
 
   // ---------------------------------------------------------------- build
@@ -32,6 +38,8 @@
       $(`genius-ref-${eye.id}`).innerHTML = Rx.rxRowHTML(`genius${eye.key}Ref`, eye.short, "refined");
     }
     ["geniusVaOd", "geniusVaOs", "geniusVaOu"].forEach(id => { $(id).innerHTML = Rx.vaOptionsHTML(); });
+    const shortVa = `<option value="">—</option>` + window.DIOPTRA_CONFIG.visualAcuity.map(v => `<option value="${v.snellen}">${v.snellen}</option>`).join("");
+    VA_SELECTS.forEach(id => { $(id).innerHTML = shortVa; });
     ["geniusPrevAdd", "geniusRefAdd"].forEach(id => { $(id).innerHTML = Rx.addOptionsHTML(); });
     syncAxes();
   }
@@ -60,8 +68,9 @@
     if (proposal) setStep("propose");
   }
 
-  function invalidate() {
+  function invalidate(clearCompare = true) {
     proposal = null;
+    if (clearCompare === true) clearComparison("Inputs changed · show the comparison again.");
     $("geniusResults").hidden = true;
     $("geniusStop").hidden = true;
     $("geniusPrescription").hidden = true;
@@ -135,6 +144,136 @@
     return out;
   }
 
+  // Whole years between a birthdate and today, or null for an empty or impossible date.
+  function ageFromBirthdate(value, today = new Date()) {
+    const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value || "");
+    if (!m) return null;
+    const [y, mo, d] = m.slice(1).map(Number);
+    const birth = new Date(y, mo - 1, d);
+    if (birth.getMonth() !== mo - 1 || birth > today) return null;
+    let age = today.getFullYear() - y;
+    if (today.getMonth() < mo - 1 || (today.getMonth() === mo - 1 && today.getDate() < d)) age--;
+    return age >= 0 && age <= 120 ? age : null;
+  }
+
+  function readAge() {
+    const ageText = $("geniusAge").value.trim();
+    if (!/^\d{1,3}$/.test(ageText) || Number(ageText) < 1 || Number(ageText) > 120) throw new Error("Enter an age from 1 to 120, or a birthdate.");
+    return Number(ageText);
+  }
+
+  function syncBirthdate() {
+    const value = $("geniusBirthdate").value;
+    const age = ageFromBirthdate(value);
+    if (age != null) {
+      $("geniusAge").value = String(Math.max(age, 0));
+      $("geniusAgeNote").textContent = `Age ${age} from the birthdate.`;
+    } else {
+      $("geniusAgeNote").textContent = value ? "That birthdate is not valid." : "Enter the age, or the birthdate and the age fills in.";
+    }
+  }
+
+  // ---------------------------------------------------------------- pre-diagnosis
+
+  function selectedLine(eye) {
+    const r = Rx.readArRow(`genius${eye.key}Sel`);
+    return Rx.validRx(r) ? r : null;
+  }
+
+  // Suggested boxes from the selected autorefractor lines and age. Boxes the assessor has
+  // touched are left as they are.
+  function suggestDiagnosis() {
+    const lines = EYES.map(selectedLine).filter(Boolean);
+    const ageText = $("geniusAge").value.trim();
+    const age = /^\d{1,3}$/.test(ageText) ? Number(ageText) : null;
+    const dx = { myopia: false, hyperopia: false, astigmatism: false, presbyopia: age != null && age >= DX_THRESHOLD.presbyopiaAge };
+    for (const r of lines) {
+      const se = r.sphere + (r.cylinder || 0) / 2;
+      if (se <= DX_THRESHOLD.myopia + 1e-9) dx.myopia = true;
+      if (se >= DX_THRESHOLD.hyperopia - 1e-9) dx.hyperopia = true;
+      if (Math.abs(r.cylinder || 0) >= DX_THRESHOLD.astigmatism - 1e-9) dx.astigmatism = true;
+    }
+    dx.none = lines.length === 2 && !dx.myopia && !dx.hyperopia && !dx.astigmatism && !dx.presbyopia;
+    return dx;
+  }
+
+  function syncDiagnosis() {
+    const dx = suggestDiagnosis();
+    document.querySelectorAll("#geniusPrediagnosis input").forEach(cb => {
+      if (cb.dataset.manual === "true") return;
+      cb.checked = Boolean(dx[cb.dataset.dx]);
+      cb.closest(".chip").classList.toggle("on", cb.checked);
+    });
+  }
+
+  // ---------------------------------------------------------------- vision comparison
+
+  const canvases = () => ({ current: $("geniusCompareCurrent"), true: $("geniusCompareTrue") });
+
+  function clearComparison(message) {
+    if (!Vision || $("geniusCompare").hidden) return;
+    Vision.clear(canvases());
+    $("geniusCompare").hidden = true;
+    if (message) $("geniusCompareStatus").textContent = message;
+  }
+
+  function outOfFocus(v) {
+    return Math.abs(v.m) + Math.hypot(v.j0, v.j45);
+  }
+
+  function viewNote(v, lensText) {
+    const parts = [lensText];
+    const d = outOfFocus(v);
+    parts.push(d < 0.125 ? "in focus" : `about ${d.toFixed(2)} D out of focus`);
+    if (v.accommodationUsed >= 0.25) parts.push(`focusing ${v.accommodationUsed.toFixed(2)} D`);
+    if (v.limited) parts.push("blur shown at the demo's limit");
+    return parts.join(" · ");
+  }
+
+  async function showComparison() {
+    const status = $("geniusCompareStatus");
+    if (!Vision || !window.ZLRetina) { status.textContent = "The comparison is not available in this browser."; return; }
+    let input;
+    try {
+      const age = readAge();
+      const od = readEyeTicket(EYES[0]);
+      const os = readEyeTicket(EYES[1]);
+      const glasses = $("geniusGlasses").dataset.value;
+      const current = glasses === "yes" ? readCurrentGlasses() : null;
+      const wdMm = optionalNumber("geniusNearWd", 250, 1000, "Working distance (250–1000 mm)");
+      const prediction = engine.predictCase({ age, instrument: { vertexMm: 12 }, near: { workingDistanceCm: wdMm == null ? null : wdMm / 10 }, od, os });
+      const eyeId = $("geniusCompareEye").dataset.value || "od";
+      const scene = $("geniusCompareScene").dataset.value || "distance";
+      input = {
+        age, scene, eyeId,
+        eye: { sphere: prediction[eyeId].sphere, cylinder: prediction[eyeId].cylinder, axis: prediction[eyeId].axis },
+        current: current ? current[eyeId] : null,
+        currentAdd: current && current.add ? current.add : 0,
+        trueAdd: prediction.tentativeAdd > 0 ? prediction.tentativeAdd : 0,
+        nearDistanceM: wdMm == null ? 0.4 : wdMm / 1000
+      };
+    } catch (error) {
+      status.textContent = error.message;
+      return;
+    }
+    status.textContent = "Rendering…";
+    $("geniusCompareBtn").disabled = true;
+    try {
+      const views = await Vision.render(canvases(), input);
+      if (!views) return;
+      $("geniusCompare").hidden = false;
+      const eyeName = input.eyeId === "od" ? "Right eye" : "Left eye";
+      const where = input.scene === "near" ? `at ${Math.round(input.nearDistanceM * 100)} cm` : "at distance";
+      $("geniusCompareCurrentNote").textContent = viewNote(views.current, input.current ? "Current glasses" : "No glasses");
+      $("geniusCompareTrueNote").textContent = viewNote(views.true, `Full correction ${Rx.fmtRx(input.eye)}`);
+      status.textContent = `${eyeName} ${where}. Full correction is Beryl's estimate from the autorefractor, before the exam.`;
+    } catch (error) {
+      status.textContent = `Could not render the comparison: ${error.message}`;
+    } finally {
+      $("geniusCompareBtn").disabled = false;
+    }
+  }
+
   // ---------------------------------------------------------------- flags
 
   function engineFlags(prediction) {
@@ -197,11 +336,9 @@
 
   function propose(event) {
     event.preventDefault();
-    invalidate();
+    invalidate(false);
     try {
-      const ageText = $("geniusAge").value.trim();
-      if (!/^\d{1,3}$/.test(ageText) || Number(ageText) < 1 || Number(ageText) > 120) throw new Error("Enter an age from 1 to 120.");
-      const age = Number(ageText);
+      const age = readAge();
       const warnings = [...document.querySelectorAll("#geniusWarnings input:checked")].map(cb => cb.dataset.warning);
       const reasons = [];
       if (warnings.length) reasons.push(`Warning signs reported: ${warnings.join(", ").toLowerCase()}.`);
@@ -325,6 +462,7 @@
       ? `${MODEL_LABEL} · proposed OD ${Rx.fmtRx(p.od)} · OS ${Rx.fmtRx(p.os)}`
       : MODEL_LABEL;
     if (!$("geniusPrescriptionDate").value) $("geniusPrescriptionDate").value = localDate();
+    if (!$("geniusPatientName").value.trim()) $("geniusPatientName").value = $("geniusName").value.trim();
     $("geniusExportStatus").textContent = "";
     $("geniusPrescription").hidden = false;
     setStep("verify");
@@ -396,25 +534,29 @@
   // Draws the preview at scale k; returns the bottom edge so the caller can shrink it to one page.
   function drawPdf(pdf, d, k) {
     const M = 46, W = pdf.width, cw = W - 2 * M;
-    const ink = 0.07, muted = 0.36, rule = 0.62;
+    // ZepheniaLabs print: labs-indigo ink on white paper, hairline rules, square corners,
+    // no grey and no bold; hierarchy from size alone. (Helvetica stands in for IBM Plex Sans,
+    // which the standard-font PDF writer cannot embed.)
+    const ink = LABS_INDIGO, muted = ink, rule = ink;
+    const paleInk = LABS_INDIGO.map(c => 1 - 0.07 * (1 - c));
     const sz = v => v * k;
     let y = M;
 
-    pdf.rotatedText("NOT A PRESCRIPTION", W / 2, pdf.height / 2, 28, { font: "bold", size: 46, color: 0.93, spacing: 3 });
+    pdf.rotatedText("NOT A PRESCRIPTION", W / 2, pdf.height / 2, 28, { font: "regular", size: 46, color: paleInk, spacing: 3 });
 
     // Header
     pdf.text("OCULI · GENIUS", M, y + sz(8), { size: sz(7.5), color: muted, spacing: 1.1 });
-    pdf.text("Prescription preview", M, y + sz(31), { font: "serif", size: sz(23), color: ink });
-    const badge = "NOT A PRESCRIPTION", badgeSize = sz(7), badgeW = pdf.textWidth(badge, "bold", badgeSize) + 0.6 * (badge.length - 1) + 16;
-    pdf.rect(W - M - badgeW, y + sz(14), badgeW, sz(17), { stroke: ink, width: 0.8, radius: sz(8.5) });
-    pdf.text(badge, W - M - badgeW / 2, y + sz(14) + sz(11.6), { font: "bold", size: badgeSize, color: ink, align: "center", spacing: 0.6 });
+    pdf.text("Prescription preview", M, y + sz(31), { font: "regular", size: sz(23), color: ink });
+    const badge = "NOT A PRESCRIPTION", badgeSize = sz(7), badgeW = pdf.textWidth(badge, "regular", badgeSize) + 0.6 * (badge.length - 1) + 16;
+    pdf.rect(W - M - badgeW, y + sz(14), badgeW, sz(17), { stroke: ink, width: 0.5 });
+    pdf.text(badge, W - M - badgeW / 2, y + sz(14) + sz(11.6), { size: badgeSize, color: ink, align: "center", spacing: 0.6 });
     y += sz(42);
-    pdf.line(M, y, W - M, y, { width: 1.6, color: ink });
+    pdf.line(M, y, W - M, y, { width: 0.75, color: ink });
 
     // Warning callout: bold lead-in, then the rest, wrapped together.
     y += sz(12);
     const ws = sz(8.5), lh = ws * 1.4;
-    const words = [...d.warningLead.split(/\s+/).map(w => ({ w, font: "bold" })), ...d.warningRest.split(/\s+/).map(w => ({ w, font: "regular" }))];
+    const words = [...d.warningLead.split(/\s+/).map(w => ({ w, font: "regular", lead: true })), ...d.warningRest.split(/\s+/).map(w => ({ w, font: "regular" }))];
     const lines = [[]];
     let lineW = 0;
     for (const word of words) {
@@ -423,16 +565,16 @@
       const line = lines[lines.length - 1];
       const piece = (line.length ? " " : "") + word.w;
       const last = line[line.length - 1];
-      if (last && last.font === word.font) last.t += piece; else line.push({ t: piece, font: word.font });
+      // The lead-in stays its own text run so it reads as one phrase; weight no longer marks it.
+      if (last && last.font === word.font && Boolean(last.lead) === Boolean(word.lead)) last.t += piece; else line.push({ t: piece, font: word.font, lead: word.lead });
       lineW += pdf.textWidth(piece, word.font, ws);
     }
     const boxH = lines.length * lh + sz(12);
-    pdf.rect(M, y, cw, boxH, { fill: 0.95 });
-    pdf.rect(M, y, 2.2, boxH, { fill: ink });
+    pdf.rect(M, y, cw, boxH, { stroke: ink, width: 0.5 });
     lines.forEach((line, i) => {
       let x = M + 12;
       for (const seg of line) {
-        pdf.text(seg.t, x, y + sz(6) + ws + i * lh - 1, { font: seg.font, size: ws, color: seg.font === "bold" ? ink : 0.25 });
+        pdf.text(seg.t, x, y + sz(6) + ws + i * lh - 1, { font: "regular", size: ws, color: ink });
         x += pdf.textWidth(seg.t, seg.font, ws);
       }
     });
@@ -462,7 +604,7 @@
     });
     d.rows.forEach((row, r) => {
       const top = y + headH + r * rowH;
-      pdf.text(row.eye, cols[0] + 10, top + rowH / 2 - sz(0.5), { font: "bold", size: sz(10), color: ink });
+      pdf.text(row.eye, cols[0] + 10, top + rowH / 2 - sz(0.5), { size: sz(10.5), color: ink });
       pdf.text(row.side, cols[0] + 10, top + rowH / 2 + sz(9.5), { size: sz(7.5), color: muted });
       row.cells.forEach((c, i) => pdf.text(c, (cols[i + 1] + cols[i + 2]) / 2, top + rowH / 2 + sz(4.5), { size: sz(13.5), color: ink, align: "center" }));
     });
@@ -502,8 +644,8 @@
       const fs = sz(8), flh = fs * 1.4;
       for (const f of d.flags) {
         const lines2 = pdf.wrap(f, cw - 12, "regular", fs);
-        pdf.text("•", M + 2, y + fs, { size: fs, color: 0.3 });
-        lines2.forEach((line, j) => pdf.text(line, M + 12, y + fs + j * flh, { size: fs, color: 0.3 }));
+        pdf.text("•", M + 2, y + fs, { size: fs, color: ink });
+        lines2.forEach((line, j) => pdf.text(line, M + 12, y + fs + j * flh, { size: fs, color: ink }));
         y += lines2.length * flh + sz(1.5);
       }
     }
@@ -523,14 +665,14 @@
     const sigW = (cw - 28) / 2;
     [[d.signatory, "Verified by"], [d.licence, "Licence or certification"]].forEach(([value, label], i) => {
       const x = M + i * (sigW + 28);
-      pdf.line(x, y, x + sigW, y, { width: 0.8, color: 0.2 });
+      pdf.line(x, y, x + sigW, y, { width: 0.5, color: ink });
       pdf.text(value, x, y + sz(14), { size: sz(10.5), color: ink });
       pdf.text(label, x, y + sz(25), { size: sz(7.5), color: muted });
     });
     y += sz(36);
 
     // Footer
-    pdf.line(M, y, W - M, y, { color: 0.8 });
+    pdf.line(M, y, W - M, y, { width: 0.5, color: ink });
     const footLines = pdf.wrap(d.footer, cw, "regular", sz(7.5));
     footLines.forEach((line, j) => pdf.text(line, M, y + sz(12) + j * sz(10), { size: sz(7.5), color: muted }));
     y += sz(12) + (footLines.length - 1) * sz(10);
@@ -592,6 +734,13 @@
     $("geniusPanel").querySelectorAll(".field[data-sign]").forEach(el => { el.dataset.sign = "-1"; });
     $("geniusPanel").querySelectorAll(".sign:not(.static)").forEach(b => { b.textContent = Rx.MINUS; });
     segment("geniusGlasses", "");
+    segment("geniusCompareEye", "od");
+    segment("geniusCompareScene", "distance");
+    document.querySelectorAll("#geniusPrediagnosis input").forEach(cb => { delete cb.dataset.manual; });
+    document.querySelectorAll("#geniusPanel .cc-row").forEach(row => { row.hidden = true; });
+    clearComparison();
+    $("geniusCompareStatus").textContent = "Needs the age and the autorefractor lines in section 2. Works at any age.";
+    $("geniusAgeNote").textContent = "Enter the age, or the birthdate and the age fills in.";
     $("geniusGlassesFields").hidden = true;
     $("geniusGlassesFields").disabled = true;
     ["geniusPatientName", "geniusPrescriptionDate", "geniusPrescriptionNotes"].forEach(id => { $(id).value = ""; });
@@ -605,7 +754,7 @@
   function newPatient() {
     resetAll();
     window.scrollTo({ top: 0, behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
-    $("geniusAge").focus({ preventScroll: true });
+    $("geniusName").focus({ preventScroll: true });
   }
 
   // ---------------------------------------------------------------- scanner
@@ -633,6 +782,7 @@
       if (result.near && result.near.workingDistanceCm != null) Rx.setPlainField("geniusNearWd", result.near.workingDistanceCm * 10);
       syncAxes();
       invalidate();
+      syncDiagnosis();
       status.textContent = result.warnings && result.warnings.length ? `Imported with ${result.warnings.length} item(s) to review` : "Imported · review values";
     } catch (error) {
       status.textContent = "Scan failed · use manual entry or try another photo";
@@ -658,12 +808,27 @@
     $("geniusTicketInput").addEventListener("change", e => { const f = e.target.files && e.target.files[0]; if (f) scan(f); });
 
     // Any edit to the screening or ticket makes the proposal stale; verification edits only hide the preview.
-    $("geniusForm").addEventListener("input", invalidate);
+    // Visual acuity, pre-diagnosis and the comparison controls ([data-keep]) never change the proposal.
+    const kept = e => Boolean(e.target.closest("[data-keep]"));
+    $("geniusForm").addEventListener("input", e => {
+      if (kept(e)) return;
+      if (e.target.id === "geniusBirthdate") syncBirthdate();
+      invalidate();
+      syncDiagnosis();
+    });
     $("geniusForm").addEventListener("change", e => {
+      if (e.target.closest("#geniusPrediagnosis")) {
+        e.target.dataset.manual = "true";
+        return;
+      }
+      if (kept(e)) return;
       const m = e.target.id.match(/^(genius(?:Od|Os)(?:R[123]|Sel|Prev))(Sph|Cyl)$/);
       if (m) Rx.syncRxAxis(m[1], /Prev$/.test(m[1]));
+      if (e.target.id === "geniusBirthdate") syncBirthdate();
       invalidate();
+      syncDiagnosis();
     });
+    $("geniusCompareBtn").addEventListener("click", showComparison);
     $("geniusResults").addEventListener("change", e => {
       const m = e.target.id.match(/^(genius(?:Od|Os)Ref)(Sph|Cyl)$/);
       if (m) Rx.syncRxAxis(m[1], true);
@@ -674,7 +839,10 @@
       if (id === "geniusGlasses") {
         $("geniusGlassesFields").hidden = e.detail.value !== "yes";
         $("geniusGlassesFields").disabled = e.detail.value !== "yes";
+        document.querySelectorAll("#geniusPanel .cc-row").forEach(row => { row.hidden = e.detail.value !== "yes"; });
         invalidate();
+      } else if (id === "geniusCompareEye" || id === "geniusCompareScene") {
+        if (!$("geniusCompare").hidden) showComparison();
       } else if (id === "geniusOutcome") {
         toggleRefine(e.detail.value === "refined");
         if (e.detail.value === "refined") prefillRefined();
@@ -685,12 +853,12 @@
     });
     $("geniusReset").addEventListener("click", () => {
       resetAll();
-      $("geniusAge").focus();
+      $("geniusName").focus();
     });
   }
 
   build();
   bind();
   setStep("screen");
-  window.OculiGenius = Object.freeze({ MIN_AGE, LARGE_CHANGE_D, buildPdf });
+  window.OculiGenius = Object.freeze({ MIN_AGE, LARGE_CHANGE_D, buildPdf, ageFromBirthdate, suggestDiagnosis });
 })();

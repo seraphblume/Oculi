@@ -36,7 +36,27 @@ const server = http.createServer(async (req, res) => {
     });
     const url = `http://127.0.0.1:${server.address().port}`;
     await page.goto(url);
-    assert.match(await page.locator("#engineLine").innerText(), /Beryl 1\.1 · not clinically validated · compared with Heliodor 1\.1/);
+
+    // Studio surface: the first-run splash appears once, waits for Continue, then never again.
+    assert.equal(await page.locator("#zlSplash").isVisible(), true, "first run shows the splash");
+    assert.match(await page.locator("#zlSplash").innerText(), /ZEPHENIALABS[\s\S]*Oculi[\s\S]*Beryl 1\.1/i);
+    assert.equal(await page.evaluate(() => getComputedStyle(document.getElementById("zlSplash")).backgroundColor), "rgb(21, 19, 88)", "Zephyr dark ground");
+    await page.locator("#zlSplashContinue").click();
+    assert.equal(await page.locator("#zlSplash").isVisible(), false);
+    await page.reload();
+    assert.equal(await page.locator("#zlSplash").isVisible(), false, "the splash shows once per install");
+
+    // Working screens use the system font; the About sheet carries the emblem and the palette.
+    assert.match(await page.evaluate(() => getComputedStyle(document.body).fontFamily), /^-apple-system/);
+    await page.locator("#aboutBtn").click();
+    assert.equal(await page.locator("#aboutDialog").evaluate(d => d.open), true);
+    assert.match(await page.locator("#aboutEngines").innerText(), /Beryl 1\.1[\s\S]*Heliodor 1\.0[\s\S]*Goshenite 1\.0[\s\S]*ZL Retina 0\.1\.0/);
+    await page.locator("#aboutPalette").selectOption("boreas");
+    assert.equal(await page.evaluate(() => document.documentElement.dataset.palette), "boreas");
+    await page.locator("#aboutPalette").selectOption("zephyr");
+    await page.locator(".about-done").click();
+    assert.equal(await page.locator("#aboutDialog").evaluate(d => d.open), false);
+    assert.match(await page.locator("#engineLine").innerText(), /Beryl 1\.1 · not clinically validated · compared with Heliodor 1\.0/);
     assert.equal(await page.locator("#previousRxFields").isVisible(), false);
 
     // A real old-format record must retain both engine identities and its original bytes.
@@ -171,9 +191,48 @@ const server = http.createServer(async (req, res) => {
         await page.screenshot({ path: path.join(process.env.DIOPTRA_SCREENSHOT_DIR, `rc-agreement-${width}.png`) });
       }
     }
+    // Goshenite outcome 1: the rating is required before the case is saved.
+    await page.locator("#primaryAction").click();
+    assert.match(await page.locator("#toast").innerText(), /Rate the proposal before saving/);
+    assert.equal(await page.evaluate(() => DioptraStorage.listCases().length), 1);
+    await page.locator("#optometristScore [data-value='4']").click();
     await page.locator("#primaryAction").click();
     const saved = await page.evaluate(() => DioptraStorage.listCases());
     assert.equal(saved.length, 2);
+    assert.deepEqual({ ...saved[1].assessment, ratedAt: "" },
+      { scaleVersion: "optometrist-acceptability-1", score: 4, disposition: "acceptable_with_minor_change", engine: "beryl-v1.1", ratedAt: "" });
+    assert.equal(saved[1].followUp, null);
+    assert.equal(await page.locator("#optometristScore").getAttribute("data-value"), "", "rating clears for the next case");
+
+    // Goshenite outcome 2: tolerance at follow-up, recorded on the saved case.
+    assert.match(await page.locator("#gosheniteCount").innerText(), /0 of 2 complete/);
+    await page.locator(`.follow-up-row[data-saved="${saved[1].savedAt}"]`).click();
+    assert.equal(await page.locator("#followUpDialog").evaluate(d => d.open), true);
+    await page.locator("#fuSave").click();
+    assert.match(await page.locator("#fuError").innerText(), /how the glasses are going/);
+    await page.locator("#fuStatus [data-value='intolerant']").click();
+    await page.locator("#fuSave").click();
+    assert.match(await page.locator("#fuError").innerText(), /what was done/);
+    await page.locator("#fuAction [data-value='remake']").click();
+    await page.locator("#fuMethod [data-value='telephone']").click();
+    await page.locator("#fuNote").fill("Headache with the new cylinder");
+    await page.locator("#fuSave").click();
+    assert.equal(await page.locator("#followUpDialog").evaluate(d => d.open), false);
+    const followed = await page.evaluate(() => DioptraStorage.listCases()[1].followUp);
+    assert.equal(followed.status, "intolerant");
+    assert.equal(followed.action, "remake");
+    assert.equal(followed.collectionMethod, "telephone");
+    assert.equal(followed.followUpDays, 0);
+    assert.match(await page.locator("#gosheniteCount").innerText(), /1 of 2 complete/);
+    const outcomeCsv = await page.evaluate(() => DioptraStorage.toCSV(DioptraStorage.listCases()));
+    const parseRow = line => [...line.matchAll(/("(?:[^"]|"")*"|[^,]*)(,|$)/g)].map(m => m[1].replace(/^"|"$/g, "").replaceAll('""', '"')).slice(0, -1);
+    const [oh, , orow] = outcomeCsv.split("\n").map(parseRow);
+    assert.equal(orow[oh.indexOf("optometrist_score")], "4");
+    assert.equal(orow[oh.indexOf("tolerance_status")], "intolerant");
+    assert.equal(orow[oh.indexOf("tolerance_note")], "Headache with the new cylinder");
+    // Follow-ups never touch the prediction or the rest of the record.
+    const after = await page.evaluate(() => DioptraStorage.listCases()[1]);
+    assert.deepEqual({ ...after, followUp: null }, saved[1]);
     assert.equal(JSON.stringify(saved[0]), historical, "historical record is untouched");
     const c = saved[1];
     assert.equal(c.schema, "dioptra-case-5");
@@ -257,6 +316,7 @@ const server = http.createServer(async (req, res) => {
     await page.locator("#primaryAction").click();
     for (const eye of ["od", "os"]) await page.locator(`#${eye}FinSph`).selectOption("0.00");
     await page.locator("#primaryAction").click();
+    await page.locator("#optometristScore [data-value='5']").click();
     await page.locator("#primaryAction").click();
     const scanned = await page.evaluate(() => DioptraStorage.listCases().at(-1));
     assert.equal(scanned.input.previousRx, null, "hidden stale previous Rx is excluded");
@@ -274,10 +334,16 @@ const server = http.createServer(async (req, res) => {
     assert.equal(await page.locator("#actionBar").isVisible(), false);
     assert.equal(await page.locator("#caseActions").isVisible(), false);
     assert.equal(await page.locator("#geniusPanel h1").innerText(), "Genius");
-    assert.match(await page.locator("#geniusPanel .title-sub").innerText(), /^Guided refraction · development preview\.$/);
+    assert.match(await page.locator("#geniusPanel .title-sub").innerText(), /^Visual assessment and guided refraction · development preview\.$/);
     const geniusSubmit = () => page.locator("#geniusForm button[type=submit]").click();
     await geniusSubmit();
     assert.match(await page.locator("#geniusError").innerText(), /age from 1 to 120/i);
+    // A birthdate fills in the age.
+    const birth = await page.evaluate(() => { const d = new Date(); d.setFullYear(d.getFullYear() - 30); d.setDate(d.getDate() - 1); return d.toISOString().slice(0, 10); });
+    await page.locator("#geniusBirthdate").fill(birth);
+    assert.equal(await page.locator("#geniusAge").inputValue(), "30");
+    assert.match(await page.locator("#geniusAgeNote").innerText(), /Age 30 from the birthdate/);
+    await page.locator("#geniusBirthdate").fill("");
     await page.locator("#geniusAge").fill("42");
 
     // Warning signs and age stop Genius before any proposal.
@@ -314,7 +380,7 @@ const server = http.createServer(async (req, res) => {
     await page.locator("#geniusOtherSymptoms").fill("Halos");
     await geniusSubmit();
     assert.equal(await page.locator("#geniusResults").isVisible(), true, await page.locator("#geniusError").innerText());
-    assert.match(await page.locator("#geniusVersion").textContent(), /v0\.3\.0 · prior offset/);
+    assert.match(await page.locator("#geniusVersion").textContent(), /v1\.1\.0 · Beryl base model · unvalidated/);
     assert.equal(await page.locator("#geniusOdResult").innerText(), "−2.25 −1.00 × 180°");
     assert.equal(await page.locator("#geniusOsResult").innerText(), "+0.75 −0.50 × 090°");
     assert.equal(await page.locator("#geniusAddResult").innerText(), "+0.75 D");
@@ -324,6 +390,28 @@ const server = http.createServer(async (req, res) => {
     assert.doesNotMatch(geniusFlags, /Large change from current glasses · OS/);
     assert.doesNotMatch(geniusFlags, /First glasses/);
     assert.equal(await page.locator("#geniusPrescription").isVisible(), false, "no preview before verification");
+
+    // Evaluación visual: with-glasses acuity rows, pre-diagnosis from the ticket, and the comparison.
+    assert.equal(await page.locator("#geniusVaDistCcOd").isVisible(), true, "cc rows show for glasses wearers");
+    await page.locator("#geniusVaDistScOd").selectOption("20/200");
+    assert.equal(await page.locator("#geniusResults").isVisible(), true, "acuity entries never invalidate the proposal");
+    const dx = () => page.evaluate(() => Object.fromEntries([...document.querySelectorAll("#geniusPrediagnosis input")].map(cb => [cb.dataset.dx, cb.checked])));
+    assert.deepEqual(await dx(), { myopia: true, hyperopia: true, astigmatism: true, presbyopia: true, none: false });
+    await page.locator("label:has([data-dx=hyperopia])").click();
+    assert.equal((await dx()).hyperopia, false, "the assessor can untick a box");
+    assert.equal(await page.locator("#geniusResults").isVisible(), true, "pre-diagnosis never invalidates the proposal");
+    await page.locator("#geniusCompareBtn").click();
+    await page.locator("#geniusCompare").waitFor({ state: "visible", timeout: 30000 });
+    assert.match(await page.locator("#geniusCompareCurrentNote").innerText(), /^Current glasses · about \d\.\d\d D out of focus/);
+    assert.match(await page.locator("#geniusCompareTrueNote").innerText(), /^Full correction −2\.25 −1\.00 × 180° · in focus/);
+    const contrast = id => page.evaluate(id => {
+      const c = document.getElementById(id), d = c.getContext("2d").getImageData(0, 0, c.width, c.height).data;
+      let lo = 255, hi = 0; for (let i = 0; i < d.length; i += 4) { lo = Math.min(lo, d[i + 1]); hi = Math.max(hi, d[i + 1]); } return hi - lo;
+    }, id);
+    assert.ok(await contrast("geniusCompareTrue") > await contrast("geniusCompareCurrent"), "the corrected chart is sharper");
+    assert.equal(await page.locator("#geniusResults").isVisible(), true, "the comparison never invalidates the proposal");
+    await page.getByRole("radio", { name: "Near", exact: true }).click();
+    await page.locator("#geniusCompareStatus").filter({ hasText: /at 40 cm/ }).waitFor({ timeout: 30000 });
 
     // Verification in a trial frame is required before the preview.
     const preview = () => page.locator("#geniusPreview").click();
@@ -603,6 +691,7 @@ const server = http.createServer(async (req, res) => {
     }
     await page.locator("#primaryAction").click();
     assert.equal(await page.locator("body").getAttribute("data-stage"), "compare");
+    await page.locator("#optometristScore [data-value='5']").click();
     await page.locator("#primaryAction").click();
     const zeroCase = await page.evaluate(() => DioptraStorage.listCases().at(-1));
     assert.equal(zeroCase.entryRevision, "beryl-v11-1");

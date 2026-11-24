@@ -1,5 +1,5 @@
 // Network first, cache as offline fallback, so a deployed update is picked up on the next load.
-const CACHE = "oculi-engine-transition-beryl-v1.1-1";
+const CACHE = "oculi-beryl-v1.1-zl-2";
 const ASSETS = [
   "./",
   "./index.html",
@@ -24,7 +24,16 @@ const ASSETS = [
   "./js/app.js",
   "./js/optical-calculators.js",
   "./js/pdf-lite.js",
+  "./js/zl-retina.js",
+  "./js/zl-retina-worker.js",
+  "./js/vision-compare.js",
   "./js/genius.js",
+  "./js/zl-field.js",
+  "./js/studio.js",
+  "./css/zl-tokens.css",
+  "./assets/fonts/ibm-plex-sans-latin-400-normal.woff2",
+  "./assets/fonts/ibm-plex-sans-latin-500-normal.woff2",
+  "./assets/fonts/ibm-plex-mono-latin-500-normal.woff2",
   "./js/workspace.js",
   "./manifest.webmanifest",
   "./assets/icon.svg",

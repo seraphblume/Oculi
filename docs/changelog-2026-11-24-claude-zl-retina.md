@@ -114,3 +114,12 @@ The ZL retina work is ready for review only when its source and license are docu
 - CI installs Chromium and retains the full Genius print/PDF browser suites.
 
 Oculi remains a research prototype and is not clinically validated. No “clinically proven” claim should be made without adequate independent prospective evidence for the version, population, intended use and endpoints being claimed.
+
+## Update, same day: ZL Retina found and integrated
+
+The source was never missing from the studio: `zl_retina` 0.1.0 lives in the studio's local package collection (`Workspace/Packages/ZLRetina`), not in this repository. It is the studio's own code, so there is no third-party licence to clear.
+
+- `js/zl-retina.js` ports it line for line; `tests/zl-retina.test.js` matches the Python package's own output to 1e-9 on the kernels and 1e-5 on rendered images.
+- Genius section 4, **Vision comparison**, renders current vision and true vision side by side in a worker. It is labelled as an illustration of focus, works at any age, keeps everything on the device, and cannot change a proposal, a Clinical Study record or storage.
+- Engines were renumbered at the same time: Beryl 1.1.0 and Heliodor 1.0.0 (each gemstone name starts its own version line).
+- Goshenite's outcomes are now collected: see `docs/goshenite-outcomes.md`.

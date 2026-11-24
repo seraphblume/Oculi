@@ -122,7 +122,8 @@ const record = {
   shadow: { prediction: run.shadow.prediction }
 };
 const studyHeader = w.DioptraStorage.toCSV([record]).split("\n")[0];
-assert.equal(studyHeader.split(",").length, 75, "study CSV keeps its 75 columns");
+assert.equal(studyHeader.split(",").length, 83, "study CSV keeps its 75 columns, then the 8 Goshenite outcome columns");
+assert.equal(studyHeader.split(",")[74], "final_note", "outcome columns are appended, never inserted");
 const csv = w.DioptraStorage.toShadowCSV([record]);
 const [header, ...rows] = csv.split("\n").map(r => r.split(","));
 assert.equal(rows.length, 16);

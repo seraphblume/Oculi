@@ -49,6 +49,10 @@ jobs:
 
       - name: Verify PDF writer
         run: node tests/pdf-lite.test.js
+      - name: ZL Retina parity with the Python package
+        run: node tests/zl-retina.test.js
+      - name: Vision comparison defocus
+        run: node tests/vision-compare.test.js
 
       - name: Install browser test runtime
         run: |

@@ -55,6 +55,10 @@
 
   const n = v => (Math.round(v * 100) / 100).toString();
 
+  // A colour is a grey level (0–1) or an [r, g, b] triple (0–1 each).
+  const fillColour = c => Array.isArray(c) ? `${c.map(n).join(" ")} rg` : `${n(c)} g`;
+  const strokeColour = c => Array.isArray(c) ? `${c.map(n).join(" ")} RG` : `${n(c)} G`;
+
   function create(width = 612, height = 792) {
     const ops = [];
     const doc = {
@@ -66,7 +70,7 @@
         const f = FONTS[font] || FONTS.regular;
         let w = textWidth(str, font, size) + spacing * Math.max(0, [...String(str)].length - 1);
         let sx = align === "right" ? x - w : align === "center" ? x - w / 2 : x;
-        ops.push(`BT /${f.key} ${n(size)} Tf ${n(color)} g ${n(spacing)} Tc 1 0 0 1 ${n(sx)} ${n(height - y)} Tm ${pdfString(str)} Tj ET`);
+        ops.push(`BT /${f.key} ${n(size)} Tf ${fillColour(color)} ${n(spacing)} Tc 1 0 0 1 ${n(sx)} ${n(height - y)} Tm ${pdfString(str)} Tj ET`);
       },
       rotatedText(str, cx, cy, degrees, opts = {}) {
         const { font = "bold", size = 48, color = 0.9, spacing = 0 } = opts;
@@ -76,11 +80,11 @@
         // Start so the text's centre line passes through (cx, cy).
         const x = cx - (w / 2) * c + (size * 0.35) * s;
         const y = (height - cy) - (w / 2) * s - (size * 0.35) * c;
-        ops.push(`BT /${f.key} ${n(size)} Tf ${n(color)} g ${n(spacing)} Tc ${n(c)} ${n(s)} ${n(-s)} ${n(c)} ${n(x)} ${n(y)} Tm ${pdfString(str)} Tj ET`);
+        ops.push(`BT /${f.key} ${n(size)} Tf ${fillColour(color)} ${n(spacing)} Tc ${n(c)} ${n(s)} ${n(-s)} ${n(c)} ${n(x)} ${n(y)} Tm ${pdfString(str)} Tj ET`);
       },
       line(x1, y1, x2, y2, opts = {}) {
         const { width: lw = 0.5, color = 0.6 } = opts;
-        ops.push(`${n(lw)} w ${n(color)} G ${n(x1)} ${n(height - y1)} m ${n(x2)} ${n(height - y2)} l S`);
+        ops.push(`${n(lw)} w ${strokeColour(color)} ${n(x1)} ${n(height - y1)} m ${n(x2)} ${n(height - y2)} l S`);
       },
       rect(x, y, w, h, opts = {}) {
         const { fill = null, stroke = null, width: lw = 0.5, radius = 0 } = opts;
@@ -94,9 +98,9 @@
             `${n(L + r)} ${n(B)} l`, `${n(L + k)} ${n(B)} ${n(L)} ${n(B + k)} ${n(L)} ${n(B + r)} c`,
             `${n(L)} ${n(T - r)} l`, `${n(L)} ${n(T - k)} ${n(L + k)} ${n(T)} ${n(L + r)} ${n(T)} c h`].join(" ");
         }
-        if (fill != null && stroke != null) ops.push(`${n(lw)} w ${n(fill)} g ${n(stroke)} G ${path} B`);
-        else if (fill != null) ops.push(`${n(fill)} g ${path} f`);
-        else if (stroke != null) ops.push(`${n(lw)} w ${n(stroke)} G ${path} S`);
+        if (fill != null && stroke != null) ops.push(`${n(lw)} w ${fillColour(fill)} ${strokeColour(stroke)} ${path} B`);
+        else if (fill != null) ops.push(`${fillColour(fill)} ${path} f`);
+        else if (stroke != null) ops.push(`${n(lw)} w ${strokeColour(stroke)} ${path} S`);
       },
       // Greedy word wrap with the same metrics used for drawing.
       wrap(str, maxWidth, font = "regular", size = 10) {

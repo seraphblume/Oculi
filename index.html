@@ -1,10 +1,10 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <meta name="theme-color" content="#F6F4EE" media="(prefers-color-scheme: light)" />
-  <meta name="theme-color" content="#111111" media="(prefers-color-scheme: dark)" />
+  <meta name="theme-color" content="#F2F2F7" media="(prefers-color-scheme: light)" />
+  <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <meta name="apple-mobile-web-app-title" content="Oculi" />
@@ -13,13 +13,18 @@
   <link rel="manifest" href="manifest.webmanifest" />
   <link rel="icon" href="assets/icon.svg" type="image/svg+xml" />
   <link rel="apple-touch-icon" href="assets/icon-192.png" />
+  <link rel="stylesheet" href="css/zl-tokens.css" />
   <link rel="stylesheet" href="css/app.css" />
+  <script>
+    // Studio surfaces start dark in the viewer's palette; applied before the first paint.
+    try { const p = localStorage.getItem("oculi-zl-palette"); if (p === "boreas" || p === "harukaze") document.documentElement.dataset.palette = p; } catch (e) {}
+  </script>
 </head>
 <body data-stage="measure" data-view="case">
   <a class="skip-link" href="#casePanel">Skip to content</a>
   <header class="navbar" id="navbar">
     <div class="navbar-inner">
-      <div class="brand">Oculi<span class="brand-caption">REFRACTION STUDIO</span></div>
+      <button class="brand brand-button" id="aboutBtn" type="button" aria-haspopup="dialog" aria-label="About Oculi">Oculi<span class="brand-caption">REFRACTION STUDIO</span></button>
       <div class="view-tabs" role="tablist" aria-label="Workspace">
         <button id="caseTab" role="tab" aria-selected="true" aria-controls="casePanel" type="button">Clinical Study</button>
         <button id="geniusTab" role="tab" aria-selected="false" aria-controls="geniusPanel" tabindex="-1" type="button">Genius</button>
@@ -247,6 +252,20 @@
     <!-- 3 · Compare ------------------------------------------------------- -->
     <section id="compareSection" class="stage-section" hidden>
       <div id="comparisonContent"></div>
+      <h2 class="group-header" id="ratingTitle">Your rating · <span id="ratingEngine">Beryl</span></h2>
+      <div class="group">
+        <div class="row stacked">
+          <span class="row-caption">How far is the locked proposal from what you would prescribe?</span>
+          <div class="segmented rating" id="optometristScore" data-value="" role="radiogroup" aria-labelledby="ratingTitle">
+            <button type="button" data-value="5" role="radio"><b>5</b>As is</button>
+            <button type="button" data-value="4" role="radio"><b>4</b>Minor</button>
+            <button type="button" data-value="3" role="radio"><b>3</b>Clear</button>
+            <button type="button" data-value="2" role="radio"><b>2</b>Major</button>
+            <button type="button" data-value="1" role="radio"><b>1</b>Reject</button>
+          </div>
+        </div>
+      </div>
+      <p class="group-footer">5 use as is · 4 minor change · 3 clinically meaningful change · 2 major change · 1 reject. Required to save. Goshenite learns from this rating and from the patient's tolerance at follow-up.</p>
     </section>
 
     <!-- Study ------------------------------------------------------------- -->
@@ -262,6 +281,10 @@
       </details>
       <p class="group-footer">Power-vector error, with an axis tolerance that tightens as cylinder grows (±14° at 0.25 D to ±2° above 1.50 D). ±5° allows for axes recorded in 5° steps. Don't tune an engine on a cohort that is still open.</p>
 
+      <h2 class="group-header">Follow-ups</h2>
+      <div class="group" id="followUpList"></div>
+      <p class="group-footer" id="followUpFooter">Ask how the new glasses are going one to four weeks after the exam. Patient tolerance is Goshenite's second outcome.</p>
+
       <div class="group">
         <button id="clearDataBtn" class="row row-button destructive" type="button">Delete All Cases…</button>
       </div>
@@ -274,11 +297,11 @@
   <section class="content genius-panel" id="geniusPanel" role="tabpanel" aria-labelledby="geniusTab" tabindex="0" hidden>
     <div class="large-title">
       <h1>Genius</h1>
-      <p class="title-sub">Guided refraction · development preview.</p>
+      <p class="title-sub">Visual assessment and guided refraction · development preview.</p>
     </div>
 
     <ol class="stepper" id="geniusStepper" aria-label="Genius progress">
-      <li data-step="screen"><span class="step-dot">1</span>Screen</li>
+      <li data-step="screen"><span class="step-dot">1</span>Assess</li>
       <li data-step="propose"><span class="step-dot">2</span>Propose</li>
       <li data-step="verify"><span class="step-dot">3</span>Verify</li>
     </ol>
@@ -287,8 +310,16 @@
       <h2 class="group-header">Patient</h2>
       <div class="group">
         <label class="row">
+          <span class="row-label">Name</span>
+          <input id="geniusName" class="row-input" type="text" autocomplete="off" maxlength="100" placeholder="Optional · not saved" />
+        </label>
+        <label class="row">
           <span class="row-label">Age</span>
           <input id="geniusAge" class="row-input num" type="text" inputmode="numeric" autocomplete="off" placeholder="Years" />
+        </label>
+        <label class="row">
+          <span class="row-label">or Birthdate</span>
+          <input id="geniusBirthdate" class="row-input date-input" type="date" autocomplete="off" aria-describedby="geniusAgeNote" />
         </label>
         <div class="row">
           <span class="row-label">Current glasses</span>
@@ -298,15 +329,7 @@
           </div>
         </div>
       </div>
-      <fieldset id="geniusGlassesFields" hidden disabled>
-        <h2 class="group-header">Current glasses · lensometer</h2>
-        <div class="eye-columns">
-          <section class="eye-section"><div class="group rx-table final" id="genius-prev-od"></div></section>
-          <section class="eye-section"><div class="group rx-table final" id="genius-prev-os"></div></section>
-        </div>
-        <div class="group"><label class="row"><span class="row-label">ADD</span><select id="geniusPrevAdd" class="row-select"></select></label></div>
-        <p class="group-footer">Minus cylinder. Leave cylinder blank for sphere only.</p>
-      </fieldset>
+      <p class="group-footer" id="geniusAgeNote">Enter the age, or the birthdate and the age fills in.</p>
 
       <h2 class="group-header">History</h2>
       <div class="group">
@@ -348,7 +371,35 @@
       </div>
       <p class="group-footer">Any warning sign stops Genius. These need an eye doctor before any prescription.</p>
 
-      <h2 class="group-header">Autorefractor ticket</h2>
+      <h2 class="group-header section-header"><span class="section-number">1</span>Visual acuity</h2>
+      <div class="group va-group" data-keep>
+        <table class="va-table">
+          <thead><tr><th scope="col"><span class="visually-hidden">Condition</span></th><th scope="col">OD</th><th scope="col">OS</th><th scope="col">OU</th></tr></thead>
+          <tbody>
+            <tr class="va-band"><th scope="rowgroup" colspan="4">Distance</th></tr>
+            <tr><th scope="row">Without glasses · sc</th><td><select id="geniusVaDistScOd" class="va-select" aria-label="Without glasses · sc OD"></select></td><td><select id="geniusVaDistScOs" class="va-select" aria-label="Without glasses · sc OS"></select></td><td><select id="geniusVaDistScOu" class="va-select" aria-label="Without glasses · sc OU"></select></td></tr>
+            <tr class="cc-row" hidden><th scope="row">With glasses · cc</th><td><select id="geniusVaDistCcOd" class="va-select" aria-label="With glasses · cc OD"></select></td><td><select id="geniusVaDistCcOs" class="va-select" aria-label="With glasses · cc OS"></select></td><td><select id="geniusVaDistCcOu" class="va-select" aria-label="With glasses · cc OU"></select></td></tr>
+            <tr class="va-band"><th scope="rowgroup" colspan="4">Near</th></tr>
+            <tr><th scope="row">Without glasses · sc</th><td><select id="geniusVaNearScOd" class="va-select" aria-label="Without glasses · sc OD"></select></td><td><select id="geniusVaNearScOs" class="va-select" aria-label="Without glasses · sc OS"></select></td><td><select id="geniusVaNearScOu" class="va-select" aria-label="Without glasses · sc OU"></select></td></tr>
+            <tr class="cc-row" hidden><th scope="row">With glasses · cc</th><td><select id="geniusVaNearCcOd" class="va-select" aria-label="With glasses · cc OD"></select></td><td><select id="geniusVaNearCcOs" class="va-select" aria-label="With glasses · cc OS"></select></td><td><select id="geniusVaNearCcOu" class="va-select" aria-label="With glasses · cc OU"></select></td></tr>
+            <tr class="va-band"><th scope="rowgroup" colspan="4">Pinhole</th></tr>
+            <tr><th scope="row">Pinhole</th><td><select id="geniusPinholeOd" class="va-select" aria-label="Pinhole OD"></select></td><td><select id="geniusPinholeOs" class="va-select" aria-label="Pinhole OS"></select></td><td></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="group-footer">Optional. The with-glasses rows appear when the patient wears glasses.</p>
+
+      <h2 class="group-header section-header"><span class="section-number">2</span>Initial refraction</h2>
+      <fieldset id="geniusGlassesFields" hidden disabled>
+        <h3 class="sub-header">Current glasses · lensometer</h3>
+        <div class="eye-columns">
+          <section class="eye-section"><div class="group rx-table final" id="genius-prev-od"></div></section>
+          <section class="eye-section"><div class="group rx-table final" id="genius-prev-os"></div></section>
+        </div>
+        <div class="group"><label class="row"><span class="row-label">ADD</span><select id="geniusPrevAdd" class="row-select"></select></label></div>
+        <p class="group-footer">Minus cylinder. Leave cylinder blank for sphere only.</p>
+      </fieldset>
+      <h3 class="sub-header">Autorefractor</h3>
       <div class="group">
         <div class="row scan-row">
           <div>
@@ -365,17 +416,17 @@
       </div>
       <div class="eye-columns">
         <section class="eye-section">
-          <h2 class="group-header">Right eye · OD</h2>
+          <h4 class="eye-header">Right eye · OD</h4>
           <div class="group rx-table" id="genius-ar-od"></div>
         </section>
         <section class="eye-section">
-          <h2 class="group-header">Left eye · OS</h2>
+          <h4 class="eye-header">Left eye · OS</h4>
           <div class="group rx-table" id="genius-ar-os"></div>
         </section>
       </div>
       <p class="group-footer">Copy the three readings and the bracketed line ‹ ›. Only the bracketed line is required; repeats let Genius check fixation.</p>
 
-      <h2 class="group-header">Near</h2>
+      <h3 class="sub-header">Near</h3>
       <div class="group">
         <div class="row">
           <span class="row-label">PD distance / near</span>
@@ -393,11 +444,58 @@
       </div>
       <p class="group-footer">Refraction uses a fixed 12 mm vertex.</p>
 
+
+      <h2 class="group-header section-header"><span class="section-number">3</span>Pre-diagnosis</h2>
+      <div class="group" data-keep>
+        <div class="row stacked">
+          <div class="chips" id="geniusPrediagnosis">
+            <label class="chip"><input type="checkbox" data-dx="myopia" /><span>Myopia</span></label>
+            <label class="chip"><input type="checkbox" data-dx="hyperopia" /><span>Hyperopia</span></label>
+            <label class="chip"><input type="checkbox" data-dx="astigmatism" /><span>Astigmatism</span></label>
+            <label class="chip"><input type="checkbox" data-dx="presbyopia" /><span>Presbyopia</span></label>
+            <label class="chip"><input type="checkbox" data-dx="none" /><span>No refractive error</span></label>
+          </div>
+        </div>
+      </div>
+      <p class="group-footer" id="geniusDxNote">Ticked from the autorefractor and age: spherical equivalent of −0.50 D or more is myopia, +0.50 D or more hyperopia, cylinder of 0.50 D or more astigmatism, age 40 or over presbyopia. Change any box.</p>
+
+      <h2 class="group-header section-header"><span class="section-number">4</span>Vision comparison</h2>
+      <div class="group" data-keep id="geniusCompareControls">
+        <div class="row">
+          <span class="row-label">Eye</span>
+          <div class="segmented" id="geniusCompareEye" data-value="od" role="radiogroup" aria-label="Eye shown">
+            <button type="button" data-value="od" role="radio" aria-checked="true">OD</button>
+            <button type="button" data-value="os" role="radio">OS</button>
+          </div>
+        </div>
+        <div class="row">
+          <span class="row-label">Chart</span>
+          <div class="segmented" id="geniusCompareScene" data-value="distance" role="radiogroup" aria-label="Chart distance">
+            <button type="button" data-value="distance" role="radio" aria-checked="true">Distance</button>
+            <button type="button" data-value="near" role="radio">Near</button>
+          </div>
+        </div>
+        <button id="geniusCompareBtn" class="row row-button" type="button">Show Comparison</button>
+      </div>
+      <div class="vision-compare" id="geniusCompare" data-keep hidden aria-live="polite">
+        <figure>
+          <canvas id="geniusCompareCurrent" width="280" height="360" role="img" aria-label="Chart as seen with the current correction"></canvas>
+          <figcaption><strong>Current vision</strong><span id="geniusCompareCurrentNote"></span></figcaption>
+        </figure>
+        <figure>
+          <canvas id="geniusCompareTrue" width="280" height="360" role="img" aria-label="Chart as seen with full correction"></canvas>
+          <figcaption><strong>True vision</strong><span id="geniusCompareTrueNote"></span></figcaption>
+        </figure>
+      </div>
+      <p class="group-footer" id="geniusCompareStatus">Needs the age and the autorefractor lines in section 2. Works at any age.</p>
+      <p class="group-footer compare-disclaimer">An optical illustration of focus only, for a 4 mm pupil. It cannot show how this patient perceives, and it says nothing about eye health.</p>
+
       <p id="geniusError" class="form-error" role="status" aria-live="polite"></p>
       <div class="form-actions">
         <button class="button-primary" type="submit">Propose Rx</button>
         <button class="quiet-button" id="geniusReset" type="button">Clear</button>
       </div>
+      <p class="group-footer" id="geniusAdultNote">The Rx proposal is for patients 18 and over.</p>
     </form>
 
     <section id="geniusStop" class="stop-card" role="alert" hidden>
@@ -669,6 +767,85 @@
     </form>
   </dialog>
 
+  <dialog id="followUpDialog" class="sheet-dialog" aria-labelledby="followUpTitle">
+    <form method="dialog" class="sheet follow-up-sheet" id="followUpForm" novalidate>
+      <div class="sheet-text">
+        <h3 id="followUpTitle">Follow-up</h3>
+        <p id="followUpMeta"></p>
+      </div>
+      <div class="sheet-body">
+        <span class="row-caption" id="fuStatusLabel">How are the glasses?</span>
+        <div class="choice-list" id="fuStatus" data-value="" role="radiogroup" aria-labelledby="fuStatusLabel">
+          <button type="button" data-value="tolerated" role="radio">Tolerated</button>
+          <button type="button" data-value="minor_symptoms" role="radio">Minor symptoms</button>
+          <button type="button" data-value="intolerant" role="radio">Not tolerated</button>
+          <button type="button" data-value="not_worn" role="radio">Not worn</button>
+          <button type="button" data-value="not_dispensed" role="radio">Glasses not made</button>
+          <button type="button" data-value="lost_to_follow_up" role="radio">No contact</button>
+        </div>
+        <span class="row-caption" id="fuActionLabel">What was done?</span>
+        <div class="choice-list" id="fuAction" data-value="" role="radiogroup" aria-labelledby="fuActionLabel">
+          <button type="button" data-value="none" role="radio">Nothing</button>
+          <button type="button" data-value="counselling" role="radio">Counselling</button>
+          <button type="button" data-value="adjustment" role="radio">Frame adjustment</button>
+          <button type="button" data-value="remake" role="radio">Lens remake</button>
+          <button type="button" data-value="new_exam" role="radio">New exam</button>
+          <button type="button" data-value="referral" role="radio">Referral</button>
+        </div>
+        <span class="row-caption" id="fuMethodLabel">How you asked</span>
+        <div class="choice-list" id="fuMethod" data-value="" role="radiogroup" aria-labelledby="fuMethodLabel">
+          <button type="button" data-value="in_person" role="radio">In person</button>
+          <button type="button" data-value="telephone" role="radio">Phone</button>
+          <button type="button" data-value="message" role="radio">Message</button>
+        </div>
+        <label class="row-caption" for="fuNote">Note</label>
+        <input id="fuNote" class="inline-input" type="text" maxlength="200" autocomplete="off" placeholder="Optional, e.g. headache with the cylinder" />
+        <p class="sheet-error" id="fuError" role="alert" hidden></p>
+      </div>
+      <div class="sheet-actions">
+        <button value="save" id="fuSave">Save Follow-up</button>
+        <button value="cancel" class="cancel" formnovalidate>Cancel</button>
+      </div>
+    </form>
+  </dialog>
+
+  <div id="zlSplash" class="zl-splash" role="dialog" aria-modal="true" aria-labelledby="zlSplashName" hidden>
+    <canvas id="zlSplashField" class="zl-field" role="img"></canvas>
+    <div class="zl-splash-text">
+      <p class="zl-label">ZepheniaLabs</p>
+      <h1 id="zlSplashName">Oculi</h1>
+      <p><span id="zlSplashVersion"></span> · Research tool. Not a validated medical device; every result needs an independent exam.</p>
+    </div>
+    <button id="zlSplashContinue" class="zl-splash-continue" type="button">Continue</button>
+  </div>
+
+  <dialog id="aboutDialog" class="about-dialog" aria-labelledby="aboutTitle">
+    <div class="about-header">
+      <canvas id="aboutField" class="zl-field" role="img"></canvas>
+      <h2 id="aboutTitle">Oculi</h2>
+      <p id="aboutVersion"></p>
+    </div>
+    <div class="about-body">
+      <h3 class="group-header">Engines</h3>
+      <div class="group" id="aboutEngines"></div>
+      <h3 class="group-header">Studio</h3>
+      <div class="group">
+        <label class="row"><span class="row-label">Palette</span>
+          <select id="aboutPalette" class="row-select" aria-describedby="aboutPaletteNote">
+            <option value="zephyr">Zephyr</option>
+            <option value="boreas">Boreas</option>
+            <option value="harukaze">Harukaze</option>
+          </select>
+        </label>
+        <div class="row"><span class="row-label">Data</span><span class="row-detail">Stays on this device</span></div>
+        <div class="row"><span class="row-label">Typeface</span><span class="row-detail">IBM Plex · <a href="assets/fonts/IBM-Plex-OFL.txt" target="_blank" rel="noopener">SIL Open Font License</a></span></div>
+      </div>
+      <p class="group-footer" id="aboutPaletteNote">The palette colours the first-run splash. Zephyr is the default.</p>
+      <p class="about-motto">ZepheniaLabs · De L’existence a L’existant</p>
+      <form method="dialog"><button class="button-primary about-done" value="done">Done</button></form>
+    </div>
+  </dialog>
+
   <script src="js/vertex.js"></script>
   <script src="js/config.js"></script>
   <script src="js/algorithm.js"></script>
@@ -689,7 +866,11 @@
   <script src="js/app.js"></script>
   <script src="js/optical-calculators.js"></script>
   <script src="js/pdf-lite.js"></script>
+  <script src="js/zl-retina.js"></script>
+  <script src="js/vision-compare.js"></script>
   <script src="js/genius.js"></script>
+  <script src="js/zl-field.js"></script>
+  <script src="js/studio.js"></script>
   <script src="js/workspace.js"></script>
 </body>
 </html>
