@@ -32,8 +32,11 @@ jobs:
       - name: Verify frozen 0.4.0-rc.1, agreement scoring and v0.3 baseline parity
         run: node tests/v0.4-rc.test.js
 
-      - name: Verify v1.0 Beryl identity, RC parity, axis floor and exports
+      - name: Verify historical v1.0 parity and current exports
         run: node tests/v1.0-beryl.test.js
+
+      - name: Verify Beryl, Heliodor and Goshenite release boundaries
+        run: node tests/engine-naming-transition.test.js
 
       - name: Verify autorefractor ticket parser
         run: node tests/ticket-scan.test.js
@@ -72,3 +75,6 @@ jobs:
 
       - name: Parse proposed v0.3 schema
         run: node -e 'JSON.parse(require("fs").readFileSync("docs/data-collection-v0.3.schema.json", "utf8"))'
+
+      - name: Parse Goshenite outcome schema
+        run: node -e 'JSON.parse(require("fs").readFileSync("docs/goshenite-training-record.schema.json", "utf8"))'

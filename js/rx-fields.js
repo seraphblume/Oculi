@@ -18,6 +18,7 @@
     EXPERIMENTAL_RC: "Experimental release candidate",
     ADD_AT_CAP: "ADD at the cap",
     PEDIATRIC_PRIOR: "Pediatric calibration unavailable",
+    PEDIATRIC_RESEARCH_ONLY: "Pediatric validation unavailable",
     SPARSE_CALIBRATION: "Limited hyperopic calibration",
     VERTEX_CONVERTED: "Vertex distance converted",
     VERTEX_ASSUMED: "Vertex distance assumed",

@@ -1,30 +1,30 @@
 // Project Dioptra — engine registry.
 //
-// v1.0 "Beryl" is primary; v0.3 is the fixed shadow comparator. v0.2 and the
-// 0.4.0-rc.1 release candidate are retired from new runs; their records and source
-// remain for historical exports and parity tests.
+// Beryl v1.1.1 is primary; Heliodor v1.1 is the paired comparator. Their source
+// algorithms remain frozen as v0.3.0 and v1.0.0 Beryl respectively. Goshenite is
+// research-only and must not be added here without the documented validation gates.
 (function () {
   const ENGINES = {
-    "v1.0": {
-      id: "v1.0",
+    "beryl-v1.1.1": {
+      id: "beryl-v1.1.1",
       label: "Beryl",
-      version: () => window.DIOPTRA_V10_CONFIG.version,
-      predictCase: input => window.DioptraEngineV10.predictCase(input)
+      version: () => window.OCULI_BERYL_V111_CONFIG.version,
+      predictCase: input => window.OculiEngineBerylV111.predictCase(input)
     },
-    "v0.3": {
-      id: "v0.3",
-      label: "v0.3",
-      version: () => window.DIOPTRA_V03_CONFIG.version,
-      predictCase: input => window.DioptraEngineV03.predictCase(input)
+    "heliodor-v1.1": {
+      id: "heliodor-v1.1",
+      label: "Heliodor",
+      version: () => window.OCULI_HELIODOR_V11_CONFIG.version,
+      predictCase: input => window.OculiEngineHeliodorV11.predictCase(input)
     }
   };
 
   function primaryId() {
-    return "v1.0";
+    return "beryl-v1.1.1";
   }
 
   function shadowId() {
-    return "v0.3";
+    return "heliodor-v1.1";
   }
 
   // The primary engine must succeed; a shadow failure is recorded and never blocks the case.

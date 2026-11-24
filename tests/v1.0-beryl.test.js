@@ -11,7 +11,9 @@ function load(files) {
   return context.window;
 }
 const w = load(["js/vertex.js", "js/config.js", "js/algorithm.js", "js/config-v03.js", "js/engine-v03.js",
-  "js/config-v04.js", "js/engine-v04.js", "js/config-v10.js", "js/engine-v10.js", "js/scoring.js", "js/engines.js", "js/storage.js"]);
+  "js/config-v04.js", "js/engine-v04.js", "js/config-v10.js", "js/engine-v10.js",
+  "js/config-beryl-v111.js", "js/engine-beryl-v111.js", "js/config-heliodor-v11.js", "js/engine-heliodor-v11.js",
+  "js/goshenite-research.js", "js/scoring.js", "js/engines.js", "js/storage.js"]);
 const eye = (sphere = -2, cylinder = -1, axis = 90) => ({ sphere, cylinder, axis });
 const input = age => ({ age, instrument: { vertexMm: 12 }, od: eye(), os: eye() });
 const optics = p => ({
@@ -48,26 +50,34 @@ for (let i = 0; i < 500; i++) {
   assert.deepEqual(optics(w.DioptraEngineV10.predictCase(example)), optics(w.DioptraEngineV04.predictCase(example)), `RC parity case ${i}`);
 }
 
-// Registry: Beryl primary, v0.3 shadow, retired engines never run.
+// Registry transition: Beryl v1.1.1 primary, Heliodor v1.1 shadow; historical engines never run.
 const configBefore = JSON.stringify(w.DIOPTRA_V03_CONFIG);
 for (const age of [9, 17, 17.9, 18, 39, 39.9, 40, 75]) {
   const run = w.DioptraEngines.run(input(age));
-  assert.equal(run.primary.id, "v1.0");
-  assert.equal(run.primary.prediction.engine, "v1.0");
+  assert.equal(run.primary.id, "beryl-v1.1.1");
+  assert.equal(run.primary.prediction.engine, "beryl-v1.1.1");
   assert.equal(run.primary.prediction.name, "Beryl");
-  assert.equal(run.primary.prediction.version, "1.0.0");
-  assert.equal(run.shadow.id, "v0.3");
-  assert.equal(run.primary.prediction.od.stratum.offset, age < 18 ? -.25 : age < 40 ? -.50 : -.30);
+  assert.equal(run.primary.prediction.version, "1.1.1");
+  assert.equal(run.shadow.id, "heliodor-v1.1");
+  assert.equal(run.shadow.prediction.name, "Heliodor");
+  assert.equal(run.shadow.prediction.version, "1.1.0");
+  assert.equal(run.primary.prediction.od.stratum.offset, -.25);
   assert.equal(run.primary.prediction.status, "review");
   assert.ok(run.primary.prediction.flags.some(f => f.code === "UNVALIDATED"));
   assert.ok(!run.primary.prediction.flags.some(f => f.code === "EXPERIMENTAL_RC"));
-  assert.equal(run.primary.prediction.flags.some(f => f.code === "PEDIATRIC_PRIOR"), age < 18);
-  assert.deepEqual(optics(run.shadow.prediction), optics(w.DioptraEngineV03.predictCase(input(age))));
+  assert.equal(run.primary.prediction.flags.some(f => f.code === "PEDIATRIC_RESEARCH_ONLY"), age < 18);
+  assert.deepEqual(optics(run.primary.prediction), optics(w.DioptraEngineV03.predictCase(input(age))));
+  assert.deepEqual(optics(run.shadow.prediction), optics(w.DioptraEngineV10.predictCase(input(age))));
 }
 assert.equal(JSON.stringify(w.DIOPTRA_V03_CONFIG), configBefore, "no global config mutation");
 w.DioptraAlgorithm.predictCase = () => { throw new Error("Retired v0.2 must not run"); };
 w.DioptraEngineV04.predictCase = () => { throw new Error("Retired RC must not run"); };
+const historicalV10Predict = w.DioptraEngineV10.predictCase;
+w.DioptraEngineV10.predictCase = () => { throw new Error("Historical v1.0 wrapper must not run"); };
 w.DioptraEngines.run(input(30));
+w.DioptraEngineV10.predictCase = historicalV10Predict;
+assert.equal(w.DioptraEngines.ENGINES["goshenite-v1.0"], undefined);
+assert.equal(w.OculiGosheniteResearch.manifest.deploymentEligible, false);
 
 // A capped ADD is a review flag, never a silent value.
 const capped = w.DioptraEngineV10.predictCase({ ...input(46), od: eye(0.25, -0.25, 20), os: eye(0.5, -0.25, 155), near: { workingDistanceCm: 15 } });
@@ -105,7 +115,7 @@ const actual = {
   endpoint: { od: eye(-1.75), os: eye(-2), reasons: ["adaptation_large_change", "binocular_comfort"] }
 };
 const record = {
-  schema: "dioptra-case-4", entryRevision: "v10-beryl-1", cohort: v10.cohort, caseId: "S1", savedAt: "2026-11-08T12:00:00Z",
+  schema: "dioptra-case-5", entryRevision: "beryl-v111-1", cohort: w.OCULI_BERYL_V111_CONFIG.cohort, caseId: "S1", savedAt: "2026-11-08T12:00:00Z",
   input: { ...input(30), vaCondition: "unaided", symptoms: { glareHalos: true, flashesFloaters: false }, previousRxKnown: "no", previousRx: null },
   prediction: run.primary.prediction, actual, agreement: s.agreementCase(run.primary.prediction, actual),
   comparison: { od: w.DioptraAlgorithm.compareEye(run.primary.prediction.od, p.od), os: w.DioptraAlgorithm.compareEye(run.primary.prediction.os, p.os) },
@@ -118,9 +128,9 @@ const [header, ...rows] = csv.split("\n").map(r => r.split(","));
 assert.equal(rows.length, 16);
 for (const r of rows) {
   const get = key => r[header.indexOf(key)];
-  assert.equal(get("cohort"), "v1.0-beryl-1");
+  assert.equal(get("cohort"), "beryl-v1.1.1-1");
   assert.equal(get("agreement_version"), "rx-agreement-1", "agreement exported for case-4 records");
-  assert.equal(get("offset"), get("variant").startsWith("v1.0") ? "-0.5" : "-0.25");
+  assert.equal(get("offset"), get("variant").startsWith("beryl-v1.1.1") ? "-0.25" : "-0.5");
   assert.equal(get("va_condition"), "unaided");
   assert.equal(get("final_va_ou"), "20/20");
   assert.equal(get("plus_test"), "held");
@@ -131,7 +141,7 @@ for (const r of rows) {
   assert.equal(get("symptom_flashes_floaters"), "false");
   assert.equal(get("axis_within_floor") === "" || ["true", "false"].includes(get("axis_within_floor")), true);
 }
-const eyeRow = (eyeId, variant = "v1.0") => rows.find(r => r[header.indexOf("eye")] === eyeId && r[header.indexOf("variant")] === variant);
+const eyeRow = (eyeId, variant = "beryl-v1.1.1") => rows.find(r => r[header.indexOf("eye")] === eyeId && r[header.indexOf("variant")] === variant);
 assert.equal(eyeRow("od")[header.indexOf("endpoint_sph")], "-1.75");
 assert.equal(eyeRow("os")[header.indexOf("final_va")], "20/25");
-console.log("PASS: v1.0 Beryl identity, RC parity, registry, retirement, ADD cap flag, 5° axis floor, agreement and exports");
+console.log("PASS: historical v1.0 parity, Beryl/Heliodor transition, Goshenite isolation, scoring and exports");

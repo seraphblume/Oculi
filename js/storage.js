@@ -139,7 +139,7 @@
   }
 
   // Records whose post-exam agreement is scored (the 0.4.0-rc.1 cohort onwards).
-  const SCORED_SCHEMAS = ["dioptra-case-3", "dioptra-case-4"];
+  const SCORED_SCHEMAS = ["dioptra-case-3", "dioptra-case-4", "dioptra-case-5"];
 
   function toShadowCSV(cases) {
     const scoring = window.DioptraScoring;

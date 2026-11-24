@@ -1,7 +1,7 @@
 (function () {
   const $ = id => document.getElementById(id);
   const cfg = window.DIOPTRA_CONFIG;
-  const activeCfg = window.DIOPTRA_V10_CONFIG;
+  const activeCfg = window.OCULI_BERYL_V111_CONFIG;
   const Rx = window.OculiRx;
   const alg = window.DioptraAlgorithm;
   const engines = window.DioptraEngines;
@@ -487,8 +487,8 @@
   function save() {
     const run = state.run;
     const record = {
-      schema: "dioptra-case-4",
-      entryRevision: "v10-beryl-1",
+      schema: "dioptra-case-5",
+      entryRevision: "beryl-v111-1",
       cohort: activeCfg.cohort,
       caseId: state.input.caseId,
       savedAt: new Date().toISOString(),
@@ -557,7 +557,7 @@
     $("navTitle").textContent = id;
   }
 
-  // "Beryl 1.0" for named releases, "v0.3.0" for research engines.
+  // "Beryl 1.1" for named releases, "v0.3.0" for historical research engines.
   function engineLabel(id) {
     const e = engines.ENGINES[id];
     const version = e.version();
@@ -594,7 +594,7 @@
   }
 
   function flagsFor(prediction) {
-    if (!prediction || !["v0.3", "v0.4", "v1.0"].includes(prediction.engine)) return [];
+    if (!prediction || !prediction.od || !prediction.os) return [];
     const list = [...(prediction.flags || [])];
     for (const eye of EYES) {
       for (const f of prediction[eye.id].flags) list.push({ ...f, eye: eye.short });
@@ -603,7 +603,7 @@
   }
 
   function flagsGroup(prediction, title) {
-    if (!prediction || !["v0.3", "v0.4", "v1.0"].includes(prediction.engine)) return "";
+    if (!prediction || !prediction.od || !prediction.os) return "";
     const flags = flagsFor(prediction);
     const items = flags.length
       ? flags.map(f => `

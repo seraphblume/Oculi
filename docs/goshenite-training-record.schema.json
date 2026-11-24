@@ -1,0 +1,132 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://seraphblume.github.io/Oculi/docs/goshenite-training-record.schema.json",
+  "title": "Goshenite research outcome record",
+  "description": "Research-only outcome record. Patient tolerance and clinician score are labels collected after an independently completed examination; they are never inference-time inputs.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "caseId",
+    "siteCode",
+    "clinicianCode",
+    "baseEngine",
+    "indexExamAt",
+    "preExamFeatures",
+    "basePrediction",
+    "independentEndpoint",
+    "issuedRx",
+    "endpointToIssuedReasons",
+    "clinicianAssessment",
+    "patientTolerance",
+    "dispensingContext"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "goshenite-training-1" },
+    "caseId": { "type": "string", "minLength": 1, "description": "Pseudonymous identifier; no name, phone, email, or medical-record number." },
+    "siteCode": { "type": "string", "minLength": 1 },
+    "clinicianCode": { "type": "string", "minLength": 1 },
+    "indexExamAt": { "type": "string", "format": "date-time" },
+    "baseEngine": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "version", "predictionLockedBeforeEndpoint"],
+      "properties": {
+        "id": { "const": "beryl-v1.1.1" },
+        "version": { "const": "1.1.1" },
+        "predictionLockedBeforeEndpoint": { "const": true }
+      }
+    },
+    "preExamFeatures": {
+      "type": "object",
+      "description": "Only features available before the independent endpoint. Outcome and post-dispensing fields are prohibited here."
+    },
+    "basePrediction": { "$ref": "#/$defs/binocularRx" },
+    "independentEndpoint": { "$ref": "#/$defs/binocularRx" },
+    "issuedRx": { "$ref": "#/$defs/binocularRx" },
+    "endpointToIssuedReasons": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "enum": [
+          "adaptation_large_change",
+          "habitual_rx_preference",
+          "binocular_comfort",
+          "ambulatory_test",
+          "visual_task",
+          "pathology_or_health_finding",
+          "clinician_judgment",
+          "patient_preference",
+          "other"
+        ]
+      }
+    },
+    "clinicianAssessment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["scaleVersion", "score", "independentOfModel", "blindedUntilEndpoint", "disposition"],
+      "properties": {
+        "scaleVersion": { "const": "optometrist-acceptability-1" },
+        "score": { "type": "integer", "minimum": 1, "maximum": 5 },
+        "independentOfModel": { "const": true },
+        "blindedUntilEndpoint": { "const": true },
+        "disposition": { "type": "string", "enum": ["acceptable_without_change", "acceptable_with_minor_change", "meaningful_change", "major_change", "reject"] },
+        "reasonCodes": { "type": "array", "uniqueItems": true, "items": { "type": "string", "minLength": 1 } },
+        "note": { "type": ["string", "null"], "maxLength": 500 }
+      },
+      "allOf": [
+        { "if": { "properties": { "score": { "const": 5 } }, "required": ["score"] }, "then": { "properties": { "disposition": { "const": "acceptable_without_change" } } } },
+        { "if": { "properties": { "score": { "const": 4 } }, "required": ["score"] }, "then": { "properties": { "disposition": { "const": "acceptable_with_minor_change" } } } },
+        { "if": { "properties": { "score": { "const": 3 } }, "required": ["score"] }, "then": { "properties": { "disposition": { "const": "meaningful_change" } } } },
+        { "if": { "properties": { "score": { "const": 2 } }, "required": ["score"] }, "then": { "properties": { "disposition": { "const": "major_change" } } } },
+        { "if": { "properties": { "score": { "const": 1 } }, "required": ["score"] }, "then": { "properties": { "disposition": { "const": "reject" } } } }
+      ]
+    },
+    "patientTolerance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["assessedAt", "followUpDays", "status", "wearingTimeHoursPerDay", "symptomSeverity0To10", "action", "adverseEvent", "collectionMethod"],
+      "properties": {
+        "assessedAt": { "type": "string", "format": "date-time" },
+        "followUpDays": { "type": "integer", "minimum": 7, "maximum": 180 },
+        "status": { "type": "string", "enum": ["tolerated", "minor_symptoms", "intolerant", "not_worn", "lost_to_follow_up", "unknown"] },
+        "wearingTimeHoursPerDay": { "type": ["number", "null"], "minimum": 0, "maximum": 24 },
+        "adaptationDays": { "type": ["integer", "null"], "minimum": 0, "maximum": 180 },
+        "symptomSeverity0To10": { "type": ["integer", "null"], "minimum": 0, "maximum": 10 },
+        "symptomCodes": { "type": "array", "uniqueItems": true, "items": { "type": "string", "minLength": 1 } },
+        "action": { "type": "string", "enum": ["none", "counselling", "adjustment", "remake", "new_exam", "referral", "unknown"] },
+        "adverseEvent": { "type": "boolean" },
+        "collectionMethod": { "type": "string", "enum": ["in_person", "telephone", "secure_form", "other"] }
+      }
+    },
+    "dispensingContext": {
+      "type": "object",
+      "additionalProperties": true,
+      "description": "Lens design, material, fitting, remake, and verification factors needed to separate prescription tolerance from dispensing causes."
+    },
+    "exclusionReason": { "type": ["string", "null"] }
+  },
+  "$defs": {
+    "rxEye": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["sphere", "cylinder", "axis"],
+      "properties": {
+        "sphere": { "type": "number", "multipleOf": 0.25 },
+        "cylinder": { "type": "number", "maximum": 0, "multipleOf": 0.25 },
+        "axis": { "type": "integer", "minimum": 1, "maximum": 180 },
+        "add": { "type": ["number", "null"], "minimum": 0, "multipleOf": 0.25 }
+      }
+    },
+    "binocularRx": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["od", "os"],
+      "properties": {
+        "od": { "$ref": "#/$defs/rxEye" },
+        "os": { "$ref": "#/$defs/rxEye" }
+      }
+    }
+  }
+}
