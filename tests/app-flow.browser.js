@@ -51,6 +51,11 @@ const server = http.createServer(async (req, res) => {
     await page.locator("#aboutBtn").click();
     assert.equal(await page.locator("#aboutDialog").evaluate(d => d.open), true);
     assert.match(await page.locator("#aboutEngines").innerText(), /Beryl 1\.1[\s\S]*Heliodor 1\.0[\s\S]*Goshenite 1\.0[\s\S]*ZL Retina 0\.1\.0/);
+    // The palette accent tints the working screens (an exception to canon), never the system blue.
+    const tint = () => page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue("--tint").trim().toUpperCase());
+    assert.equal(await tint(), "#5A4688", "Zephyr light accent");
+    await page.locator("#aboutPalette").selectOption("harukaze");
+    assert.equal(await tint(), "#7D4997", "Harukaze light accent");
     await page.locator("#aboutPalette").selectOption("boreas");
     assert.equal(await page.evaluate(() => document.documentElement.dataset.palette), "boreas");
     await page.locator("#aboutPalette").selectOption("zephyr");

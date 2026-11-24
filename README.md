@@ -65,7 +65,7 @@ Goshenite v1.0 is the planned flagship: a learned layer on Beryl v1.1, tuned on 
 
 ## Design
 
-Working screens follow the platform: system font, system grouped colours and the system tint, since Oculi has no product colour yet. The ZepheniaLabs look appears only on studio surfaces: the first-run splash, the About sheet's header (tap **Oculi**), and the printed preview, set in labs-indigo on white. Tokens, fonts and the glyph-field engine come from the ZLDesignSystem package; refresh them with
+Working screens follow the platform's system font and grouped colours, tinted with the viewer's palette accent (Zephyr, Boreas or Harukaze, chosen in About). The tint is a deliberate exception to canon, generated from the design tokens into `css/zl-tint.css`; every palette holds 4.5 : 1 or better for text and filled controls. The ZepheniaLabs look appears only on studio surfaces: the first-run splash, the About sheet's header (tap **Oculi**), and the printed preview, set in labs-indigo on white. Tokens, fonts and the glyph-field engine come from the ZLDesignSystem package; refresh them with
 
 ```sh
 node tools/sync-zl-design.js ~/ZepheniaLabs/Workspace/Packages/ZLDesignSystem

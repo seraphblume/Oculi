@@ -1,5 +1,6 @@
-/* Oculi — working screens follow the platform: system font, system grouped colours, system
-   tint (Oculi has no product colour yet, so none is invented). Clinical status colours are
+/* Oculi — working screens follow the platform: system font and system grouped colours, tinted
+   with the viewer's ZepheniaLabs palette accent (css/zl-tint.css), a sanctioned exception to
+   canon. Clinical status colours are
    semantic. The ZepheniaLabs look appears only on studio surfaces (splash, About header,
    printed preview); see the end of this file. No remote assets. */
 
@@ -19,8 +20,7 @@
   --alert: #FFFFFF;
   --scrim: rgba(0, 0, 0, 0.2);
 
-  --tint: #007AFF;                       /* systemBlue: the platform default until Oculi has a colour */
-  --on-tint: #FFFFFF;
+  /* --tint and --on-tint come from css/zl-tint.css: the palette accent (an exception to canon). */
   --green: #248A3D;                      /* accessible systemGreen */
   --orange: #C93400;                     /* accessible systemOrange */
   --red: #D70015;                        /* accessible systemRed */
@@ -51,8 +51,6 @@
     --alert: #2C2C2E;
     --scrim: rgba(0, 0, 0, 0.5);
 
-    --tint: #0A84FF;
-    --on-tint: #FFFFFF;
     --green: #30D158;
     --orange: #FF9F0A;
     --red: #FF453A;
@@ -1100,7 +1098,7 @@ body[data-view="calculator"] #toast { display: none; }
 .genius-prescription {
   --cell: #FFFFFF; --label: #000000; --label-2: rgba(60, 60, 67, 0.6); --label-3: rgba(60, 60, 67, 0.45);
   --separator: rgba(60, 60, 67, 0.29); --fill: rgba(120, 120, 128, 0.12); --fill-strong: rgba(120, 120, 128, 0.2);
-  --tint: #007AFF; --on-tint: #FFFFFF;
+  --tint: var(--tint-light); --on-tint: #FFFFFF;
   color-scheme: light;
 }
 .genius-prescription th, .genius-prescription b { font-weight: 500; }
