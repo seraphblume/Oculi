@@ -530,12 +530,14 @@
     list.querySelectorAll(".rx-more").forEach(li => li.remove());
     const notes = [...list.children];
     notes.forEach(li => { li.hidden = false; });
-    card.classList.add("as-print"); // measure what will print, not the editing fields
-    // 3% headroom: print rounds lines slightly differently from the screen.
-    const over = () => {
+    // Fit both what will print (static values) and what is on screen (editing fields), with 3%
+    // headroom: print and other browsers round lines slightly differently.
+    const overIn = printed => {
+      card.classList.toggle("as-print", printed);
       const last = box.lastElementChild.getBoundingClientRect().bottom - box.getBoundingClientRect().top;
       return last > box.clientHeight * 0.97;
     };
+    const over = () => overIn(true) || overIn(false);
     let fit = 1;
     card.style.setProperty("--fit", fit);
     while (fit > 0.75 && over()) {
