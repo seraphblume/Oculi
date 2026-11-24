@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en" data-theme="dark">
+<html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
@@ -15,10 +15,14 @@
   <link rel="apple-touch-icon" href="assets/icon-192.png" />
   <link rel="stylesheet" href="css/zl-tokens.css" />
   <link rel="stylesheet" href="css/app.css" />
-  <link rel="stylesheet" href="css/zl-tint.css" />
+  <link rel="stylesheet" href="css/coat.css" />
   <script>
-    // Studio surfaces start dark in the viewer's palette; applied before the first paint.
-    try { const p = localStorage.getItem("oculi-zl-palette"); if (p === "boreas" || p === "harukaze") document.documentElement.dataset.palette = p; } catch (e) {}
+    // The viewer's theme, applied before the first paint. Default: Zephyr, following the device.
+    try {
+      const p = localStorage.getItem("oculi-zl-palette"), a = localStorage.getItem("oculi-zl-appearance");
+      if (p === "boreas" || p === "harukaze") document.documentElement.dataset.palette = p;
+      if (a === "light" || a === "dark") document.documentElement.dataset.theme = a;
+    } catch (e) {}
   </script>
 </head>
 <body data-stage="measure" data-view="case">
@@ -71,8 +75,43 @@
         </div>
       </div>
 
+      <h2 class="group-header">History</h2>
+      <div class="group">
+        <div class="row stacked">
+          <span class="row-caption">Symptoms</span>
+          <div class="chips" id="symptomChips"></div>
+          <input id="symptomOtherText" class="inline-input" type="text" placeholder="Other symptom (optional)" />
+        </div>
+        <div class="row stacked">
+          <span class="row-caption">Medical background</span>
+          <div class="chips" id="medicalChips"></div>
+        </div>
+      </div>
+      <p id="warningNote" class="group-footer warning-footer" hidden>New flashes or floaters are a warning sign. Refer to an eye doctor before prescribing.</p>
+      <h2 class="group-header section-header"><span class="section-number">1</span>Visual acuity</h2>
+      <div class="group va-group">
+        <table class="va-table va-table-2">
+          <thead><tr><th scope="col"><span class="visually-hidden">Measure</span></th><th scope="col">OD</th><th scope="col">OS</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">Distance VA</th><td><select id="vaOd" class="va-select" aria-label="OD distance VA"></select></td><td><select id="vaOs" class="va-select" aria-label="OS distance VA"></select></td></tr>
+            <tr><th scope="row">Pinhole VA</th><td><select id="phOd" class="va-select" aria-label="OD pinhole VA"></select></td><td><select id="phOs" class="va-select" aria-label="OS pinhole VA"></select></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="group">
+        <div class="row">
+          <span class="row-label">VA measured</span>
+          <div class="segmented" id="vaCondition" data-value="" role="radiogroup" aria-label="VA measured">
+            <button type="button" data-value="unaided" role="radio">Unaided</button>
+            <button type="button" data-value="corrected" role="radio">With correction</button>
+          </div>
+        </div>
+      </div>
+      <p class="group-footer">Pinhole is not needed for an eye that already reads 20/25 or better.</p>
+
+      <h2 class="group-header section-header"><span class="section-number">2</span>Initial refraction</h2>
       <fieldset id="previousRxFields" hidden disabled>
-        <h2 class="group-header">Previous prescription</h2>
+        <h3 class="sub-header">Previous prescription</h3>
         <div class="eye-columns">
           <section class="eye-section"><div class="group rx-table final" id="previous-od"></div></section>
           <section class="eye-section"><div class="group rx-table final" id="previous-os"></div></section>
@@ -85,7 +124,7 @@
         <p class="group-footer">Minus cylinder. Leave cylinder blank for sphere only. Duration is optional context: blank is unknown, 0 is under a month.</p>
       </fieldset>
 
-      <h2 class="group-header">Autorefractor ticket</h2>
+      <h3 class="sub-header">Autorefractor</h3>
       <div class="group">
         <div class="row scan-row">
           <div>
@@ -103,34 +142,17 @@
 
       <div class="eye-columns">
         <section class="eye-section" data-eye="od">
-          <h2 class="group-header">Right eye · OD</h2>
+          <h4 class="eye-header">Right eye · OD</h4>
           <div class="group rx-table" id="ar-od"></div>
-          <div class="group">
-            <label class="row"><span class="row-label">Distance VA</span><select id="vaOd" class="row-select"></select></label>
-            <label class="row"><span class="row-label">Pinhole VA</span><select id="phOd" class="row-select"></select></label>
-          </div>
         </section>
         <section class="eye-section" data-eye="os">
-          <h2 class="group-header">Left eye · OS</h2>
+          <h4 class="eye-header">Left eye · OS</h4>
           <div class="group rx-table" id="ar-os"></div>
-          <div class="group">
-            <label class="row"><span class="row-label">Distance VA</span><select id="vaOs" class="row-select"></select></label>
-            <label class="row"><span class="row-label">Pinhole VA</span><select id="phOs" class="row-select"></select></label>
-          </div>
         </section>
-      </div>
-      <div class="group">
-        <div class="row">
-          <span class="row-label">VA measured</span>
-          <div class="segmented" id="vaCondition" data-value="" role="radiogroup" aria-label="VA measured">
-            <button type="button" data-value="unaided" role="radio">Unaided</button>
-            <button type="button" data-value="corrected" role="radio">With correction</button>
-          </div>
-        </div>
       </div>
       <p class="group-footer">Copy the three readings and the bracketed line ‹ ›. Only the bracketed line is required. Q is the reliability digit after each reading.</p>
 
-      <h2 class="group-header">Near</h2>
+      <h3 class="sub-header">Near</h3>
       <div class="group">
         <div class="row">
           <span class="row-label">PD distance / near</span>
@@ -156,20 +178,6 @@
         <summary class="row disclosure-row"><span class="row-label">Keratometry</span><span class="row-detail">Optional</span></summary>
         <div id="k-fields"></div>
       </details>
-
-      <h2 class="group-header">History</h2>
-      <div class="group">
-        <div class="row stacked">
-          <span class="row-caption">Symptoms</span>
-          <div class="chips" id="symptomChips"></div>
-          <input id="symptomOtherText" class="inline-input" type="text" placeholder="Other symptom (optional)" />
-        </div>
-        <div class="row stacked">
-          <span class="row-caption">Medical background</span>
-          <div class="chips" id="medicalChips"></div>
-        </div>
-      </div>
-      <p id="warningNote" class="group-footer warning-footer" hidden>New flashes or floaters are a warning sign. Refer to an eye doctor before prescribing.</p>
     </fieldset>
 
     <!-- 2 · Refract ------------------------------------------------------- -->
@@ -429,14 +437,14 @@
 
       <h3 class="sub-header">Near</h3>
       <div class="group">
-        <div class="row">
-          <span class="row-label">PD distance / near</span>
-          <span class="row-value">
-            <input id="geniusPdDistance" class="row-input num short" type="text" inputmode="decimal" placeholder="—" aria-label="Distance PD" />
-            <span class="unit">/</span>
-            <input id="geniusPdNear" class="row-input num short" type="text" inputmode="decimal" placeholder="—" aria-label="Near PD" />
-            <span class="unit">mm</span>
-          </span>
+        <div class="row stacked pd-row">
+          <span class="row-caption" id="geniusPdLabel">PD per eye · distance / near</span>
+          <table class="pd-table" aria-labelledby="geniusPdLabel">
+            <tbody>
+              <tr><th scope="row">OD</th><td><input id="geniusPdOdDist" class="row-input num" type="text" inputmode="decimal" placeholder="—" aria-label="OD distance PD" /></td><td><input id="geniusPdOdNear" class="row-input num" type="text" inputmode="decimal" placeholder="—" aria-label="OD near PD" /></td><td class="unit">mm</td></tr>
+              <tr><th scope="row">OS</th><td><input id="geniusPdOsDist" class="row-input num" type="text" inputmode="decimal" placeholder="—" aria-label="OS distance PD" /></td><td><input id="geniusPdOsNear" class="row-input num" type="text" inputmode="decimal" placeholder="—" aria-label="OS near PD" /></td><td class="unit">mm</td></tr>
+            </tbody>
+          </table>
         </div>
         <label class="row">
           <span class="row-label">Working distance</span>
@@ -568,62 +576,90 @@
     </section>
 
     <section id="geniusPrescription" class="genius-prescription" aria-labelledby="geniusPrescriptionTitle" hidden>
-      <header class="prescription-header">
-        <div>
-          <p class="eyebrow">Oculi · Genius</p>
-          <h2 id="geniusPrescriptionTitle">Prescription preview</h2>
-        </div>
-        <span class="prescription-badge">Not a prescription</span>
-      </header>
-      <p class="prescription-warning" role="note"><strong>Development preview.</strong> This is not a prescription, is not clinical guidance, and is not indicative of the final product.</p>
-      <div class="prescription-meta">
-        <label for="geniusPatientName">Patient name <span>Optional · not saved</span>
-          <input id="geniusPatientName" type="text" autocomplete="off" maxlength="100" />
-          <span id="geniusPatientNamePrint" class="prescription-print-value"></span>
-        </label>
-        <label for="geniusPrescriptionDate">Date
-          <input id="geniusPrescriptionDate" type="date" />
-          <span id="geniusPrescriptionDatePrint" class="prescription-print-value"></span>
-        </label>
+      <h2 class="group-header" id="geniusPrescriptionTitle">Prescription card</h2>
+      <p class="group-footer card-howto">9 × 16 cm. Print both sides, flipping on the long edge, then fold in half with the Rx inside.</p>
+      <div class="rx-faces">
+        <figure class="rx-face">
+          <figcaption class="rx-face-label">Inside</figcaption>
+          <div class="rx-card" id="rxCardInside">
+            <div class="rx-panel rx-panel-top">
+              <div class="rx-card-head"><span class="rx-label">Oculi · Genius</span><span class="prescription-badge">Not a prescription</span></div>
+              <label class="rx-line" for="geniusPrescriptionDate"><span class="rx-label">Date</span>
+                <input id="geniusPrescriptionDate" type="date" />
+                <span id="geniusPrescriptionDatePrint" class="prescription-print-value"></span>
+              </label>
+              <label class="rx-line" for="geniusPatientName"><span class="rx-label">Patient</span>
+                <input id="geniusPatientName" type="text" autocomplete="off" maxlength="100" placeholder="Optional · not saved" />
+                <span id="geniusPatientNamePrint" class="prescription-print-value"></span>
+              </label>
+              <table class="prescription-table rx-table-card">
+                <caption>Spectacle Rx · minus cylinder · 12 mm vertex</caption>
+                <thead><tr><th scope="col"><span class="visually-hidden">Eye</span></th><th scope="col">Sphere</th><th scope="col">Cylinder</th><th scope="col">Axis</th><th scope="col">PD far</th><th scope="col">PD near</th></tr></thead>
+                <tbody>
+                  <tr><th scope="row">OD</th><td id="geniusPrescriptionSphereOd"></td><td id="geniusPrescriptionCylinderOd"></td><td id="geniusPrescriptionAxisOd"></td><td id="geniusPrescriptionPdDistOd"></td><td id="geniusPrescriptionPdNearOd"></td></tr>
+                  <tr><th scope="row">OS</th><td id="geniusPrescriptionSphereOs"></td><td id="geniusPrescriptionCylinderOs"></td><td id="geniusPrescriptionAxisOs"></td><td id="geniusPrescriptionPdDistOs"></td><td id="geniusPrescriptionPdNearOs"></td></tr>
+                </tbody>
+              </table>
+              <div class="rx-add"><span class="rx-label">ADD</span><strong id="geniusPrescriptionAdd"></strong></div>
+              <div class="rx-lenses" role="group" aria-label="Lens type">
+                <label><input type="checkbox" data-lens="Single vision" /><span>Single vision</span></label>
+                <label><input type="checkbox" data-lens="Progressive" /><span>Progressive</span></label>
+                <label><input type="checkbox" data-lens="Bifocal" /><span>Bifocal</span></label>
+                <label><input type="checkbox" data-lens="Occupational" /><span>Occupational</span></label>
+              </div>
+              <p class="prescription-warning" role="note"><strong>Development preview.</strong> This is not a prescription, is not clinical guidance, and is not indicative of the final product.</p>
+            </div>
+            <div class="rx-panel rx-panel-bottom">
+              <div class="rx-fit" id="rxFit">
+                <div class="rx-pair">
+                  <div><span class="rx-label">Verified VA</span><strong id="geniusPrescriptionVa"></strong></div>
+                  <div><span class="rx-label">Verification</span><strong id="geniusPrescriptionOutcome"></strong></div>
+                </div>
+                <div class="rx-pair rx-pair-3">
+                  <div><span class="rx-label">Age</span><strong id="geniusPrescriptionAge"></strong></div>
+                  <div><span class="rx-label">Medical background</span><strong id="geniusPrescriptionMedical"></strong></div>
+                  <div><span class="rx-label">Reported symptoms</span><strong id="geniusPrescriptionSymptoms"></strong></div>
+                </div>
+                <div class="prescription-review">
+                  <span class="rx-label">Review notes</span>
+                  <ul id="geniusPrescriptionFlags"></ul>
+                </div>
+                <label class="prescription-notes" for="geniusPrescriptionNotes"><span class="rx-label">Notes</span>
+                  <textarea id="geniusPrescriptionNotes" rows="2" maxlength="500" placeholder="Optional · not saved"></textarea>
+                  <span id="geniusPrescriptionNotesPrint" class="prescription-print-value prescription-notes-value"></span>
+                </label>
+              </div>
+              <div class="prescription-signature">
+                <div><span class="signature-line"></span><span id="geniusSignatory" class="signature-value">Valeria Luxe</span><span class="signature-label">Verified by</span></div>
+                <div><span class="signature-line"></span><span id="geniusLicence" class="signature-value">Pending certification</span><span class="signature-label">Licence or certification</span></div>
+              </div>
+              <footer class="prescription-footer"><span id="geniusPrescriptionVersion"></span></footer>
+            </div>
+          </div>
+        </figure>
+        <figure class="rx-face">
+          <figcaption class="rx-face-label">Outside</figcaption>
+          <div class="rx-card rx-card-outside" id="rxCardOutside">
+            <div class="rx-panel rx-cover">
+              <div class="rx-cover-mark"><span class="rx-wordmark">Oculi</span><span class="rx-emblem" id="rxCoverEmblem" aria-hidden="true"></span></div>
+              <h3 class="rx-cover-title">Prescription preview</h3>
+              <p class="rx-cover-body">A record of a guided refraction preview made with Oculi. It is not a prescription and must be confirmed by an independent eye examination.</p>
+              <p class="rx-cover-meta"><span id="rxCoverPatient"></span><span id="rxCoverDate"></span></p>
+              <span class="rx-band" aria-hidden="true"></span>
+            </div>
+            <div class="rx-panel rx-back">
+              <h3 class="rx-back-title">Adapting to new glasses</h3>
+              <ul class="rx-back-list" id="rxBackList">
+                <li>Wear them full-time for the first week. Things can look slightly different for a few days.</li>
+                <li>With progressive lenses, read through the lower part and turn your head to look to the side.</li>
+                <li>Come back if headaches, dizziness or double vision last beyond the first week.</li>
+                <li>Clean them with water and mild soap, dry them with a soft cloth, and keep them in their case.</li>
+              </ul>
+              <p class="rx-back-studio"><span>ZepheniaLabs</span><span id="rxBackVersion"></span></p>
+            </div>
+          </div>
+        </figure>
       </div>
-      <div class="prescription-table-wrap">
-        <table class="prescription-table">
-          <caption>Spectacle Rx · minus cylinder · 12 mm vertex</caption>
-          <thead><tr><th scope="col">Eye</th><th scope="col">Sphere</th><th scope="col">Cylinder</th><th scope="col">Axis</th></tr></thead>
-          <tbody>
-            <tr><th scope="row">OD <span>Right</span></th><td id="geniusPrescriptionSphereOd"></td><td id="geniusPrescriptionCylinderOd"></td><td id="geniusPrescriptionAxisOd"></td></tr>
-            <tr><th scope="row">OS <span>Left</span></th><td id="geniusPrescriptionSphereOs"></td><td id="geniusPrescriptionCylinderOs"></td><td id="geniusPrescriptionAxisOs"></td></tr>
-          </tbody>
-        </table>
-      </div>
-      <div class="prescription-additional">
-        <div><span>ADD</span><strong id="geniusPrescriptionAdd"></strong></div>
-        <div><span>PD distance / near</span><strong id="geniusPrescriptionPd"></strong></div>
-      </div>
-      <div class="prescription-verified">
-        <div><span>Verified VA</span><strong id="geniusPrescriptionVa"></strong></div>
-        <div><span>Verification</span><strong id="geniusPrescriptionOutcome"></strong></div>
-      </div>
-      <div class="prescription-context">
-        <div><span>Age</span><strong id="geniusPrescriptionAge"></strong></div>
-        <div><span>Medical background</span><strong id="geniusPrescriptionMedical"></strong></div>
-        <div><span>Reported symptoms</span><strong id="geniusPrescriptionSymptoms"></strong></div>
-      </div>
-      <div class="prescription-review">
-        <span>Review notes</span>
-        <ul id="geniusPrescriptionFlags"></ul>
-      </div>
-      <label class="prescription-notes" for="geniusPrescriptionNotes">Additional notes <span>Optional · not saved</span>
-        <textarea id="geniusPrescriptionNotes" rows="3" maxlength="500"></textarea>
-        <span id="geniusPrescriptionNotesPrint" class="prescription-print-value prescription-notes-value"></span>
-      </label>
-      <div class="prescription-signature">
-        <div><span class="signature-line"></span><span id="geniusSignatory" class="signature-value">Valeria Luxe</span><span class="signature-label">Verified by</span></div>
-        <div><span class="signature-line"></span><span id="geniusLicence" class="signature-value">Pending certification</span><span class="signature-label">Licence or certification</span></div>
-      </div>
-      <footer class="prescription-footer">
-        <span id="geniusPrescriptionVersion"></span>
-      </footer>
       <div class="prescription-actions">
         <button id="geniusSavePdf" class="button-primary" type="button">Save PDF</button>
         <button id="geniusPrint" class="button-secondary" type="button">Print</button>
@@ -838,10 +874,17 @@
             <option value="harukaze">Harukaze</option>
           </select>
         </label>
+        <label class="row"><span class="row-label">Appearance</span>
+          <select id="aboutAppearance" class="row-select" aria-describedby="aboutPaletteNote">
+            <option value="device">Follow device</option>
+            <option value="light">Light</option>
+            <option value="dark">Dark</option>
+          </select>
+        </label>
         <div class="row"><span class="row-label">Data</span><span class="row-detail">Stays on this device</span></div>
         <div class="row"><span class="row-label">Typeface</span><span class="row-detail">IBM Plex · <a href="assets/fonts/IBM-Plex-OFL.txt" target="_blank" rel="noopener">SIL Open Font License</a></span></div>
       </div>
-      <p class="group-footer" id="aboutPaletteNote">The palette tints Oculi and colours the first-run splash. Zephyr is the default.</p>
+      <p class="group-footer" id="aboutPaletteNote">Oculi wears the ZepheniaLabs theme you choose here. Zephyr, following the device, is the default.</p>
       <p class="about-motto">ZepheniaLabs · De L’existence a L’existant</p>
       <form method="dialog"><button class="button-primary about-done" value="done">Done</button></form>
     </div>

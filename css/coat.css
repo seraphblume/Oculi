@@ -1,0 +1,268 @@
+/* Oculi in the O(n!) coat: the ZepheniaLabs design system applied to every screen.
+   Three colours per theme (zl-ground, zl-ink, zl-accent from css/zl-tokens.css), IBM Plex Sans
+   for words and Plex Mono for labels, square corners, hairline rules instead of boxes, no grey,
+   no shadow, no bold. Loaded after app.css, whose structure it keeps and re-dresses.
+   The theme follows the device until the viewer picks one in About. */
+
+:root {
+  --bg: var(--zl-ground);
+  --cell: var(--zl-ground);
+  --label: var(--zl-ink);
+  --label-2: var(--zl-ink);
+  --label-3: var(--zl-ink);
+  --separator: var(--zl-ink);
+  --fill: transparent;
+  --fill-strong: transparent;
+  --thumb: var(--zl-ink);
+  --bar: var(--zl-ground);
+  --alert: var(--zl-ground);
+  --scrim: color-mix(in srgb, var(--zl-ground) 72%, transparent);
+  --tint: var(--zl-ink);
+  --on-tint: var(--zl-ground);
+  --green: var(--zl-ink);
+  --orange: var(--zl-accent);
+  --red: var(--zl-accent);
+  --font: var(--zl-font-sans);
+  --font-rounded: var(--zl-font-sans);
+  --mono: var(--zl-font-mono);
+  --radius: 0;
+  --field-radius: 0;
+  --row-1: 7.88px; --row-2: 15.77px; --row-3: 23.65px; --row-4: 31.53px;
+}
+
+*, *::before, *::after { border-radius: 0 !important; }
+html { background: var(--zl-ground); }
+body { font: 400 16px/23.65px var(--zl-font-sans); letter-spacing: 0; font-synthesis: none; background: var(--zl-ground); color: var(--zl-ink); }
+::selection { background: var(--zl-ink); color: var(--zl-ground); }
+:focus-visible, .row-input:focus-visible, .row-select:focus-visible, .inline-input:focus-visible, .va-select:focus-visible { outline: 2px solid var(--zl-accent); outline-offset: 3px; }
+b, strong, th, h1, h2, h3, h4 { font-weight: 500; }
+
+/* type: labels in Mono capitals, untracked; one emphasis, Medium */
+.group-header, .eyebrow, .row-caption, .rx-label, .brand-caption, .stepper, .va-table thead th, .va-table .va-band th, .eye-header,
+.stat span, .pill, .view-tabs button, .nav-button, .calculator-tabs button, .prescription-table caption {
+  font-family: var(--zl-font-mono); font-weight: 500; text-transform: uppercase; letter-spacing: 0;
+}
+.group-header { font-size: 13.14px; line-height: 15.77px; color: var(--zl-ink); padding-bottom: var(--row-1); }
+.group-footer { font-size: 14px; line-height: 20px; color: var(--zl-ink); }
+.row-caption, .eye-header { font-size: 12px; color: var(--zl-ink); }
+.large-title h1 { font: 500 30px/31.53px var(--zl-font-sans); letter-spacing: -0.01em; }
+.title-sub { font-size: 16px; color: var(--zl-ink); }
+.sub-header { font: 500 16px/23.65px var(--zl-font-sans); }
+.footnote { color: var(--zl-ink); font-size: 13px; }
+
+/* frame: the navbar and action bar are the ground with a rule */
+.navbar, .navbar.scrolled { background: var(--zl-ground); box-shadow: inset 0 -1px 0 var(--zl-ink); }
+.brand { font: 500 20px/1 var(--zl-font-sans); color: var(--zl-ink); }
+.brand-caption { font-size: 11px; letter-spacing: 0; color: var(--zl-ink); }
+.view-tabs { background: none; border: 0; padding: 0; gap: var(--row-3); }
+.view-tabs button { background: none; color: var(--zl-ink); font-size: 13.14px; padding: 8px 0; min-height: 40px; }
+.view-tabs button[aria-selected="true"] { background: none; color: var(--zl-ink); text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: .4em; }
+.nav-button, .quiet-button { border: 1px solid var(--zl-ink); background: none; color: var(--zl-ink); font-size: 13px; }
+.nav-button:hover, .quiet-button:hover { background: var(--zl-ink); color: var(--zl-ground); }
+.action-bar { background: var(--zl-ground); box-shadow: inset 0 1px 0 var(--zl-ink); }
+
+/* groups: no cards, rules above and below */
+.group { background: none; border: 0; box-shadow: inset 0 1px 0 var(--zl-ink), inset 0 -1px 0 var(--zl-ink); }
+.group > .row, .group > label.row, .group .rx-head, .group .rx-row { padding-left: 0; padding-right: 0; }
+.group-header, .group-footer, .sub-header, .eye-header, .about-body .group-header { padding-left: 0; padding-right: 0; }
+.va-table th:first-child { padding-left: 0; }
+.row + .row::before, .disclosure[open] > summary + * > .row:first-child::before { background: var(--zl-ink); opacity: 0.35; }
+.row-detail, .unit, .scan-caption { color: var(--zl-ink); }
+.row-button { color: var(--zl-ink); text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: .25em; }
+.row-button.destructive { color: var(--zl-accent); }
+.row-button:active, .disclosure-row:active, .sheet-actions button:active { background: var(--zl-ink); color: var(--zl-ground); }
+
+/* inputs: a hairline box on the ground */
+.field, .power, .inline-input, .va-select, .pd-table .row-input, .prescription-meta input { background: var(--zl-ground); box-shadow: inset 0 0 0 1px var(--zl-ink); color: var(--zl-ink); }
+.row-input, .row-select { color: var(--zl-ink); }
+.row-input::placeholder, .inline-input::placeholder, .field::placeholder { color: var(--zl-ink); opacity: 0.55; }
+.field:focus, .power:focus-within { box-shadow: inset 0 0 0 2px var(--zl-ink); }
+.invalid, .power.invalid { box-shadow: inset 0 0 0 2px var(--zl-accent) !important; }
+.sign { color: var(--zl-ink); }
+select:disabled, input:disabled { opacity: 0.45; }
+
+/* choices: outlined, the chosen one in ink */
+.segmented { background: none; box-shadow: inset 0 0 0 1px var(--zl-ink); padding: 0; }
+.segmented button { color: var(--zl-ink); font-weight: 400; transition: none; }
+.segmented button[aria-checked="true"] { background: var(--zl-ink); color: var(--zl-ground); font-weight: 500; box-shadow: none; }
+.segmented.rating button { color: var(--zl-ink); }
+.segmented.rating button b { color: inherit; }
+.chip, .choice-list button { background: none; box-shadow: inset 0 0 0 1px var(--zl-ink); color: var(--zl-ink); }
+.chip.on, .choice-list button[aria-checked="true"] { background: var(--zl-ink); color: var(--zl-ground); }
+.chip-warning.on { background: var(--zl-accent); color: var(--zl-ground); }
+.calculator-tabs { background: none; box-shadow: inset 0 0 0 1px var(--zl-ink); }
+.calculator-tabs button[aria-selected="true"] { background: var(--zl-ink); color: var(--zl-ground); box-shadow: none; }
+.switch span { background: none; box-shadow: inset 0 0 0 1px var(--zl-ink); }
+.switch span::after { background: var(--zl-ink); box-shadow: none; }
+.switch input:checked + span { background: var(--zl-ink); }
+.switch input:checked + span::after { background: var(--zl-ground); }
+
+/* actions: ink blocks */
+.button-primary, .scan-button { background: var(--zl-ink); color: var(--zl-ground); font: 500 16px/1 var(--zl-font-sans); }
+.button-secondary { background: none; color: var(--zl-ink); box-shadow: inset 0 0 0 1px var(--zl-ink); font: 500 16px/1 var(--zl-font-sans); }
+.button-primary:active, .button-secondary:active { transform: none; opacity: 0.8; }
+
+/* progress and status */
+.step-dot, .section-number { background: none; box-shadow: inset 0 0 0 1px var(--zl-ink); color: var(--zl-ink); font-family: var(--zl-font-mono); font-weight: 500; }
+.stepper { font-size: 12px; color: var(--zl-ink); }
+.stepper li { opacity: 0.55; }
+.stepper li.current, .stepper li.done { opacity: 1; }
+.stepper li.current .step-dot { background: var(--zl-ink); color: var(--zl-ground); }
+.stepper li.done .step-dot { background: none; color: var(--zl-ink); }
+.stats { background: none; gap: 0; box-shadow: inset 0 1px 0 var(--zl-ink), inset 0 -1px 0 var(--zl-ink); }
+.stat { background: none; }
+.stat strong { font: 500 30px/31.53px var(--zl-font-sans); }
+.stat span { font-size: 11px; }
+.pill { background: none; box-shadow: inset 0 0 0 1px var(--zl-ink); color: var(--zl-ink); }
+.pill.ok { background: none; color: var(--zl-ink); }
+.pill.off { background: var(--zl-accent); color: var(--zl-ground); box-shadow: none; }
+.pill.na { background: none; opacity: 0.6; }
+.flag-dot.review { background: var(--zl-accent); color: var(--zl-ground); }
+.flag-dot.info, .flag-dot.ok { background: var(--zl-ink); color: var(--zl-ground); }
+.locked-card { background: none; box-shadow: inset 0 0 0 1px var(--zl-ink); }
+.locked-icon { color: var(--zl-ink); }
+.stop-card { background: none; border: 0; box-shadow: inset 1px 0 0 var(--zl-accent); }
+.stop-card h2 { font: 500 24px/31.53px var(--zl-font-sans); }
+.stop-card p, .stop-card #geniusStopReason { color: var(--zl-ink); }
+.stop-card .eyebrow { color: var(--zl-accent); }
+.warning-footer, .form-error, .sheet-error { color: var(--zl-accent); }
+.follow-up-row .row-detail.due { color: var(--zl-accent); }
+.study { border-top: 1px solid var(--zl-ink); }
+
+/* overlays: the ground with a rule, no shadow */
+.sheet-dialog, .about-dialog { background: var(--zl-ground); color: var(--zl-ink); box-shadow: 0 0 0 1px var(--zl-ink); }
+.sheet-dialog::backdrop, .about-dialog::backdrop { background: var(--scrim); }
+.sheet-actions button { color: var(--zl-ink); box-shadow: inset 0 1px 0 var(--zl-ink); }
+.sheet-actions button.destructive { color: var(--zl-accent); }
+.toast { background: var(--zl-ink); color: var(--zl-ground); font-family: var(--zl-font-sans); }
+.toast.error { background: var(--zl-accent); color: var(--zl-ground); }
+.about-header { --zl-ink: inherit; }
+.about-header p, .about-motto { color: var(--zl-ink); }
+.about-body a { color: var(--zl-ink); }
+
+/* the vision comparison keeps its white chart: it shows an object, not a surface */
+.vision-compare canvas { box-shadow: 0 0 0 1px var(--zl-ink); }
+.vision-compare figcaption, .vision-compare figcaption strong { color: var(--zl-ink); }
+
+/* ==================================================================
+   The prescription card: 90 × 160 mm, folding to 90 × 80 mm, after the Crizal certificate.
+   Paper: labs-indigo on white in every theme. --mm is one millimetre of card; on screen it
+   scales to fit, in print it is 1mm.
+   ================================================================== */
+
+.genius-panel .genius-prescription { margin-top: 36px; scroll-margin-top: 120px; }
+.card-howto { margin-bottom: var(--row-3); }
+.rx-faces { display: flex; flex-wrap: wrap; justify-content: center; gap: var(--row-4); }
+.rx-face { margin: 0; }
+.rx-face-label { margin-bottom: var(--row-1); font: 500 12px/15.77px var(--zl-font-mono); text-transform: uppercase; }
+
+.rx-card {
+  --mm: min(3.6px, calc((100vw - 48px) / 90));
+  --fit: 1;
+  --ink: var(--labs-indigo);
+  position: relative;
+  display: grid;
+  grid-template-rows: 1fr 1fr;
+  width: calc(90 * var(--mm));
+  height: calc(160 * var(--mm));
+  background: #FFFFFF;
+  color: var(--ink);
+  font-family: var(--zl-font-sans);
+  letter-spacing: 0;
+  box-shadow: 0 0 0 1px var(--zl-ink);
+  overflow: hidden;
+}
+.rx-card * { color: var(--ink); }
+.rx-panel { position: relative; display: flex; flex-direction: column; min-height: 0; padding: calc(5 * var(--mm)); overflow: hidden; }
+.rx-panel-top { box-shadow: inset 0 -1px 0 rgba(21, 19, 88, 0.25); }
+.rx-panel-top::after { content: "NOT A PRESCRIPTION"; position: absolute; left: 50%; top: 52%; transform: translate(-50%, -50%) rotate(-28deg); font: 500 calc(6 * var(--mm))/1 var(--zl-font-sans); color: var(--ink); opacity: 0.06; white-space: nowrap; pointer-events: none; }
+.rx-label { display: block; font: 500 calc(1.8 * var(--mm))/1.3 var(--zl-font-mono); text-transform: uppercase; letter-spacing: 0; }
+.rx-card-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: calc(3.5 * var(--mm)); }
+.rx-card .prescription-badge { padding: calc(0.7 * var(--mm)) calc(1.5 * var(--mm)); box-shadow: inset 0 0 0 1px var(--ink); background: #FFFFFF; font: 500 calc(1.7 * var(--mm))/1 var(--zl-font-mono); text-transform: uppercase; }
+.rx-line { display: grid; grid-template-columns: calc(12 * var(--mm)) minmax(0, 1fr); align-items: end; gap: calc(2 * var(--mm)); margin-bottom: calc(2 * var(--mm)); }
+.rx-line input, .rx-card textarea { width: 100%; min-width: 0; padding: calc(0.5 * var(--mm)) 0; border: 0; box-shadow: inset 0 -1px 0 var(--ink); background: transparent; color: var(--ink); font: 400 calc(2.6 * var(--mm))/1.3 var(--zl-font-sans); }
+.rx-line input::placeholder, .rx-card textarea::placeholder { color: var(--ink); opacity: 0.45; }
+.rx-table-card { width: 100%; margin-top: calc(2.5 * var(--mm)); border-collapse: collapse; table-layout: fixed; }
+.rx-table-card caption { margin-bottom: calc(1 * var(--mm)); text-align: left; font: 500 calc(1.55 * var(--mm))/1.3 var(--zl-font-mono); text-transform: uppercase; }
+.rx-table-card th, .rx-table-card td { padding: calc(1.3 * var(--mm)) calc(0.3 * var(--mm)); border: 1px solid var(--ink); text-align: center; overflow-wrap: anywhere; }
+.rx-table-card thead th { font: 500 calc(1.5 * var(--mm))/1.2 var(--zl-font-mono); text-transform: uppercase; }
+.rx-table-card tbody th { width: calc(8 * var(--mm)); font: 500 calc(2.5 * var(--mm))/1 var(--zl-font-sans); }
+.rx-table-card td { font: 500 calc(2.8 * var(--mm))/1 var(--zl-font-sans); font-variant-numeric: tabular-nums; }
+.rx-table-card td:nth-child(n+5) { font-size: calc(2.4 * var(--mm)); }
+.rx-add { display: flex; align-items: baseline; gap: calc(4 * var(--mm)); margin-top: calc(3 * var(--mm)); }
+.rx-add strong { font: 500 calc(3 * var(--mm))/1 var(--zl-font-sans); }
+.rx-lenses { display: grid; grid-template-columns: 1fr 1fr; gap: calc(1.6 * var(--mm)) calc(3 * var(--mm)); margin-top: calc(3 * var(--mm)); }
+.rx-lenses label { display: flex; align-items: center; gap: calc(1.5 * var(--mm)); font: 400 calc(2.4 * var(--mm))/1.2 var(--zl-font-sans); cursor: pointer; }
+.rx-lenses input { flex: none; width: calc(2.5 * var(--mm)); height: calc(2.5 * var(--mm)); margin: 0; border: 1px solid var(--ink); background: #FFFFFF; -webkit-appearance: none; appearance: none; cursor: pointer; }
+.rx-lenses input:checked { background: var(--ink); box-shadow: inset 0 0 0 calc(0.5 * var(--mm)) #FFFFFF; }
+.rx-card .prescription-warning { margin: auto 0 0; padding: 0; border: 0; background: none; font: 400 calc(1.75 * var(--mm))/1.35 var(--zl-font-sans); }
+.rx-card .prescription-warning strong { font-weight: 500; }
+
+.rx-panel-bottom { gap: calc(2 * var(--mm)); }
+.rx-fit { flex: 1 1 auto; min-height: 0; overflow: hidden; font-size: calc(2.2 * var(--mm) * var(--fit)); line-height: 1.3; }
+.rx-fit .rx-label { font-size: calc(1.6 * var(--mm) * var(--fit)); }
+.rx-pair { display: grid; grid-template-columns: 1fr 1.25fr; gap: calc(2 * var(--mm)); margin-bottom: calc(2.2 * var(--mm) * var(--fit)); }
+.rx-pair-3 { grid-template-columns: 0.55fr 1fr 1.25fr; }
+.rx-pair strong { display: block; margin-top: calc(0.4 * var(--mm)); font-weight: 500; overflow-wrap: anywhere; }
+.rx-card .prescription-review ul { margin: calc(0.6 * var(--mm)) 0 calc(2 * var(--mm) * var(--fit)); padding-left: calc(3 * var(--mm)); font-size: calc(1.9 * var(--mm) * var(--fit)); line-height: 1.3; }
+.rx-card .prescription-notes { display: block; }
+.rx-card textarea { resize: none; font-size: calc(2.2 * var(--mm) * var(--fit)); min-height: calc(6 * var(--mm)); }
+.rx-card .prescription-signature { display: grid; grid-template-columns: 1fr 1fr; gap: calc(3 * var(--mm)); margin: 0; }
+.rx-card .prescription-signature > div { display: flex; flex-direction: column; gap: calc(0.4 * var(--mm)); }
+.rx-card .signature-line { display: block; height: calc(4 * var(--mm)); box-shadow: inset 0 -1px 0 var(--ink); }
+.rx-card .signature-value { font: 400 calc(2.3 * var(--mm))/1.2 var(--zl-font-sans); }
+.rx-card .signature-label { font: 500 calc(1.5 * var(--mm))/1.2 var(--zl-font-mono); text-transform: uppercase; }
+.rx-card .prescription-footer { margin: 0; padding: 0; border: 0; font: 400 calc(1.6 * var(--mm))/1.2 var(--zl-font-sans); }
+.prescription-print-value { display: none; }
+
+.rx-cover { padding: calc(6 * var(--mm)); }
+.rx-cover-mark { display: flex; justify-content: space-between; align-items: flex-end; }
+.rx-wordmark { font: 500 calc(11 * var(--mm))/0.9 var(--zl-font-sans); letter-spacing: -0.01em; }
+.rx-emblem svg { display: block; width: auto; height: calc(9 * var(--mm)); }
+.rx-cover-title { margin: calc(6 * var(--mm)) 0 calc(1.5 * var(--mm)); font: 500 calc(4 * var(--mm))/1.2 var(--zl-font-sans); }
+.rx-cover-body { margin: 0; font: 400 calc(2.4 * var(--mm))/1.4 var(--zl-font-sans); }
+.rx-cover-meta { display: flex; flex-direction: column; gap: calc(0.6 * var(--mm)); margin: auto 0 calc(3 * var(--mm)); font: 400 calc(2.1 * var(--mm))/1.25 var(--zl-font-sans); }
+.rx-band { position: absolute; left: 0; right: 0; bottom: 0; height: calc(2 * var(--mm)); background: var(--ink); }
+.rx-back { padding: calc(6 * var(--mm)); }
+.rx-back-title { margin: calc(2 * var(--mm)) 0 calc(2 * var(--mm)); font: 500 calc(3.4 * var(--mm))/1.2 var(--zl-font-sans); }
+.rx-back-list { margin: 0; padding-left: calc(3 * var(--mm)); font: 400 calc(2.3 * var(--mm))/1.4 var(--zl-font-sans); }
+.rx-back-list li + li { margin-top: calc(1.2 * var(--mm)); }
+.rx-back-studio { display: flex; justify-content: space-between; margin: auto 0 0; padding-top: calc(1.5 * var(--mm)); box-shadow: inset 0 1px 0 var(--ink); font: 500 calc(1.8 * var(--mm))/1.2 var(--zl-font-mono); text-transform: uppercase; }
+
+.pd-table { border-collapse: separate; border-spacing: 8px 6px; margin: -6px -8px; }
+.pd-table th { font: 500 12px/1 var(--zl-font-mono); text-align: left; }
+.pd-table .row-input { width: 72px; max-width: 72px; text-align: center; padding: 6px 4px; }
+.va-table-2 th:first-child { width: 46%; }
+
+/* print: the card only, inside then outside, at 90 × 160 mm */
+@media print {
+  @page { size: 90mm 160mm; margin: 0; }
+  html, body { background: #FFFFFF !important; }
+  body[data-view="genius"] > :not(main),
+  body[data-view="genius"] main > :not(#geniusPanel),
+  body[data-view="genius"] #geniusPanel > :not(#geniusPrescription),
+  body[data-view="genius"] #geniusPrescription > :not(.rx-faces) { display: none !important; }
+  body[data-view="genius"] main, body[data-view="genius"] #geniusPanel, body[data-view="genius"] #geniusPrescription,
+  .rx-faces, .rx-face { display: block !important; margin: 0 !important; padding: 0 !important; max-width: none; gap: 0; }
+  .rx-face-label { display: none; }
+  .rx-card { --mm: 1mm; box-shadow: none; break-inside: avoid; }
+  .rx-face + .rx-face { break-before: page; }
+  .rx-panel-top { box-shadow: none; }
+  .rx-cover { transform: rotate(180deg); }
+  .rx-line input, .rx-card textarea { display: none; }
+  .prescription-print-value { display: block; min-height: calc(3.4 * var(--mm)); padding: calc(0.5 * var(--mm)) 0; box-shadow: inset 0 -1px 0 var(--ink); font: 400 calc(2.6 * var(--mm))/1.3 var(--zl-font-sans); white-space: pre-wrap; overflow-wrap: anywhere; }
+  .rx-card .prescription-notes-value { font-size: calc(2.2 * var(--mm) * var(--fit)); }
+}
+/* fitCard() measures the card as it will print: the static values in place of the inputs */
+.rx-card.as-print .rx-line input, .rx-card.as-print textarea { display: none; }
+.rx-card.as-print .prescription-print-value { display: block; min-height: calc(3.4 * var(--mm)); padding: calc(0.5 * var(--mm)) 0; font: 400 calc(2.6 * var(--mm))/1.3 var(--zl-font-sans); white-space: pre-wrap; overflow-wrap: anywhere; }
+.rx-card.as-print .prescription-notes-value { font-size: calc(2.2 * var(--mm) * var(--fit)); }
+
+/* native pickers follow the chosen appearance */
+:root { color-scheme: dark; }
+@media (prefers-color-scheme: light) { :root:not([data-theme="dark"]) { color-scheme: light; } }
+:root[data-theme="light"] { color-scheme: light; }
+@media (max-width: 480px) {
+  .view-tabs { gap: 0; justify-content: space-between; }
+  .view-tabs button { white-space: nowrap; font-size: 12px; padding-left: 6px; padding-right: 6px; }
+}

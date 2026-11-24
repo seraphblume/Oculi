@@ -1,5 +1,4 @@
-// The two ZepheniaLabs studio surfaces in Oculi: the first-run splash and the About sheet.
-// Everything else in Oculi is a working screen in platform style.
+// The first-run splash, the About sheet and the viewer's theme (palette × appearance).
 (function () {
   "use strict";
   const $ = id => document.getElementById(id);
@@ -7,6 +6,7 @@
   const engines = window.DioptraEngines;
   const SPLASH_KEY = "oculi-zl-first-run";
   const PALETTE_KEY = "oculi-zl-palette";
+  const APPEARANCE_KEY = "oculi-zl-appearance";
   const PALETTES = ["zephyr", "boreas", "harukaze"];
 
   const store = {
@@ -65,6 +65,7 @@
     $("aboutVersion").textContent = `${releaseName()} · ZepheniaLabs`;
     $("aboutEngines").innerHTML = engineRows();
     $("aboutPalette").value = document.documentElement.dataset.palette || "zephyr";
+    $("aboutAppearance").value = document.documentElement.dataset.theme || "device";
     $("aboutDialog").showModal();
     if (!aboutField) aboutField = startField($("aboutField"), 200, "none");
   }
@@ -81,13 +82,20 @@
     store.set(PALETTE_KEY, id);
   }
 
+  function setAppearance(mode) {
+    if (mode === "light" || mode === "dark") document.documentElement.dataset.theme = mode;
+    else delete document.documentElement.dataset.theme;
+    store.set(APPEARANCE_KEY, mode);
+  }
+
   $("aboutBtn").addEventListener("click", openAbout);
   $("aboutDialog").addEventListener("close", closeAbout);
   $("aboutPalette").addEventListener("change", e => setPalette(e.target.value));
+  $("aboutAppearance").addEventListener("change", e => setAppearance(e.target.value));
   $("zlSplashContinue").addEventListener("click", closeSplash);
   $("zlSplash").addEventListener("keydown", e => { if (e.key === "Escape" || e.key === "Enter") closeSplash(); });
 
   if (!store.get(SPLASH_KEY)) showSplash();
 
-  window.OculiStudio = Object.freeze({ SPLASH_KEY, PALETTE_KEY, showSplash, openAbout });
+  window.OculiStudio = Object.freeze({ SPLASH_KEY, PALETTE_KEY, APPEARANCE_KEY, showSplash, openAbout });
 })();

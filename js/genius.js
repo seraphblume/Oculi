@@ -25,6 +25,7 @@
   const Vision = window.OculiVisionCompare;
   const VA_SELECTS = ["Dist", "Near"].flatMap(k => ["Sc", "Cc"].flatMap(c => ["Od", "Os", "Ou"].map(e => `geniusVa${k}${c}${e}`)))
     .concat(["geniusPinholeOd", "geniusPinholeOs"]);
+  const PINHOLE_NOT_NEEDED = 0.8; // 20/25: pinhole adds nothing for an eye that reads this well
   const DX_THRESHOLD = { myopia: -0.5, hyperopia: 0.5, astigmatism: 0.5, presbyopiaAge: 40 };
 
   let proposal = null; // { prediction, flags, context }
@@ -117,6 +118,19 @@
     return v;
   }
 
+  // Monocular PDs. The engine still receives the binocular sums when both eyes are measured.
+  function readPd() {
+    const pd = {};
+    for (const [eye, key] of [["od", "Od"], ["os", "Os"]]) {
+      pd[eye] = {
+        dist: optionalNumber(`geniusPd${key}Dist`, 20, 45, `${eye.toUpperCase()} distance PD (20–45 mm)`),
+        near: optionalNumber(`geniusPd${key}Near`, 18, 43, `${eye.toUpperCase()} near PD (18–43 mm)`)
+      };
+    }
+    const sum = k => pd.od[k] != null && pd.os[k] != null ? pd.od[k] + pd.os[k] : null;
+    return { pd, pdDistanceMm: sum("dist"), pdNearMm: sum("near") };
+  }
+
   function readEyeTicket(eye) {
     const sel = Rx.readArRow(`genius${eye.key}Sel`);
     if (!Rx.validRx(sel)) throw new Error(`Enter the bracketed (selected) line for the ${eye.name.toLowerCase()}.`);
@@ -160,6 +174,19 @@
     const ageText = $("geniusAge").value.trim();
     if (!/^\d{1,3}$/.test(ageText) || Number(ageText) < 1 || Number(ageText) > 120) throw new Error("Enter an age from 1 to 120, or a birthdate.");
     return Number(ageText);
+  }
+
+  // Pinhole per eye is not needed once that eye reads 20/25 or better at distance, with or without glasses.
+  function syncPinhole() {
+    const decimal = snellen => (window.DIOPTRA_CONFIG.visualAcuity.find(v => v.snellen === snellen) || {}).decimal || 0;
+    for (const key of ["Od", "Os"]) {
+      const best = Math.max(decimal($(`geniusVaDistSc${key}`).value), decimal($(`geniusVaDistCc${key}`).value));
+      const ph = $(`geniusPinhole${key}`);
+      const off = best >= PINHOLE_NOT_NEEDED - 1e-9;
+      ph.disabled = off;
+      ph.options[0].textContent = off ? "Not needed" : "—";
+      if (off) ph.value = "";
+    }
   }
 
   function syncBirthdate() {
@@ -350,8 +377,7 @@
       const os = readEyeTicket(EYES[1]);
       const instrument = {
         vertexMm: 12,
-        pdDistanceMm: optionalNumber("geniusPdDistance", 40, 85, "Distance PD"),
-        pdNearMm: optionalNumber("geniusPdNear", 35, 85, "Near PD")
+        ...readPd()
       };
       const wdMm = optionalNumber("geniusNearWd", 250, 1000, "Working distance (250–1000 mm)");
       const prediction = engine.predictCase({ age, instrument, near: { workingDistanceCm: wdMm == null ? null : wdMm / 10 }, od, os });
@@ -443,8 +469,11 @@
     renderPrescriptionEye("Od", v.rx.od);
     renderPrescriptionEye("Os", v.rx.os);
     $("geniusPrescriptionAdd").textContent = v.rx.add ? `${Rx.fmtPower(v.rx.add)} D` : "None";
-    $("geniusPrescriptionPd").textContent = pd.pdDistanceMm == null && pd.pdNearMm == null ? "Not measured"
-      : `${pd.pdDistanceMm ?? "—"} / ${pd.pdNearMm ?? "—"} mm`;
+    for (const [eye, key] of [["od", "Od"], ["os", "Os"]]) {
+      const mono = pd.pd ? pd.pd[eye] : {};
+      $(`geniusPrescriptionPdDist${key}`).textContent = mono.dist == null ? "—" : String(mono.dist);
+      $(`geniusPrescriptionPdNear${key}`).textContent = mono.near == null ? "—" : String(mono.near);
+    }
     $("geniusPrescriptionVa").textContent = `OD ${v.va.od} · OS ${v.va.os}${v.va.ou ? ` · both ${v.va.ou}` : ""}`;
     const parts = [v.outcome === "refined" ? "Refined in a trial frame" : "Accepted as proposed"];
     if (v.near) parts.push(`near ${v.near === "comfortable" ? "comfortable" : "not comfortable"}`);
@@ -463,6 +492,9 @@
       : MODEL_LABEL;
     if (!$("geniusPrescriptionDate").value) $("geniusPrescriptionDate").value = localDate();
     if (!$("geniusPatientName").value.trim()) $("geniusPatientName").value = $("geniusName").value.trim();
+    $("rxBackVersion").textContent = `Oculi · ${p.name || "Beryl"} ${String(p.version).split(".").slice(0, 2).join(".")}`;
+    if (window.ZLField && !$("rxCoverEmblem").innerHTML) $("rxCoverEmblem").innerHTML = window.ZLField.markSvg(48);
+    requestAnimationFrame(() => { syncPrintValues(); fitCard(); });
     $("geniusExportStatus").textContent = "";
     $("geniusPrescription").hidden = false;
     setStep("verify");
@@ -483,6 +515,47 @@
     $("geniusPatientNamePrint").textContent = patientName();
     $("geniusPrescriptionDatePrint").textContent = previewDate();
     $("geniusPrescriptionNotesPrint").textContent = previewNotes() || "—";
+    $("rxCoverPatient").textContent = $("geniusPatientName").value.trim();
+    $("rxCoverDate").textContent = previewDate();
+  }
+
+  // The card's lower panel holds a variable amount of text: shrink its type until it fits.
+  // Past the type floor, the last review notes give way to a count, as in the PDF.
+  function fitCard() {
+    const box = $("rxFit");
+    const card = $("rxCardInside");
+    if (!box || $("geniusPrescription").hidden) return;
+    syncPrintValues();
+    const list = $("geniusPrescriptionFlags");
+    list.querySelectorAll(".rx-more").forEach(li => li.remove());
+    const notes = [...list.children];
+    notes.forEach(li => { li.hidden = false; });
+    card.classList.add("as-print"); // measure what will print, not the editing fields
+    // 3% headroom: print rounds lines slightly differently from the screen.
+    const over = () => {
+      const last = box.lastElementChild.getBoundingClientRect().bottom - box.getBoundingClientRect().top;
+      return last > box.clientHeight * 0.97;
+    };
+    let fit = 1;
+    card.style.setProperty("--fit", fit);
+    while (fit > 0.75 && over()) {
+      fit = Math.round((fit - 0.05) * 100) / 100;
+      card.style.setProperty("--fit", fit);
+    }
+    let dropped = 0;
+    const more = document.createElement("li");
+    more.className = "rx-more";
+    while (over() && dropped < notes.length) {
+      notes[notes.length - 1 - dropped].hidden = true;
+      dropped++;
+      more.textContent = `${dropped} more review note${dropped === 1 ? " is" : "s are"} shown in Oculi.`;
+      if (!more.isConnected) list.appendChild(more);
+    }
+    card.classList.remove("as-print");
+  }
+
+  function lensTypes() {
+    return [...document.querySelectorAll("#rxCardInside .rx-lenses input")].map(cb => ({ label: cb.dataset.lens, checked: cb.checked }));
   }
 
   function print() {
@@ -500,13 +573,9 @@
     return `oculi-genius-preview-${previewDate()}.pdf`;
   }
 
-  // Letter where it is the usual office paper, A4 elsewhere.
-  function pageSize() {
-    const LETTER = ["US", "CA", "MX", "CL", "CO", "VE", "PH", "CR", "GT", "PA", "DO", "PR", "SV", "NI", "HN", "BZ"];
-    let region = "";
-    try { region = new Intl.Locale(navigator.language || "en-US").maximize().region || ""; } catch { region = ""; }
-    return LETTER.includes(region) ? { width: 612, height: 792 } : { width: 595.28, height: 841.89 };
-  }
+  // The card: 90 × 160 mm, folding to 90 × 80 mm.
+  const MM = 72 / 25.4;
+  const CARD = { width: 90 * MM, height: 160 * MM };
 
   function text(id) { return $(id).textContent.trim(); }
 
@@ -520,174 +589,185 @@
       name: patientName(),
       date: previewDate(),
       rows: EYES.map(eye => ({ eye: eye.short, side: eye.name.replace(" eye", ""),
-        cells: ["Sphere", "Cylinder", "Axis"].map(c => text(`geniusPrescription${c}${eye.key}`)) })),
-      add: text("geniusPrescriptionAdd"), pd: text("geniusPrescriptionPd"),
+        cells: ["Sphere", "Cylinder", "Axis", "PdDist", "PdNear"].map(c => text(`geniusPrescription${c}${eye.key}`)) })),
+      add: text("geniusPrescriptionAdd"), lenses: lensTypes(),
+      cover: { title: "Prescription preview", body: document.querySelector(".rx-cover-body").textContent.trim(),
+        back: [...$("rxBackList").children].map(li => li.textContent.trim()), backTitle: document.querySelector(".rx-back-title").textContent.trim(),
+        version: text("rxBackVersion") },
       va: text("geniusPrescriptionVa"), outcome: text("geniusPrescriptionOutcome"),
       age: text("geniusPrescriptionAge"), medical: text("geniusPrescriptionMedical"), symptoms: text("geniusPrescriptionSymptoms"),
-      flags: [...$("geniusPrescriptionFlags").children].map(li => li.textContent.trim()),
+      flags: [...$("geniusPrescriptionFlags").children].filter(li => !li.classList.contains("rx-more")).map(li => li.textContent.trim()),
       notes: previewNotes(),
       signatory: text("geniusSignatory"), licence: text("geniusLicence"),
       footer: text("geniusPrescriptionVersion")
     };
   }
 
-  // Draws the preview at scale k; returns the bottom edge so the caller can shrink it to one page.
-  function drawPdf(pdf, d, k) {
-    const M = 46, W = pdf.width, cw = W - 2 * M;
-    // ZepheniaLabs print: labs-indigo ink on white paper, hairline rules, square corners,
-    // no grey and no bold; hierarchy from size alone. (Helvetica stands in for IBM Plex Sans,
-    // which the standard-font PDF writer cannot embed.)
-    const ink = LABS_INDIGO, muted = ink, rule = ink;
-    const paleInk = LABS_INDIGO.map(c => 1 - 0.07 * (1 - c));
-    const sz = v => v * k;
-    let y = M;
+  // The card in two pages: the inside (Rx above the fold, verification below) and the outside
+  // (front cover above the fold, turned 180° so it reads upright once folded; back cover below).
+  // labs-indigo on white, hairlines, square corners, no bold. Helvetica stands in for IBM Plex.
+  function drawCardInside(pdf, d, k) {
+    const W = pdf.width, P = CARD.height / 2, M = 5 * MM, cw = W - 2 * M;
+    const ink = LABS_INDIGO, pale = LABS_INDIGO.map(c => 1 - 0.07 * (1 - c));
+    const label = (t, x, y, o = {}) => pdf.text(t.toUpperCase(), x, y, { size: 5.2, color: ink, spacing: 0.25, ...o });
+    let y = M + 4;
 
-    pdf.rotatedText("NOT A PRESCRIPTION", W / 2, pdf.height / 2, 28, { font: "regular", size: 46, color: paleInk, spacing: 3 });
-
-    // Header
-    pdf.text("OCULI · GENIUS", M, y + sz(8), { size: sz(7.5), color: muted, spacing: 1.1 });
-    pdf.text("Prescription preview", M, y + sz(31), { font: "regular", size: sz(23), color: ink });
-    const badge = "NOT A PRESCRIPTION", badgeSize = sz(7), badgeW = pdf.textWidth(badge, "regular", badgeSize) + 0.6 * (badge.length - 1) + 16;
-    pdf.rect(W - M - badgeW, y + sz(14), badgeW, sz(17), { stroke: ink, width: 0.5 });
-    pdf.text(badge, W - M - badgeW / 2, y + sz(14) + sz(11.6), { size: badgeSize, color: ink, align: "center", spacing: 0.6 });
-    y += sz(42);
-    pdf.line(M, y, W - M, y, { width: 0.75, color: ink });
-
-    // Warning callout: bold lead-in, then the rest, wrapped together.
-    y += sz(12);
-    const ws = sz(8.5), lh = ws * 1.4;
-    const words = [...d.warningLead.split(/\s+/).map(w => ({ w, font: "regular", lead: true })), ...d.warningRest.split(/\s+/).map(w => ({ w, font: "regular" }))];
-    const lines = [[]];
-    let lineW = 0;
-    for (const word of words) {
-      const add = pdf.textWidth((lines[lines.length - 1].length ? " " : "") + word.w, word.font, ws);
-      if (lines[lines.length - 1].length && lineW + add > cw - 20) { lines.push([]); lineW = 0; }
-      const line = lines[lines.length - 1];
-      const piece = (line.length ? " " : "") + word.w;
-      const last = line[line.length - 1];
-      // The lead-in stays its own text run so it reads as one phrase; weight no longer marks it.
-      if (last && last.font === word.font && Boolean(last.lead) === Boolean(word.lead)) last.t += piece; else line.push({ t: piece, font: word.font, lead: word.lead });
-      lineW += pdf.textWidth(piece, word.font, ws);
+    // ---- above the fold: the Rx
+    pdf.rotatedText("NOT A PRESCRIPTION", W / 2, P / 2 + 6, 28, { font: "regular", size: 17, color: pale, spacing: 1.2 });
+    label("Oculi · Genius", M, y);
+    const badge = "NOT A PRESCRIPTION", bw = pdf.textWidth(badge, "regular", 5) + 0.25 * (badge.length - 1) + 8;
+    pdf.rect(W - M - bw, y - 6.5, bw, 9.5, { stroke: ink, width: 0.5 });
+    pdf.text(badge, W - M - bw / 2, y, { size: 5, color: ink, align: "center", spacing: 0.25 });
+    y += 14;
+    for (const [name, value] of [["Date", d.date], ["Patient", d.name]]) {
+      label(name, M, y);
+      const lines = pdf.wrap(value, cw - 34, "regular", 7.5).slice(0, 2);
+      lines.forEach((line, j) => pdf.text(line, M + 34, y + j * 9, { size: 7.5, color: ink }));
+      y += (lines.length - 1) * 9 + 3;
+      pdf.line(M + 34, y, W - M, y, { width: 0.4, color: ink });
+      y += 10;
     }
-    const boxH = lines.length * lh + sz(12);
-    pdf.rect(M, y, cw, boxH, { stroke: ink, width: 0.5 });
-    lines.forEach((line, i) => {
-      let x = M + 12;
-      for (const seg of line) {
-        pdf.text(seg.t, x, y + sz(6) + ws + i * lh - 1, { font: "regular", size: ws, color: ink });
-        x += pdf.textWidth(seg.t, seg.font, ws);
-      }
-    });
-    y += boxH;
-
-    // Patient and date
-    y += sz(14);
-    const nameW = (cw - 18) * 2 / 3, dateX = M + nameW + 18, dateW = cw - nameW - 18;
-    pdf.text("Patient name", M, y + sz(8), { size: sz(8), color: muted });
-    pdf.text("Date", dateX, y + sz(8), { size: sz(8), color: muted });
-    const nameLines = pdf.wrap(d.name, nameW, "regular", sz(11.5));
-    nameLines.forEach((line, j) => pdf.text(line, M, y + sz(23) + j * sz(15), { size: sz(11.5), color: ink }));
-    pdf.text(d.date, dateX, y + sz(23), { size: sz(11.5), color: ink });
-    y += sz(29) + (nameLines.length - 1) * sz(15);
-    pdf.line(M, y, M + nameW, y, { color: rule });
-    pdf.line(dateX, y, dateX + dateW, y, { color: rule });
-
-    // Rx table
-    y += sz(16);
-    pdf.text(d.caption.toUpperCase(), M, y + sz(7), { size: sz(7), color: muted, spacing: 0.5 });
-    y += sz(13);
-    const eyeCol = 84, valCol = (cw - eyeCol) / 3, headH = sz(20), rowH = sz(32);
-    const cols = [M, M + eyeCol, M + eyeCol + valCol, M + eyeCol + 2 * valCol, W - M];
-    ["EYE", "SPHERE", "CYLINDER", "AXIS"].forEach((h, i) => {
-      const x = i === 0 ? cols[0] + 10 : (cols[i] + cols[i + 1]) / 2;
-      pdf.text(h, x, y + headH / 2 + sz(2.5), { size: sz(7), color: muted, align: i === 0 ? "left" : "center", spacing: 0.4 });
+    y += 2;
+    label(d.caption, M, y, { size: 4.6, spacing: 0.15 });
+    y += 4;
+    const eyeCol = 22, valCol = (cw - eyeCol) / 5, headH = 13, rowH = 17;
+    const cols = [M, M + eyeCol, ...[1, 2, 3, 4].map(i => M + eyeCol + i * valCol), W - M];
+    ["", "SPHERE", "CYLINDER", "AXIS", "PD FAR", "PD NEAR"].forEach((h, i) => {
+      if (h) pdf.text(h, (cols[i] + cols[i + 1]) / 2, y + headH / 2 + 1.8, { size: 4.6, color: ink, align: "center", spacing: 0.15 });
     });
     d.rows.forEach((row, r) => {
       const top = y + headH + r * rowH;
-      pdf.text(row.eye, cols[0] + 10, top + rowH / 2 - sz(0.5), { size: sz(10.5), color: ink });
-      pdf.text(row.side, cols[0] + 10, top + rowH / 2 + sz(9.5), { size: sz(7.5), color: muted });
-      row.cells.forEach((c, i) => pdf.text(c, (cols[i + 1] + cols[i + 2]) / 2, top + rowH / 2 + sz(4.5), { size: sz(13.5), color: ink, align: "center" }));
+      pdf.text(row.eye, cols[0] + 5, top + rowH / 2 + 2.6, { size: 7.5, color: ink });
+      row.cells.forEach((c, i) => pdf.text(c, (cols[i + 1] + cols[i + 2]) / 2, top + rowH / 2 + 3, { size: i < 3 ? 8.5 : 7.5, color: ink, align: "center" }));
     });
     const tableH = headH + 2 * rowH;
-    for (const x of cols) pdf.line(x, y, x, y + tableH, { color: rule });
-    for (const yy of [y, y + headH, y + headH + rowH, y + tableH]) pdf.line(M, yy, W - M, yy, { color: rule });
-    y += tableH;
-
-    // Boxed rows of label/value cells; values wrap and the row grows to the tallest cell.
-    function cells(items, widths, valueSize, valueFont = "regular") {
-      y += sz(11);
-      const pad = 9, vlh = valueSize * 1.35;
-      const total = widths.reduce((a, b) => a + b, 0);
-      const ws2 = widths.map(w => w / total * cw);
-      const wrapped = items.map((it, i) => pdf.wrap(it.value, ws2[i] - 2 * pad, valueFont, valueSize));
-      const h = sz(8) + sz(7) + sz(5) + Math.max(...wrapped.map(l => l.length)) * vlh + sz(4);
-      let x = M;
-      items.forEach((it, i) => {
-        pdf.text(it.label.toUpperCase(), x + pad, y + sz(8) + sz(6), { size: sz(7), color: muted, spacing: 0.4 });
-        wrapped[i].forEach((line, j) => pdf.text(line, x + pad, y + sz(8) + sz(7) + sz(5) + valueSize * 0.85 + j * vlh, { font: valueFont, size: valueSize, color: ink }));
-        if (i) pdf.line(x, y, x, y + h, { color: rule });
-        x += ws2[i];
-      });
-      pdf.rect(M, y, cw, h, { stroke: rule });
-      y += h;
-    }
-    cells([{ label: "ADD", value: d.add }, { label: "PD distance / near", value: d.pd }], [1, 1], sz(12.5));
-    cells([{ label: "Verified VA", value: d.va }, { label: "Verification", value: d.outcome }], [1, 1], sz(9.5));
-    cells([{ label: "Age", value: d.age }, { label: "Medical background", value: d.medical }, { label: "Reported symptoms", value: d.symptoms }],
-      [0.55, 1, 1.3], sz(9.5));
-
-    // Review notes
-    if (d.flags.length) {
-      y += sz(14);
-      pdf.text("REVIEW NOTES", M, y + sz(6), { size: sz(7), color: muted, spacing: 0.4 });
-      y += sz(10);
-      const fs = sz(8), flh = fs * 1.4;
-      for (const f of d.flags) {
-        const lines2 = pdf.wrap(f, cw - 12, "regular", fs);
-        pdf.text("•", M + 2, y + fs, { size: fs, color: ink });
-        lines2.forEach((line, j) => pdf.text(line, M + 12, y + fs + j * flh, { size: fs, color: ink }));
-        y += lines2.length * flh + sz(1.5);
-      }
-    }
-
-    // Additional notes
-    y += sz(12);
-    pdf.text("Additional notes", M, y + sz(8), { size: sz(8), color: muted });
-    y += sz(12);
-    const ns = sz(10), nlh = ns * 1.4;
-    const noteLines = pdf.wrap(d.notes || "—", cw, "regular", ns);
-    noteLines.forEach((line, j) => pdf.text(line, M, y + ns + j * nlh, { size: ns, color: ink }));
-    y += Math.max(noteLines.length * nlh, sz(30)) + sz(4);
-    pdf.line(M, y, W - M, y, { color: rule });
-
-    // Signatures
-    y += sz(36);
-    const sigW = (cw - 28) / 2;
-    [[d.signatory, "Verified by"], [d.licence, "Licence or certification"]].forEach(([value, label], i) => {
-      const x = M + i * (sigW + 28);
-      pdf.line(x, y, x + sigW, y, { width: 0.5, color: ink });
-      pdf.text(value, x, y + sz(14), { size: sz(10.5), color: ink });
-      pdf.text(label, x, y + sz(25), { size: sz(7.5), color: muted });
+    for (const x of cols) pdf.line(x, y, x, y + tableH, { width: 0.4, color: ink });
+    for (const yy of [y, y + headH, y + headH + rowH, y + tableH]) pdf.line(M, yy, W - M, yy, { width: 0.4, color: ink });
+    y += tableH + 12;
+    label("ADD", M, y);
+    pdf.text(d.add, M + 34, y, { size: 8.5, color: ink });
+    y += 13;
+    // Lens type, two by two, as on the Crizal card's coating row.
+    const box = 6.5, colW = cw / 2;
+    d.lenses.forEach((lens, i) => {
+      const x = M + (i % 2) * colW, yy = y + Math.floor(i / 2) * 12;
+      pdf.rect(x, yy - box + 1, box, box, { stroke: ink, width: 0.5 });
+      if (lens.checked) pdf.rect(x + 1.6, yy - box + 2.6, box - 3.2, box - 3.2, { fill: ink });
+      pdf.text(lens.label, x + box + 4, yy, { size: 7, color: ink });
     });
-    y += sz(36);
+    y += 24;
+    const warn = `${d.warningLead} ${d.warningRest}`;
+    pdf.wrap(warn, cw, "regular", 4.8).forEach((line, j) => {
+      if (j === 0 && line.startsWith(d.warningLead)) {
+        pdf.text(d.warningLead, M, y + j * 6.2, { size: 4.8, color: ink });
+        pdf.text(line.slice(d.warningLead.length), M + pdf.textWidth(d.warningLead, "regular", 4.8), y + j * 6.2, { size: 4.8, color: ink });
+      } else pdf.text(line, M, y + j * 6.2, { size: 4.8, color: ink });
+    });
 
-    // Footer
-    pdf.line(M, y, W - M, y, { width: 0.5, color: ink });
-    const footLines = pdf.wrap(d.footer, cw, "regular", sz(7.5));
-    footLines.forEach((line, j) => pdf.text(line, M, y + sz(12) + j * sz(10), { size: sz(7.5), color: muted }));
-    y += sz(12) + (footLines.length - 1) * sz(10);
-    return y;
+    // ---- below the fold: verification, context, review notes, notes, signatures
+    y = P + M + 4;
+    const sz = v => v * k;
+    const pair = (items, widths) => {
+      const total = widths.reduce((a, b) => a + b, 0);
+      let x = M, h = 0;
+      items.forEach((it, i) => {
+        const w = widths[i] / total * cw - 4;
+        label(it.label, x, y, { size: sz(4.8) });
+        const lines = pdf.wrap(it.value, w, "regular", sz(6.4));
+        lines.forEach((line, j) => pdf.text(line, x, y + sz(8) + j * sz(7.8), { size: sz(6.4), color: ink }));
+        h = Math.max(h, sz(8) + (lines.length - 1) * sz(7.8));
+        x += widths[i] / total * cw;
+      });
+      y += h + sz(9);
+    };
+    pair([{ label: "Verified VA", value: d.va }, { label: "Verification", value: d.outcome }], [1, 1.25]);
+    pair([{ label: "Age", value: d.age }, { label: "Medical background", value: d.medical }, { label: "Reported symptoms", value: d.symptoms }], [0.55, 1, 1.25]);
+    const sigTop = CARD.height - M - 30;
+    if (d.flags.length) {
+      label("Review notes", M, y, { size: sz(4.8) });
+      y += sz(7);
+      const fs = sz(5.4), lh = fs * 1.3;
+      for (const f of d.flags) {
+        const lines = pdf.wrap(f, cw - 7, "regular", fs);
+        pdf.text("•", M + 1, y + fs * 0.8, { size: fs, color: ink });
+        lines.forEach((line, j) => pdf.text(line, M + 7, y + fs * 0.8 + j * lh, { size: fs, color: ink }));
+        y += lines.length * lh + sz(1);
+      }
+      y += sz(4);
+    }
+    label("Notes", M, y, { size: sz(4.8) });
+    y += sz(8);
+    const notes = pdf.wrap(d.notes || "—", cw, "regular", sz(6.2));
+    notes.forEach((line, j) => pdf.text(line, M, y + j * sz(7.6), { size: sz(6.2), color: ink }));
+    y += notes.length * sz(7.6);
+    const bottom = y;
+    const sigW = (cw - 10) / 2;
+    [[d.signatory, "Verified by"], [d.licence, "Licence or certification"]].forEach(([value, lab], i) => {
+      const x = M + i * (sigW + 10);
+      pdf.line(x, sigTop + 8, x + sigW, sigTop + 8, { width: 0.4, color: ink });
+      pdf.text(value, x, sigTop + 16, { size: 6.4, color: ink });
+      label(lab, x, sigTop + 23, { size: 4.6, spacing: 0.15 });
+    });
+    pdf.text(d.footer, M, CARD.height - M + 1, { size: 4.6, color: ink });
+    return bottom <= sigTop;
+  }
+
+  function drawCardOutside(pdf, d) {
+    const W = pdf.width, P = CARD.height / 2, M = 6 * MM, cw = W - 2 * M, ink = LABS_INDIGO;
+    // Front cover, drawn upright in the top half, then turned so its top meets the fold.
+    pdf.rotated180(W / 2, P / 2, () => {
+      let y = M + 30;
+      pdf.text("Oculi", M, y, { size: 30, color: ink });
+      const mark = window.ZLField ? window.ZLField.D.mark : null;
+      if (mark) {
+        const h = 26, sc = h / mark.height, x0 = W - M - mark.width * sc, y0 = y - 24;
+        for (const d0 of mark.paths) {
+          const pts = d0.match(/-?\d+(?:\.\d+)?,-?\d+(?:\.\d+)?/g).map(t => t.split(",").map(Number)).map(([x, yy]) => [x0 + x * sc, y0 + yy * sc]);
+          pdf.polygon(pts, { fill: ink });
+        }
+      }
+      y += 34;
+      pdf.text(d.cover.title, M, y, { size: 11.5, color: ink });
+      y += 13;
+      pdf.wrap(d.cover.body, cw, "regular", 6.8).forEach((line, j) => pdf.text(line, M, y + j * 9, { size: 6.8, color: ink }));
+      const meta = [d.name === "Not provided" ? "" : d.name, d.date].filter(Boolean).join("  ·  ");
+      pdf.text(meta, M, P - 18, { size: 6, color: ink });
+      pdf.rect(0, P - 6, W, 6, { fill: ink }); // the band at the free edge, after Crizal's
+    });
+    // Back cover, upright below the fold.
+    let y = P + M + 10;
+    pdf.text(d.cover.backTitle, M, y, { size: 9.5, color: ink });
+    y += 12;
+    for (const item of d.cover.back) {
+      const lines = pdf.wrap(item, cw - 8, "regular", 6.6);
+      pdf.text("•", M + 1, y, { size: 6.6, color: ink });
+      lines.forEach((line, j) => pdf.text(line, M + 8, y + j * 8.4, { size: 6.6, color: ink }));
+      y += lines.length * 8.4 + 4;
+    }
+    pdf.line(M, CARD.height - M - 16, W - M, CARD.height - M - 16, { width: 0.4, color: ink });
+    pdf.text("ZEPHENIALABS", M, CARD.height - M - 5, { size: 5.2, color: ink, spacing: 0.25 });
+    pdf.text(d.cover.version, W - M, CARD.height - M - 5, { size: 5.2, color: ink, align: "right" });
   }
 
   function buildPdf() {
     const d = previewData();
-    const size = pageSize();
-    let pdf;
-    for (let k = 1; k >= 0.6; k -= 0.05) {
-      pdf = window.OculiPdf.create(size.width, size.height);
-      if (drawPdf(pdf, d, k) <= size.height - 40) break;
+    // Shrink the lower panel's text until it clears the signatures; past the floor, drop the
+    // last review notes and say how many are left out.
+    let pdf, data = d, dropped = 0;
+    for (;;) {
+      let fits = false;
+      for (let k = 1; k >= 0.6 - 1e-9; k -= 0.05) {
+        pdf = window.OculiPdf.create(CARD.width, CARD.height);
+        if (drawCardInside(pdf, data, k)) { fits = true; break; }
+      }
+      if (fits || !data.flags.length) break;
+      dropped++;
+      data = { ...d, flags: [...d.flags.slice(0, Math.max(0, d.flags.length - dropped - 1)), `${dropped + 1} more review notes are shown in Oculi.`] };
+      if (dropped >= d.flags.length) break;
     }
-    return pdf.toBytes({ title: `Oculi Genius preview ${d.date}` });
+    pdf.newPage();
+    drawCardOutside(pdf, data);
+    return pdf.toBytes({ title: `Oculi prescription card ${d.date}` });
   }
 
   function download(file) {
@@ -738,13 +818,15 @@
     segment("geniusCompareScene", "distance");
     document.querySelectorAll("#geniusPrediagnosis input").forEach(cb => { delete cb.dataset.manual; });
     document.querySelectorAll("#geniusPanel .cc-row").forEach(row => { row.hidden = true; });
+    syncPinhole();
     clearComparison();
     $("geniusCompareStatus").textContent = "Needs the age and the autorefractor lines in section 2. Works at any age.";
     $("geniusAgeNote").textContent = "Enter the age, or the birthdate and the age fills in.";
     $("geniusGlassesFields").hidden = true;
     $("geniusGlassesFields").disabled = true;
     ["geniusPatientName", "geniusPrescriptionDate", "geniusPrescriptionNotes"].forEach(id => { $(id).value = ""; });
-    ["geniusPatientNamePrint", "geniusPrescriptionDatePrint", "geniusPrescriptionNotesPrint", "geniusExportStatus"].forEach(id => { $(id).textContent = ""; });
+    ["geniusPatientNamePrint", "geniusPrescriptionDatePrint", "geniusPrescriptionNotesPrint", "geniusExportStatus", "rxCoverPatient", "rxCoverDate"].forEach(id => { $(id).textContent = ""; });
+    document.querySelectorAll("#rxCardInside .rx-lenses input").forEach(cb => { cb.checked = false; });
     $("geniusScanStatusRow").hidden = true;
     resetVerification();
     syncAxes();
@@ -774,10 +856,14 @@
       if (!window.confirm(Rx.scanSummary(result))) { status.textContent = "Cancelled · no values changed"; return; }
       Rx.applyScannedEye("geniusOd", result.od);
       Rx.applyScannedEye("geniusOs", result.os);
-      ["geniusPdDistance", "geniusPdNear", "geniusNearWd"].forEach(id => { $(id).value = ""; });
+      ["geniusPdOdDist", "geniusPdOdNear", "geniusPdOsDist", "geniusPdOsNear", "geniusNearWd"].forEach(id => { $(id).value = ""; });
+      // A ticket gives one binocular PD; each eye starts at half of it, rounded to 0.5 mm. Measure monocular PD when it matters.
+      const half = v => v == null ? null : Math.round(v) / 2;
       if (result.instrument) {
-        Rx.setPlainField("geniusPdDistance", result.instrument.pdDistanceMm);
-        Rx.setPlainField("geniusPdNear", result.instrument.pdNearMm);
+        for (const key of ["Od", "Os"]) {
+          Rx.setPlainField(`geniusPd${key}Dist`, half(result.instrument.pdDistanceMm));
+          Rx.setPlainField(`geniusPd${key}Near`, half(result.instrument.pdNearMm));
+        }
       }
       if (result.near && result.near.workingDistanceCm != null) Rx.setPlainField("geniusNearWd", result.near.workingDistanceCm * 10);
       syncAxes();
@@ -803,7 +889,7 @@
     if ($("geniusPrint").hidden) $("geniusSavePdf").textContent = "Save or Print PDF";
     $("geniusSavePdf").addEventListener("click", savePdf);
     $("geniusNewPatient").addEventListener("click", newPatient);
-    window.addEventListener("beforeprint", syncPrintValues);
+    window.addEventListener("beforeprint", () => { syncPrintValues(); fitCard(); });
     $("geniusScanBtn").addEventListener("click", () => $("geniusTicketInput").click());
     $("geniusTicketInput").addEventListener("change", e => { const f = e.target.files && e.target.files[0]; if (f) scan(f); });
 
@@ -817,6 +903,7 @@
       syncDiagnosis();
     });
     $("geniusForm").addEventListener("change", e => {
+      if (/^geniusVaDist(Sc|Cc)O[ds]$/.test(e.target.id)) syncPinhole();
       if (e.target.closest("#geniusPrediagnosis")) {
         e.target.dataset.manual = "true";
         return;
@@ -829,6 +916,8 @@
       syncDiagnosis();
     });
     $("geniusCompareBtn").addEventListener("click", showComparison);
+    $("geniusPrescription").addEventListener("input", () => { syncPrintValues(); fitCard(); });
+    window.addEventListener("resize", fitCard);
     $("geniusResults").addEventListener("change", e => {
       const m = e.target.id.match(/^(genius(?:Od|Os)Ref)(Sph|Cyl)$/);
       if (m) Rx.syncRxAxis(m[1], true);

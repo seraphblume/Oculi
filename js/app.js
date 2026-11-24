@@ -9,6 +9,7 @@
   const store = window.DioptraStorage;
   const ticketScan = window.DioptraTicketScan;
   const REFRACTION_VERTEX_MM = 12;
+  const PINHOLE_NOT_NEEDED = 0.8; // 20/25 decimal
 
   const EYES = [
     { id: "od", short: "OD", name: "Right eye" },
@@ -159,10 +160,11 @@
 
   function syncPinhole(suffix) {
     const va = cfg.visualAcuity.find(v => v.snellen === $(`va${suffix}`).value);
-    const cancelled = Boolean(va && va.decimal >= 1);
+    // Pinhole adds nothing for an eye that already reads 20/25 or better.
+    const cancelled = Boolean(va && va.decimal >= PINHOLE_NOT_NEEDED - 1e-9);
     const ph = $(`ph${suffix}`);
     ph.disabled = cancelled;
-    ph.options[0].textContent = cancelled ? "Not needed · ≥20/20" : "—";
+    ph.options[0].textContent = cancelled ? "Not needed" : "—";
     if (cancelled) ph.value = "";
   }
 

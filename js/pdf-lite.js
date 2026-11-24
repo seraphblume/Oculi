@@ -1,4 +1,4 @@
-// A small, dependency-free PDF writer for one-page documents: text in the standard
+// A small, dependency-free PDF writer for short documents: text in the standard
 // Helvetica/Times fonts (WinAnsi), lines, rectangles and rotated text. Coordinates are
 // in points from the top-left corner. Used for the Genius preview so saving a PDF does
 // not depend on the browser's print support (unreliable in home-screen web apps).
@@ -60,10 +60,26 @@
   const strokeColour = c => Array.isArray(c) ? `${c.map(n).join(" ")} RG` : `${n(c)} G`;
 
   function create(width = 612, height = 792) {
-    const ops = [];
+    const pages = [[]];
+    let ops = pages[0];
     const doc = {
       width, height,
       textWidth,
+      // Starts a new page of the same size; later drawing goes there.
+      newPage() { ops = []; pages.push(ops); },
+      // Runs `draw` with every coordinate turned 180° about (cx, cy), in top-left points.
+      rotated180(cx, cy, draw) {
+        ops.push(`q -1 0 0 -1 ${n(2 * cx)} ${n(2 * (height - cy))} cm`);
+        draw();
+        ops.push("Q");
+      },
+      // A filled polygon from [[x, y], …] in top-left points.
+      polygon(points, opts = {}) {
+        const { fill = 0 } = opts;
+        if (points.length < 3) return;
+        const path = points.map(([x, y], i) => `${n(x)} ${n(height - y)} ${i ? "l" : "m"}`).join(" ");
+        ops.push(`${fillColour(fill)} ${path} h f`);
+      },
       text(str, x, y, opts = {}) {
         const { font = "regular", size = 10, color = 0, align = "left", spacing = 0 } = opts;
         if (str == null || str === "") return;
@@ -118,15 +134,19 @@
         return lines;
       },
       toBytes(info = {}) {
-        const content = ops.join("\n");
+        // 1 catalog, 2 page tree, 3–5 fonts, then a page and its content stream per page, then info.
+        const pageIds = pages.map((_, i) => 6 + 2 * i);
         const objects = [
           "<< /Type /Catalog /Pages 2 0 R >>",
-          "<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
-          `<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${n(width)} ${n(height)}] /Resources << /Font << /F1 4 0 R /F2 5 0 R /F3 6 0 R >> >> /Contents 7 0 R >>`,
-          ...["regular", "bold", "serif"].map(k => `<< /Type /Font /Subtype /Type1 /BaseFont /${FONTS[k].base} /Encoding /WinAnsiEncoding >>`),
-          `<< /Length ${content.length} >>\nstream\n${content}\nendstream`,
-          `<< /Title ${pdfString(info.title || "")} /Producer (Oculi) /Creator (Oculi) >>`
+          `<< /Type /Pages /Kids [${pageIds.map(id => `${id} 0 R`).join(" ")}] /Count ${pages.length} >>`,
+          ...["regular", "bold", "serif"].map(k => `<< /Type /Font /Subtype /Type1 /BaseFont /${FONTS[k].base} /Encoding /WinAnsiEncoding >>`)
         ];
+        pages.forEach((pageOps, i) => {
+          const content = pageOps.join("\n");
+          objects.push(`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${n(width)} ${n(height)}] /Resources << /Font << /F1 3 0 R /F2 4 0 R /F3 5 0 R >> >> /Contents ${pageIds[i] + 1} 0 R >>`);
+          objects.push(`<< /Length ${content.length} >>\nstream\n${content}\nendstream`);
+        });
+        objects.push(`<< /Title ${pdfString(info.title || "")} /Producer (Oculi) /Creator (Oculi) >>`);
         let out = "%PDF-1.4\n";
         const offsets = [];
         objects.forEach((body, i) => { offsets.push(out.length); out += `${i + 1} 0 obj\n${body}\nendobj\n`; });

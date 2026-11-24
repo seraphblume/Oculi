@@ -10,7 +10,7 @@ Oculi brings clinical comparison and essential prescription tools into one calm,
 
 A blinded comparison workflow for structured research.
 
-1. **Measure.** Record the autorefractor ticket, visual acuity and whether it was measured unaided or with correction, plus history.
+1. **Measure.** In the same order as Genius: patient, history, visual acuity (unaided or with correction; pinhole only for an eye below 20/25), then the initial refraction: previous Rx, autorefractor ticket, near and keratometry.
 2. **Refract.** Complete your own exam without seeing Oculi's prediction. Record the final Rx, the final VA, the +0.25 D test, and the endpoint whenever the prescribed Rx differs from it.
 3. **Compare.** Reveal the prediction, rate it 1–5 against what you would prescribe, and save the case.
 
@@ -25,7 +25,7 @@ A visual assessment followed by a guided refraction preview. The assessment foll
 - **Patient.** Name (never saved), age or birthdate (the age fills in), current glasses.
 - **History.** Symptoms, medical background and warning signs.
 - **1 · Visual acuity.** Distance and near, without and with glasses, for OD, OS and OU; pinhole for OD and OS.
-- **2 · Initial refraction.** The current glasses from the lensometer and the autorefractor ticket, with near working distance and PD.
+- **2 · Initial refraction.** The current glasses from the lensometer and the autorefractor ticket, with near working distance and a distance and near PD per eye.
 - **3 · Pre-diagnosis.** Myopia, hyperopia, astigmatism, presbyopia or no refractive error, ticked from the ticket and age; every box can be changed.
 - **4 · Vision comparison.** The same letter chart, side by side, as seen through the current correction and through a full correction, rendered by ZL Retina (below). Distance or near, either eye.
 
@@ -33,7 +33,7 @@ The assessment works at any age, so a guardian can see a child's comparison. The
 
 - **Propose.** Any warning sign, or an age under 18, stops Genius here. The full autorefractor ticket runs through Beryl v1.1. Current glasses, symptoms and medical background become review notes, not dioptric changes.
 - **Verify.** VA through the proposed Rx in a trial frame, near when there is an ADD, the +0.25 D test, then accepted or refined.
-- **Preview.** A one-page, watermarked preview set as a ZepheniaLabs document. It is not a prescription. Save it as a PDF or print it, then start the next patient with **New Patient**.
+- **Card.** A 9 × 16 cm card that folds to 9 × 8 cm, after a lens certificate: the Rx with a PD per eye, the ADD and the lens type inside above the fold; verification, review notes, notes and signatures below it; a cover and adaptation advice outside. It is watermarked and is not a prescription. Save it as a two-page PDF or print it double-sided (flip on the long edge), then start the next patient with **New Patient**.
 
 Genius is clearly marked as a development preview, and nothing entered there is saved.
 
@@ -65,7 +65,7 @@ Goshenite v1.0 is the planned flagship: a learned layer on Beryl v1.1, tuned on 
 
 ## Design
 
-Working screens follow the platform's system font and grouped colours, tinted with the viewer's palette accent (Zephyr, Boreas or Harukaze, chosen in About). The tint is a deliberate exception to canon, generated from the design tokens into `css/zl-tint.css`; every palette holds 4.5 : 1 or better for text and filled controls. The ZepheniaLabs look appears only on studio surfaces: the first-run splash, the About sheet's header (tap **Oculi**), and the printed preview, set in labs-indigo on white. Tokens, fonts and the glyph-field engine come from the ZLDesignSystem package; refresh them with
+Oculi wears the ZepheniaLabs design system as applied in O(n!): three colours per theme (ground, ink, accent), IBM Plex Sans for words and Plex Mono for labels, square corners, hairline rules instead of boxes, ink blocks for actions, and no grey, shadow or bold. The theme follows the device in Zephyr until the viewer picks a palette (Zephyr, Boreas, Harukaze) and an appearance in About (tap **Oculi**). The coat lives in `css/coat.css` over the structural `css/app.css`; tokens, fonts and the glyph-field engine come from the ZLDesignSystem package:
 
 ```sh
 node tools/sync-zl-design.js ~/ZepheniaLabs/Workspace/Packages/ZLDesignSystem

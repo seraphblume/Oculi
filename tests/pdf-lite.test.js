@@ -47,3 +47,19 @@ assert.match(stream[2], /\/F3 23 Tf/, "serif title");
 assert.match(stream[2], / c h B| c h S/, "rounded rectangle path");
 
 console.log("PASS: PDF writer structure, xref offsets, WinAnsi encoding, escaping, wrapping, rotated watermark");
+
+// Several pages, filled polygons and a 180° turn (the folded card's front cover).
+const card = OculiPdf.create(255.12, 453.54);
+card.text("Inside", 10, 20);
+card.newPage();
+card.rotated180(127.56, 113.39, () => card.text("Cover", 10, 20));
+card.polygon([[10, 10], [20, 10], [15, 20]], { fill: [0.08, 0.07, 0.35] });
+const cardText = Buffer.from(card.toBytes()).toString("latin1");
+assert.match(cardText, /\/Count 2/);
+assert.equal((cardText.match(/\/Type \/Page(?![a-z])/g) || []).length, 2);
+assert.match(cardText, /q -1 0 0 -1 255\.12 680\.3 cm[\s\S]*\(Cover\) Tj[\s\S]*Q/, "cover drawn turned 180°");
+assert.match(cardText, /0\.08 0\.07 0\.35 rg 10 443\.54 m 20 443\.54 l 15 433\.54 l h f/, "filled polygon in labs-indigo");
+const cx = Number(/startxref\n(\d+)\n%%EOF/.exec(cardText)[1]);
+const cxr = cardText.slice(cx).split("\n");
+for (let i = 1; i < Number(cxr[1].split(" ")[1]); i++) assert.ok(cardText.slice(Number(cxr[2 + i].slice(0, 10))).startsWith(`${i} 0 obj\n`), `card object ${i}`);
+console.log("PASS: multi-page card, polygon and 180° cover");

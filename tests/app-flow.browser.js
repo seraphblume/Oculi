@@ -40,25 +40,29 @@ const server = http.createServer(async (req, res) => {
     // Studio surface: the first-run splash appears once, waits for Continue, then never again.
     assert.equal(await page.locator("#zlSplash").isVisible(), true, "first run shows the splash");
     assert.match(await page.locator("#zlSplash").innerText(), /ZEPHENIALABS[\s\S]*Oculi[\s\S]*Beryl 1\.1/i);
-    assert.equal(await page.evaluate(() => getComputedStyle(document.getElementById("zlSplash")).backgroundColor), "rgb(21, 19, 88)", "Zephyr dark ground");
+    assert.equal(await page.evaluate(() => getComputedStyle(document.getElementById("zlSplash")).backgroundColor), "rgb(244, 242, 248)", "Zephyr light ground on a light device");
     await page.locator("#zlSplashContinue").click();
     assert.equal(await page.locator("#zlSplash").isVisible(), false);
     await page.reload();
     assert.equal(await page.locator("#zlSplash").isVisible(), false, "the splash shows once per install");
 
-    // Working screens use the system font; the About sheet carries the emblem and the palette.
-    assert.match(await page.evaluate(() => getComputedStyle(document.body).fontFamily), /^-apple-system/);
+    // The O(n!) coat: IBM Plex on the theme's ground and ink; the About sheet picks the theme.
+    assert.match(await page.evaluate(() => getComputedStyle(document.body).fontFamily), /^"IBM Plex Sans"/);
+    const bodyColours = () => page.evaluate(() => { const cs = getComputedStyle(document.body); return [cs.backgroundColor, cs.color]; });
+    assert.deepEqual(await bodyColours(), ["rgb(244, 242, 248)", "rgb(21, 19, 88)"], "Zephyr light follows the device");
     await page.locator("#aboutBtn").click();
     assert.equal(await page.locator("#aboutDialog").evaluate(d => d.open), true);
     assert.match(await page.locator("#aboutEngines").innerText(), /Beryl 1\.1[\s\S]*Heliodor 1\.0[\s\S]*Goshenite 1\.0[\s\S]*ZL Retina 0\.1\.0/);
-    // The palette accent tints the working screens (an exception to canon), never the system blue.
-    const tint = () => page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue("--tint").trim().toUpperCase());
-    assert.equal(await tint(), "#5A4688", "Zephyr light accent");
     await page.locator("#aboutPalette").selectOption("harukaze");
-    assert.equal(await tint(), "#7D4997", "Harukaze light accent");
-    await page.locator("#aboutPalette").selectOption("boreas");
-    assert.equal(await page.evaluate(() => document.documentElement.dataset.palette), "boreas");
+    await page.locator("#aboutAppearance").selectOption("dark");
+    assert.deepEqual(await bodyColours(), ["rgb(66, 76, 151)", "rgb(244, 243, 248)"], "Harukaze dark");
+    await page.reload();
+    assert.deepEqual(await bodyColours(), ["rgb(66, 76, 151)", "rgb(244, 243, 248)"], "the theme is remembered");
+    await page.locator("#aboutBtn").click();
+    assert.equal(await page.locator("#aboutAppearance").inputValue(), "dark");
     await page.locator("#aboutPalette").selectOption("zephyr");
+    await page.locator("#aboutAppearance").selectOption("device");
+    assert.deepEqual(await bodyColours(), ["rgb(244, 242, 248)", "rgb(21, 19, 88)"]);
     await page.locator(".about-done").click();
     assert.equal(await page.locator("#aboutDialog").evaluate(d => d.open), false);
     assert.match(await page.locator("#engineLine").innerText(), /Beryl 1\.1 · not clinically validated · compared with Heliodor 1\.0/);
@@ -399,6 +403,11 @@ const server = http.createServer(async (req, res) => {
     // Evaluación visual: with-glasses acuity rows, pre-diagnosis from the ticket, and the comparison.
     assert.equal(await page.locator("#geniusVaDistCcOd").isVisible(), true, "cc rows show for glasses wearers");
     await page.locator("#geniusVaDistScOd").selectOption("20/200");
+    await page.locator("#geniusVaDistCcOd").selectOption("20/25");
+    assert.equal(await page.locator("#geniusPinholeOd").isDisabled(), true, "Genius: 20/25 with glasses makes OD pinhole redundant");
+    assert.equal(await page.locator("#geniusPinholeOs").isEnabled(), true, "Genius pinhole rule is per eye");
+    await page.locator("#geniusVaDistCcOd").selectOption("");
+    assert.equal(await page.locator("#geniusPinholeOd").isEnabled(), true);
     assert.equal(await page.locator("#geniusResults").isVisible(), true, "acuity entries never invalidate the proposal");
     const dx = () => page.evaluate(() => Object.fromEntries([...document.querySelectorAll("#geniusPrediagnosis input")].map(cb => [cb.dataset.dx, cb.checked])));
     assert.deepEqual(await dx(), { myopia: true, hyperopia: true, astigmatism: true, presbyopia: true, none: false });
@@ -441,7 +450,7 @@ const server = http.createServer(async (req, res) => {
     for (const [id, value] of Object.entries({
       geniusPrescriptionSphereOd: "−2.00", geniusPrescriptionCylinderOd: "−1.00", geniusPrescriptionAxisOd: "180°",
       geniusPrescriptionSphereOs: "+0.75", geniusPrescriptionCylinderOs: "−0.50", geniusPrescriptionAxisOs: "090°",
-      geniusPrescriptionAdd: "+0.75 D", geniusPrescriptionPd: "Not measured", geniusPrescriptionVa: "OD 20/20 · OS 20/25",
+      geniusPrescriptionAdd: "+0.75 D", geniusPrescriptionPdDistOd: "—", geniusPrescriptionPdNearOs: "—", geniusPrescriptionVa: "OD 20/20 · OS 20/25",
       geniusPrescriptionAge: "42 years", geniusPrescriptionMedical: "Diabetes, Pregnancy", geniusPrescriptionSymptoms: "Blurred vision, Glare / halos, Halos"
     })) assert.equal(await page.locator(`#${id}`).innerText(), value, id);
     assert.match(await page.locator("#geniusPrescriptionOutcome").innerText(), /Refined in a trial frame · near comfortable · \+0\.25 D holds the line/);
@@ -451,6 +460,11 @@ const server = http.createServer(async (req, res) => {
     assert.doesNotMatch(await page.locator("#geniusPrescription").innerText(), /research prototype/i);
     assert.match(await page.locator("#geniusPrescriptionFlags").innerText(), /Large change from current glasses · OD/);
     assert.match(await page.locator("#geniusPrescription").innerText(), /not a prescription/i);
+    // The card: 90 × 160 mm at true proportions, a lens-type row, and a cover that carries the patient.
+    const cardBox = await page.locator("#rxCardInside").boundingBox();
+    assert.ok(Math.abs(cardBox.height / cardBox.width - 160 / 90) < 0.01, "card keeps 9 × 16 cm proportions");
+    await page.locator("#rxCardInside .rx-lenses label:has([data-lens=Progressive])").click();
+    assert.equal(await page.locator("[data-lens=Progressive]").isChecked(), true);
     await page.locator("#geniusPatientName").fill("Preview patient");
     await page.locator("#geniusPrescriptionNotes").fill("Test output only");
     await page.evaluate(() => { window.__geniusPrintCalls = 0; window.print = () => { window.__geniusPrintCalls += 1; }; });
@@ -458,6 +472,7 @@ const server = http.createServer(async (req, res) => {
     assert.equal(await page.evaluate(() => window.__geniusPrintCalls), 1, "Genius export opens the system print dialog");
     assert.equal(await page.locator("#geniusPatientNamePrint").innerText(), "Preview patient");
     assert.equal(await page.locator("#geniusPrescriptionNotesPrint").innerText(), "Test output only");
+    assert.equal(await page.locator("#rxCoverPatient").innerText(), "Preview patient");
     assert.equal(await page.evaluate(() => JSON.stringify(DioptraStorage.listCases())), beforeTools, "Genius never writes study cases");
     await page.setViewportSize({ width: 320, height: 900 });
     assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), "Genius has no mobile overflow");
@@ -478,7 +493,8 @@ const server = http.createServer(async (req, res) => {
     assert.equal(await page.locator("#geniusOdR2Sph").inputValue(), "2.50");
     assert.equal(await page.locator("#geniusOdR1Q").inputValue(), "9");
     assert.equal(await page.locator("#geniusOsSelSph").getAttribute("data-sign"), "1");
-    assert.equal(await page.locator("#geniusPdDistance").inputValue(), "62");
+    assert.equal(await page.locator("#geniusPdOdDist").inputValue(), "31", "a ticket's binocular PD starts each eye at half");
+    assert.equal(await page.locator("#geniusPdOsDist").inputValue(), "31");
     assert.equal(await page.locator("#odSelSph").inputValue(), clinicalBeforeScan, "Genius scans never touch the Clinical Study form");
     await page.locator("#geniusReset").click();
     assert.equal(await page.locator("#geniusAge").inputValue(), "");
@@ -655,8 +671,12 @@ const server = http.createServer(async (req, res) => {
     for (const suffix of ["Od", "Os"]) {
       await page.locator(`#va${suffix}`).selectOption("20/40");
       await page.locator(`#ph${suffix}`).selectOption("20/25");
+      await page.locator(`#va${suffix}`).selectOption("20/25");
+      assert.equal(await page.locator(`#ph${suffix}`).inputValue(), "", "20/25 makes pinhole redundant");
+      assert.equal(await page.locator(`#ph${suffix}`).isDisabled(), true);
+      await page.locator(`#va${suffix}`).selectOption("20/30");
+      assert.equal(await page.locator(`#ph${suffix}`).isEnabled(), true, "20/30 still allows pinhole");
       await page.locator(`#va${suffix}`).selectOption("20/20");
-      assert.equal(await page.locator(`#ph${suffix}`).inputValue(), "");
       assert.equal(await page.locator(`#ph${suffix}`).isDisabled(), true);
       await page.locator(`#va${suffix}`).selectOption("20/15");
       assert.equal(await page.locator(`#ph${suffix}`).isDisabled(), true);

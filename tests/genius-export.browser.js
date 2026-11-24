@@ -1,6 +1,7 @@
 #!/usr/bin/env node
-// Genius preview export: one printed page on Letter and A4, a valid one-page PDF on desktop (download)
-// and on phones (share sheet), the iOS home-screen fallback, and New Patient. Synthetic data only.
+// Genius prescription card: printed and saved as a 90 × 160 mm folding card in two pages (inside,
+// outside), on desktop (download) and on phones (share sheet), the iOS home-screen fallback, and
+// New Patient. Synthetic data only.
 const assert = require("node:assert/strict");
 const fs = require("node:fs/promises");
 const os = require("node:os");
@@ -64,8 +65,7 @@ async function genius(page, worst) {
     for (const id of ["geniusDiabetes", "geniusHypertension", "geniusPregnancy", "geniusBlurredVision", "geniusHeadache", "geniusGlare", "geniusTearing",
       "geniusIrritation", "geniusItching", "geniusDischarge", "geniusDryEye"]) await page.locator(`label:has(#${id})`).click();
     await page.locator("#geniusOtherSymptoms").fill("Intermittent blur late in the day after long screen sessions and night driving");
-    await page.locator("#geniusPdDistance").fill("63");
-    await page.locator("#geniusPdNear").fill("60");
+    for (const [id, v] of Object.entries({ geniusPdOdDist: "31.5", geniusPdOsDist: "31.5", geniusPdOdNear: "30", geniusPdOsNear: "30" })) await page.locator(`#${id}`).fill(v);
     await page.locator("#geniusNearWd").fill("400");
   } else {
     await page.getByRole("button", { name: "Toggle OS selected sphere sign" }).click();
@@ -84,6 +84,7 @@ async function genius(page, worst) {
   if (worst) {
     await page.locator("#geniusPatientName").fill("Maria Fernanda de los Angeles Gutierrez Villasenor y Montes de Oca, preview patient");
     await page.locator("#geniusPrescriptionNotes").fill("Long note. ".repeat(45).trim());
+    await page.locator("#rxCardInside .rx-lenses label:has([data-lens=Progressive])").click();
   } else {
     await page.locator("#geniusPatientName").fill("Preview patient");
     await page.locator("#geniusPrescriptionNotes").fill("Test output only");
@@ -118,7 +119,7 @@ async function genius(page, worst) {
     assert.equal(await page.locator("#geniusSavePdf").innerText(), "Save PDF");
     assert.equal(await page.locator("#geniusNewPatient").isVisible(), true);
 
-    // Printing shows only the preview, on one page, on Letter and A4 — also for a long case.
+    // Printing shows only the card: two 90 × 160 mm pages (inside, outside) — also for a long case.
     for (const worst of [false, true]) {
       if (worst) {
         await page.locator("#geniusNewPatient").click();
@@ -128,45 +129,52 @@ async function genius(page, worst) {
       await page.evaluate(() => window.dispatchEvent(new Event("beforeprint")));
       // Measure with IBM Plex loaded, as a real print would; never with the fallback font.
       assert.equal(await page.evaluate(async () => { await document.fonts.ready; return [...document.fonts].filter(f => f.status === "loaded" && /IBM Plex/.test(f.family)).length; }), 3, "Plex is loaded before printing");
-      for (const format of ["Letter", "A4"]) {
-        const bytes = await page.pdf({ format, margin: { top: "12mm", right: "12mm", bottom: "12mm", left: "12mm" }, printBackground: true });
-        if (process.env.DIOPTRA_SCREENSHOT_DIR) await fs.writeFile(path.join(process.env.DIOPTRA_SCREENSHOT_DIR, `print-${worst ? "long" : "short"}-${format}.pdf`), bytes);
-        assert.equal(pageCount(bytes, `print ${format}`), 1, `${worst ? "long" : "short"} preview prints on one ${format} page`);
-      }
+      const fit = await page.evaluate(() => { const p = document.getElementById("rxFit"); return { over: p.scrollHeight - p.clientHeight, fit: getComputedStyle(document.getElementById("rxCardInside")).getPropertyValue("--fit") }; });
+      assert.ok(fit.over <= 1, `${worst ? "long" : "short"} card's lower panel fits on screen (fit ${fit.fit})`);
+      const bytes = await page.pdf({ preferCSSPageSize: true, printBackground: true });
+      if (process.env.DIOPTRA_SCREENSHOT_DIR) await fs.writeFile(path.join(process.env.DIOPTRA_SCREENSHOT_DIR, `print-card-${worst ? "long" : "short"}.pdf`), bytes);
+      assert.equal(pageCount(bytes, "print card"), 2, `${worst ? "long" : "short"} card prints inside and outside`);
+      const box = /\/MediaBox \[0 0 ([\d.]+) ([\d.]+)\]/.exec(Buffer.from(bytes).toString("latin1"));
+      assert.ok(Math.abs(Number(box[1]) - 255.12) < 1.5 && Math.abs(Number(box[2]) - 453.54) < 1.5, `printed at 90 × 160 mm, got ${box[1]} × ${box[2]}`);
       await page.emulateMedia({ media: "print" });
       const hidden = await page.evaluate(() => ["navbar", "geniusForm", "geniusResults", "actionBar"].map(id => getComputedStyle(document.getElementById(id)).display));
-      assert.deepEqual(hidden, ["none", "none", "none", "none"], "print hides everything but the preview");
+      assert.deepEqual(hidden, ["none", "none", "none", "none"], "print hides everything but the card");
       assert.equal(await page.locator("#geniusPatientNamePrint").isVisible(), true);
+      const printedOver = await page.evaluate(() => { const p = document.getElementById("rxFit"); return p.scrollHeight - p.clientHeight; });
+      assert.ok(printedOver <= 1, `${worst ? "long" : "short"} card's lower panel fits in print (over by ${printedOver}px)`);
+      assert.match(await page.evaluate(() => getComputedStyle(document.querySelector(".rx-cover")).transform), /^matrix\(-1, .*-1, 0, 0\)$/, "the front cover prints turned so it reads upright once folded");
       await page.emulateMedia({ media: null });
     }
 
-    // Save PDF on desktop downloads a one-page PDF with the preview's content.
+    // Save PDF on desktop downloads the two-page card with the preview's content.
     const [download] = await Promise.all([page.waitForEvent("download"), page.locator("#geniusSavePdf").click()]);
     assert.match(download.suggestedFilename(), /^oculi-genius-preview-\d{4}-\d{2}-\d{2}\.pdf$/);
     const pdf = await fs.readFile(await download.path());
     const text = checkOculiPdf(pdf);
-    assert.equal(pageCount(pdf, "saved PDF"), 1);
-    assert.match(text, /\/MediaBox \[0 0 612 792\]/, "es-MX gets Letter paper");
-    for (const s of ["(Valeria Luxe)", "(Pending certification)", "(Verified by)", "(Licence or certification)", "(NOT A PRESCRIPTION)", "(Prescription preview)",
-      "(Development preview.)", "(Maria Fernanda"]) assert.ok(text.includes(s), `PDF contains ${s}`);
+    assert.equal(pageCount(pdf, "saved PDF"), 2);
+    assert.match(text, /\/MediaBox \[0 0 255\.12 453\.54\]/, "a 90 × 160 mm card on every locale");
+    for (const s of ["(Valeria Luxe)", "(Pending certification)", "(VERIFIED BY)", "(LICENCE OR CERTIFICATION)", "(NOT A PRESCRIPTION)", "(Prescription preview)",
+      "(Development preview.)", "(Maria Fernanda", "(SPHERE)", "(PD FAR)", "(PD NEAR)", "(31.5)", "(Progressive)", "(Adapting to new glasses)", "(Oculi)"]) assert.ok(text.includes(s), `PDF contains ${s}`);
+    assert.match(text, / cm\n[\s\S]*\(Oculi\) Tj[\s\S]*\nQ/, "front cover drawn turned 180°");
+    assert.match(text, /0\.08 0\.07 0\.35 rg [\d. ]+ m/, "the emblem in labs-indigo");
     assert.ok(/\(Oculi Model \\267 proposed OD \\226/.test(text), "footer label with the minus sign as an en dash");
     assert.ok(!/research prototype/.test(text));
     assert.match(await page.locator("#geniusExportStatus").innerText(), /Saved oculi-genius-preview-/);
     if (process.env.DIOPTRA_SCREENSHOT_DIR) await fs.writeFile(path.join(process.env.DIOPTRA_SCREENSHOT_DIR, "genius-preview.pdf"), pdf);
 
-    // A4 elsewhere.
+    // The card is the same size everywhere.
     const a4 = await browser.newContext({ viewport: { width: 1280, height: 900 }, serviceWorkers: "block", locale: "en-GB" });
     await a4.addInitScript(() => localStorage.setItem("oculi-zl-first-run", "seen"));
     const a4Page = await a4.newPage();
     await a4Page.goto(url);
     await genius(a4Page, false);
     const a4Bytes = await a4Page.evaluate(() => Array.from(OculiGenius.buildPdf()));
-    assert.match(Buffer.from(a4Bytes).toString("latin1"), /\/MediaBox \[0 0 595.28 841.89\]/);
+    assert.match(Buffer.from(a4Bytes).toString("latin1"), /\/MediaBox \[0 0 255\.12 453\.54\]/);
     await a4.close();
 
     // New Patient starts over.
     await page.locator("#geniusNewPatient").click();
-    for (const id of ["geniusName", "geniusAge", "geniusBirthdate", "geniusPatientName", "geniusPrescriptionNotes", "geniusPdDistance", "geniusOdSelSph"]) assert.equal(await page.locator(`#${id}`).inputValue(), "", id);
+    for (const id of ["geniusName", "geniusAge", "geniusBirthdate", "geniusPatientName", "geniusPrescriptionNotes", "geniusPdOdDist", "geniusOdSelSph"]) assert.equal(await page.locator(`#${id}`).inputValue(), "", id);
     for (const id of ["geniusResults", "geniusPrescription", "geniusGlassesFields", "geniusCompare"]) assert.equal(await page.locator(`#${id}`).isVisible(), false, id);
     assert.equal(await page.locator("#geniusPanel .chip.on").count(), 0);
     assert.equal(await page.locator('#geniusStepper li[data-step="screen"]').getAttribute("class"), "current");
@@ -203,7 +211,7 @@ async function genius(page, worst) {
     assert.match(shared.name, /^oculi-genius-preview-\d{4}-\d{2}-\d{2}\.pdf$/);
     assert.equal(shared.type, "application/pdf");
     checkOculiPdf(Uint8Array.from(shared.bytes));
-    assert.equal(pageCount(Uint8Array.from(shared.bytes), "shared PDF"), 1);
+    assert.equal(pageCount(Uint8Array.from(shared.bytes), "shared PDF"), 2);
     assert.equal(await mobile.locator("#geniusExportStatus").innerText(), "");
     assert.ok(await mobile.evaluate(() => document.documentElement.scrollWidth <= innerWidth), "no horizontal overflow on a phone");
     if (process.env.DIOPTRA_SCREENSHOT_DIR) await mobile.locator("#geniusPrescription").screenshot({ path: path.join(process.env.DIOPTRA_SCREENSHOT_DIR, "genius-preview-phone.png") });
@@ -213,7 +221,7 @@ async function genius(page, worst) {
     assert.deepEqual(mobileErrors, []);
     await phone.close();
 
-    console.log("PASS: Genius one-page print (Letter, A4, long case), PDF download and share sheet, home-screen fallback, signatory placeholders, footer, New Patient");
+    console.log("PASS: Genius 90 × 160 mm card (print and PDF, inside and outside, long case), download and share sheet, home-screen fallback, signatory placeholders, New Patient");
   } finally {
     if (browser) await browser.close();
     await new Promise(resolve => server.close(resolve));
