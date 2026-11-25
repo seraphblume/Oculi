@@ -15,7 +15,7 @@ self.onmessage = event => {
         scale *= 0.8;
       }
     }
-    if (!psf) throw new RangeError("Beyond the demo's range");
+    if (!psf) throw new RangeError("Beyond the renderer's range");
     const out = self.ZLRetina.simulateRetina(image, self.ZLRetina.cropPsf(psf, tailEnergy));
     self.postMessage({ id, out, scale }, [out.buffer]);
   } catch (error) {

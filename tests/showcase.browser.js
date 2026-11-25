@@ -8,7 +8,7 @@ const http = require("node:http");
 const { chromium } = require("playwright");
 
 const root = path.resolve(__dirname, "..");
-const types = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css", ".svg": "image/svg+xml", ".png": "image/png", ".woff2": "font/woff2", ".webmanifest": "application/manifest+json" };
+const types = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css", ".svg": "image/svg+xml", ".png": "image/png", ".woff2": "font/woff2", ".jpg": "image/jpeg", ".webmanifest": "application/manifest+json" };
 const server = http.createServer(async (req, res) => {
   try {
     const pathname = decodeURIComponent(new URL(req.url, "http://localhost").pathname);
@@ -102,6 +102,32 @@ const sharpness = (page, id) => page.evaluate(id => {
     await page.locator("#tvShow").click();
     assert.match(await page.locator("#tvStatus").innerText(), /left eye/);
     assert.equal(await page.locator("#tvCompare").isVisible(), false);
+
+    // OU: each panel shows the sharper eye. OS's glasses are spot on, OD's are 1.75 D short.
+    await page.locator("#tvScene").getByRole("radio", { name: "Distance" }).click();
+    await page.locator("#tvEye").getByRole("radio", { name: "OU" }).click();
+    await page.locator("#tvShow").click();
+    assert.match(await page.locator("#tvStatus").innerText(), /left eye/, "OU needs both eyes");
+    await page.locator("#tvFinOsSph").selectOption("1.00");
+    await page.locator("#tvCurOsSph").selectOption("1.00");
+    await page.locator("#tvShow").click();
+    await page.locator("#tvCompare").waitFor({ state: "visible" });
+    assert.match(await page.locator("#tvStatus").innerText(), /^Both eyes · distance$/);
+    assert.match(await page.locator("#tvCurrentNote").innerText(), /^Current glasses · OS sharper · in focus/);
+    assert.match(await page.locator("#tvTrueNote").innerText(), /^Final Rx · both eyes alike · in focus/);
+
+    // Distance is the photo, in colour; near stays the black-and-white chart.
+    const colour = id => page.evaluate(id => {
+      const c = document.getElementById(id), d = c.getContext("2d").getImageData(0, 0, c.width, c.height).data;
+      let sum = 0; for (let i = 0; i < d.length; i += 4) sum += Math.abs(d[i] - d[i + 2]);
+      return sum / (d.length / 4);
+    }, id);
+    const photoColour = await colour("tvCanvasTrue");
+    assert.ok(photoColour > 10, `the distance view is the colour photo: ${photoColour}`);
+    if (shots) await page.locator("#tvCompare").screenshot({ path: path.join(shots, "showcase-clarity-photo.png") });
+    await page.locator("#tvScene").getByRole("radio", { name: "Near" }).click();
+    await page.waitForFunction(() => /near, 40 cm/.test(document.getElementById("tvStatus").textContent));
+    { const c = await colour("tvCanvasTrue"); assert.ok(c < 4, `the near view is the chart: ${c}`); }
     await page.locator("#tvReset").click();
     assert.equal(await page.locator("#tvAge").inputValue(), "");
     assert.equal(await page.locator("#tvCurrentFields").isVisible(), false);

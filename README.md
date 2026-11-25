@@ -21,7 +21,7 @@ A guided visual assessment, from history and acuity to the autorefractor ticket 
 ### Showcase
 **Let them see it.**
 
-- **Clarity** puts the same chart side by side: how your patient sees today, and how their new prescription sees. Distance or near, at any age. Built for guardians and skeptics alike.
+- **Clarity** shows the same view side by side: how your patient sees today, and how they will see with their new prescription. A real outdoor scene for distance, a reading chart for near, for either eye or both. Any age. Built for guardians and skeptics alike.
 - **Lens Studio** draws the full frame twice, current pair on top and new pair below, both eyes at once. Pick a shape, enter the frame size and PD, and compare edge thickness, weight and colour fringing at a glance.
 
 ### Tools

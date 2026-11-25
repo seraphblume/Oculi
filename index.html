@@ -489,7 +489,7 @@
       </div>
       <div class="vision-compare" id="geniusCompare" data-keep hidden aria-live="polite">
         <figure>
-          <canvas id="geniusCompareCurrent" width="280" height="360" role="img" aria-label="Chart as seen with the current correction"></canvas>
+          <canvas id="geniusCompareCurrent" width="280" height="360" role="img" aria-label="Scene as seen with the current correction"></canvas>
           <figcaption><strong>Current vision</strong><span id="geniusCompareCurrentNote"></span></figcaption>
         </figure>
         <figure>
@@ -710,7 +710,7 @@
         <section class="eye-section"><h4 class="eye-header">Left eye · OS</h4><div class="group rx-table" data-rx="tvFinOs" data-eye="OS"></div></section>
       </div>
       <div class="group"><label class="row"><span class="row-label">ADD</span><select id="tvFinAdd" class="row-select"></select></label></div>
-      <p class="group-footer">Only the eye you show is required.</p>
+      <p class="group-footer">Only the eye you show is required; OU needs both.</p>
 
       <h2 class="group-header">Comparison</h2>
       <div class="group">
@@ -718,9 +718,10 @@
           <div class="segmented" id="tvEye" data-value="od" role="radiogroup" aria-label="Eye shown">
             <button type="button" data-value="od" role="radio" aria-checked="true">OD</button>
             <button type="button" data-value="os" role="radio">OS</button>
+            <button type="button" data-value="ou" role="radio">OU</button>
           </div>
         </div>
-        <div class="row"><span class="row-label">Chart</span>
+        <div class="row"><span class="row-label">View</span>
           <div class="segmented" id="tvScene" data-value="distance" role="radiogroup" aria-label="Chart distance">
             <button type="button" data-value="distance" role="radio" aria-checked="true">Distance</button>
             <button type="button" data-value="near" role="radio">Near</button>
@@ -729,9 +730,9 @@
       </div>
       <div class="form-actions"><button class="button-primary" type="submit" id="tvShow">Show Comparison</button><button class="quiet-button" type="button" id="tvReset">Clear</button></div>
       <div class="vision-compare" id="tvCompare" hidden aria-live="polite">
-        <figure><canvas id="tvCanvasCurrent" width="280" height="360" role="img" aria-label="Chart as seen with the current correction"></canvas>
+        <figure><canvas id="tvCanvasCurrent" width="280" height="360" role="img" aria-label="Scene as seen with the current correction"></canvas>
           <figcaption><strong>Current vision</strong><span id="tvCurrentNote"></span></figcaption></figure>
-        <figure><canvas id="tvCanvasTrue" width="280" height="360" role="img" aria-label="Chart as seen with the final Rx"></canvas>
+        <figure><canvas id="tvCanvasTrue" width="280" height="360" role="img" aria-label="Scene as seen with the final Rx"></canvas>
           <figcaption><strong>True vision</strong><span id="tvTrueNote"></span></figcaption></figure>
       </div>
       <p class="group-footer" id="tvStatus" role="status" aria-live="polite">Nothing here is saved.</p>

@@ -1,5 +1,5 @@
 // Network first, cache as offline fallback, so a deployed update is picked up on the next load.
-const CACHE = "oculi-beryl-v1.1-showcase-2";
+const CACHE = "oculi-beryl-v1.1-showcase-3";
 const ASSETS = [
   "./",
   "./index.html",
@@ -40,6 +40,7 @@ const ASSETS = [
   "./assets/fonts/ibm-plex-mono-latin-500-normal.woff2",
   "./js/workspace.js",
   "./manifest.webmanifest",
+  "./assets/clarity-distance.jpg",
   "./assets/icon.svg",
   "./assets/icon-192.png",
   "./assets/icon-512.png"

@@ -73,6 +73,18 @@
 
   const tvCanvases = () => ({ current: $("tvCanvasCurrent"), true: $("tvCanvasTrue") });
 
+  // The distance view is a photo; it loads once, on the first distance render.
+  let photo = null;
+  function distancePhoto() {
+    if (!photo) {
+      const img = new Image();
+      img.src = "assets/clarity-distance.jpg";
+      photo = img.decode().then(() => img).catch(() => { photo = null; return null; });
+    }
+    return photo;
+  }
+  const EYE_NAMES = { od: "right eye · OD", os: "left eye · OS" };
+
   function clearVision(message) {
     if (!$("tvCompare").hidden) Vision.clear(tvCanvases());
     $("tvCompare").hidden = true;
@@ -82,6 +94,7 @@
   function outOfFocus(v) { return Math.abs(v.m) + Math.hypot(v.j0, v.j45); }
   function viewNote(v, lens) {
     const parts = [lens];
+    if (v.eyeId) parts.push(v.spread < 0.125 ? "both eyes alike" : `${v.eyeId.toUpperCase()} sharper`);
     const d = outOfFocus(v);
     parts.push(d < 0.125 ? "in focus" : `about ${d.toFixed(2)} D out of focus`);
     if (v.accommodationUsed >= 0.25) parts.push(`focusing ${v.accommodationUsed.toFixed(2)} D`);
@@ -97,15 +110,22 @@
       const ageText = $("tvAge").value.trim();
       if (!/^\d{1,3}$/.test(ageText) || Number(ageText) < 1 || Number(ageText) > 120) throw new Error("Enter an age from 1 to 120.");
       const eyeId = $("tvEye").dataset.value || "od";
-      const key = eyeId === "od" ? "Od" : "Os";
-      const eyeName = eyeId === "od" ? "right eye · OD" : "left eye · OS";
-      const final = readRx(`tvFin${key}`, `the final Rx for the ${eyeName}`, true);
       const wears = $("tvGlasses").dataset.value === "yes";
-      const current = wears ? readRx(`tvCur${key}`, `the current glasses for the ${eyeName}`, true) : null;
-      input = {
-        age: Number(ageText), scene: $("tvScene").dataset.value || "distance", eyeId,
-        eye: final, current, currentAdd: wears ? readAdd("tvCurAdd") : 0, trueAdd: readAdd("tvFinAdd"), nearDistanceM: 0.4
+      const read = id => {
+        const key = id === "od" ? "Od" : "Os";
+        return {
+          id, eye: readRx(`tvFin${key}`, `the final Rx for the ${EYE_NAMES[id]}`, true),
+          current: wears ? readRx(`tvCur${key}`, `the current glasses for the ${EYE_NAMES[id]}`, true) : null
+        };
       };
+      const shown = eyeId === "ou" ? [read("od"), read("os")] : [read(eyeId)];
+      const scene = $("tvScene").dataset.value || "distance";
+      input = {
+        age: Number(ageText), scene, eyeId,
+        currentAdd: wears ? readAdd("tvCurAdd") : 0, trueAdd: readAdd("tvFinAdd"), nearDistanceM: 0.4,
+        ...(eyeId === "ou" ? { eyes: shown } : { eye: shown[0].eye, current: shown[0].current })
+      };
+      input.rx = Object.fromEntries(shown.map(e => [e.id, e]));
     } catch (error) {
       clearVision(error.message);
       return;
@@ -113,12 +133,17 @@
     status.textContent = "Rendering…";
     $("tvShow").disabled = true;
     try {
+      if (input.scene !== "near") input.photo = await distancePhoto();
       const views = await Vision.render(tvCanvases(), input);
       if (!views) return;
       $("tvCompare").hidden = false;
-      $("tvCurrentNote").textContent = viewNote(views.current, input.current ? `Current glasses ${Rx.fmtRx(input.current)}` : "No glasses");
-      $("tvTrueNote").textContent = viewNote(views.true, `Final Rx ${Rx.fmtRx(input.eye)}`);
-      status.textContent = `${input.eyeId === "od" ? "Right eye" : "Left eye"} · ${input.scene === "near" ? "near, 40 cm" : "distance"}`;
+      // One eye: name its Rx. Both eyes: the note says which eye leads instead.
+      const rxText = key => (input.eyes ? "" : ` ${Rx.fmtRx(input.rx[input.eyeId][key])}`);
+      const wearing = $("tvGlasses").dataset.value === "yes";
+      $("tvCurrentNote").textContent = viewNote(views.current, wearing ? `Current glasses${rxText("current")}` : "No glasses");
+      $("tvTrueNote").textContent = viewNote(views.true, `Final Rx${rxText("eye")}`);
+      const who = { od: "Right eye", os: "Left eye", ou: "Both eyes" }[input.eyeId];
+      status.textContent = `${who} · ${input.scene === "near" ? "near, 40 cm" : "distance"}`;
     } catch (error) {
       status.textContent = `Could not render the comparison: ${error.message}`;
     } finally {

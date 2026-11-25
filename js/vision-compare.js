@@ -6,6 +6,9 @@
   "use strict";
 
   const PITCH_ARCMIN = 0.6;          // one scene pixel, in arcminutes of visual angle
+  // A photo stands for the central ~9° × 12° of a scene: magnified enough that blur shows on
+  // screen, but not so far that a small error smears the whole view.
+  const PHOTO_PITCH_ARCMIN = 2.0;
   const PUPIL_MM = 4.0;              // indoor photopic pupil
   const TAIL_ENERGY = 3e-3;          // PSF tail dropped for display speed (zl-retina.js cropPsf)
   // Monochromatic: the eye's chromatic aberration is real but not perceived as colour fringes,
@@ -56,6 +59,13 @@
     const { width: W, height: H } = SCENE;
     canvas.width = W; canvas.height = H;
     const ctx = canvas.getContext("2d", { willReadFrequently: true });
+    if (typeof scene === "object" && scene) { // a photo, cropped to fill the scene
+      const sw = scene.naturalWidth || scene.width, sh = scene.naturalHeight || scene.height;
+      const r = Math.max(W / sw, H / sh), dw = sw * r, dh = sh * r;
+      ctx.imageSmoothingQuality = "high";
+      ctx.drawImage(scene, (W - dw) / 2, (H - dh) / 2, dw, dh);
+      return ctx.getImageData(0, 0, W, H);
+    }
     ctx.fillStyle = "#FFFFFF";
     ctx.fillRect(0, 0, W, H);
     ctx.fillStyle = "#111111";
@@ -97,8 +107,8 @@
     return worker;
   }
 
-  function renderVectors(image, vectors) {
-    const opts = { pupilMm: PUPIL_MM, arcminPerPixel: PITCH_ARCMIN, maxSamples: 512, chromaticDiopters: CHROMATIC };
+  function renderVectors(image, vectors, pitch = PITCH_ARCMIN) {
+    const opts = { pupilMm: PUPIL_MM, arcminPerPixel: pitch, maxSamples: 512, chromaticDiopters: CHROMATIC };
     const w = getWorker();
     if (w) {
       return new Promise((resolve, reject) => {
@@ -131,21 +141,38 @@
 
   let generation = 0;
 
+  const blurOf = v => Math.abs(v.m) + Math.hypot(v.j0, v.j45);
+
   /**
    * Renders both panels. `input` = { age, eye: {sphere,cylinder,axis}, current: Rx|null,
-   * currentAdd, trueAdd, scene: "distance"|"near", nearDistanceM }.
-   * Resolves to { current, true } residuals, or null when superseded by a newer call.
+   * currentAdd, trueAdd, scene: "distance"|"near", nearDistanceM, photo? }.
+   * For both eyes, pass `eyes: [{ id, eye, current }, …]` instead of `eye`/`current`: each panel
+   * then shows the eye that sees it more sharply, since binocular acuity follows the better eye.
+   * `photo` (an image) replaces the distance chart, at PHOTO_PITCH_ARCMIN.
+   * Resolves to { current, true } residuals (each with `eyeId` when both eyes are given), or
+   * null when superseded by a newer call.
    */
   async function render(canvases, input) {
     const gen = ++generation;
-    const data = JSON.parse(JSON.stringify(input));
+    const photo = input.photo || null;
+    const data = JSON.parse(JSON.stringify({ ...input, photo: null }));
     const vergence = data.scene === "near" ? 1 / (data.nearDistanceM || 0.4) : 0;
-    const views = {
-      current: residual({ eye: data.eye, lens: data.current, add: data.scene === "near" ? data.currentAdd : 0, vergence, age: data.age }),
-      true: residual({ eye: data.eye, lens: data.eye, add: data.scene === "near" ? data.trueAdd : 0, vergence, age: data.age })
+    const eyes = data.eyes || [{ id: null, eye: data.eye, current: data.current }];
+    const best = (lensOf, add) => {
+      const all = eyes.map(e => ({ ...residual({ eye: e.eye, lens: lensOf(e), add, vergence, age: data.age }), eyeId: e.id }));
+      const pick = all.reduce((a, b) => (blurOf(b) < blurOf(a) - 1e-9 ? b : a));
+      pick.spread = Math.max(...all.map(blurOf)) - blurOf(pick); // how much the other eye trails
+      return pick;
     };
-    const scene = drawScene(document.createElement("canvas"), data.scene);
-    const results = await Promise.all([renderVectors(scene, views.current), renderVectors(scene, views.true)]);
+    const views = {
+      current: best(e => e.current, data.scene === "near" ? data.currentAdd : 0),
+      true: best(e => e.eye, data.scene === "near" ? data.trueAdd : 0)
+    };
+    if (!data.eyes) for (const v of [views.current, views.true]) { delete v.eyeId; delete v.spread; }
+    const usePhoto = photo && data.scene !== "near";
+    const scene = drawScene(document.createElement("canvas"), usePhoto ? photo : data.scene);
+    const pitch = usePhoto ? PHOTO_PITCH_ARCMIN : PITCH_ARCMIN;
+    const results = await Promise.all([renderVectors(scene, views.current, pitch), renderVectors(scene, views.true, pitch)]);
     if (gen !== generation) return null;
     paint(canvases.current, results[0].out);
     paint(canvases.true, results[1].out);
@@ -162,6 +189,6 @@
     }
   }
 
-  root.OculiVisionCompare = Object.freeze({ PITCH_ARCMIN, PUPIL_MM, SCENE, LINES, accommodation, residual, render, clear });
+  root.OculiVisionCompare = Object.freeze({ PITCH_ARCMIN, PHOTO_PITCH_ARCMIN, PUPIL_MM, SCENE, LINES, accommodation, residual, render, clear });
   if (typeof module !== "undefined" && module.exports) module.exports = root.OculiVisionCompare;
 })(typeof window !== "undefined" ? window : globalThis);
