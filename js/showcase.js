@@ -73,16 +73,6 @@
 
   const tvCanvases = () => ({ current: $("tvCanvasCurrent"), true: $("tvCanvasTrue") });
 
-  // The distance view is a photo; it loads once, on the first distance render.
-  let photo = null;
-  function distancePhoto() {
-    if (!photo) {
-      const img = new Image();
-      img.src = "assets/clarity-distance.jpg";
-      photo = img.decode().then(() => img).catch(() => { photo = null; return null; });
-    }
-    return photo;
-  }
   const EYE_NAMES = { od: "right eye · OD", os: "left eye · OS" };
 
   function clearVision(message) {
@@ -133,7 +123,6 @@
     status.textContent = "Rendering…";
     $("tvShow").disabled = true;
     try {
-      if (input.scene !== "near") input.photo = await distancePhoto();
       const views = await Vision.render(tvCanvases(), input);
       if (!views) return;
       $("tvCompare").hidden = false;

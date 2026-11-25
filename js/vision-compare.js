@@ -1,5 +1,6 @@
-// Vision comparison for Genius (section 4): the same letter chart through the patient's
-// current correction and through a full correction, rendered by ZL Retina.
+// Vision comparison for Genius (section 4) and Clarity: the same view through the patient's
+// current correction and through a full correction, rendered by ZL Retina. Distance is a photo;
+// near is a reading chart.
 // Illustrative only. It reads a defensive copy of the numbers it is given and writes
 // nothing but two canvases: no storage, no network, no change to any Rx.
 (function (root) {
@@ -143,18 +144,32 @@
 
   const blurOf = v => Math.abs(v.m) + Math.hypot(v.j0, v.j45);
 
+  // Distance is always the photo. It loads once; if it can't, the letter chart stands in.
+  const DISTANCE_PHOTO = "assets/clarity-distance.jpg";
+  let distancePhoto = null;
+  function loadDistancePhoto() {
+    if (!distancePhoto) {
+      const img = new Image();
+      img.src = DISTANCE_PHOTO;
+      distancePhoto = img.decode().then(() => img).catch(() => { distancePhoto = null; return null; });
+    }
+    return distancePhoto;
+  }
+
   /**
    * Renders both panels. `input` = { age, eye: {sphere,cylinder,axis}, current: Rx|null,
    * currentAdd, trueAdd, scene: "distance"|"near", nearDistanceM, photo? }.
    * For both eyes, pass `eyes: [{ id, eye, current }, …]` instead of `eye`/`current`: each panel
    * then shows the eye that sees it more sharply, since binocular acuity follows the better eye.
-   * `photo` (an image) replaces the distance chart, at PHOTO_PITCH_ARCMIN.
+   * Distance shows the photo at PHOTO_PITCH_ARCMIN (`photo` may pass another image); near
+   * shows the reading chart.
    * Resolves to { current, true } residuals (each with `eyeId` when both eyes are given), or
    * null when superseded by a newer call.
    */
   async function render(canvases, input) {
     const gen = ++generation;
-    const photo = input.photo || null;
+    const photo = input.scene === "near" ? null : (input.photo || await loadDistancePhoto());
+    if (gen !== generation) return null;
     const data = JSON.parse(JSON.stringify({ ...input, photo: null }));
     const vergence = data.scene === "near" ? 1 / (data.nearDistanceM || 0.4) : 0;
     const eyes = data.eyes || [{ id: null, eye: data.eye, current: data.current }];
@@ -169,7 +184,7 @@
       true: best(e => e.eye, data.scene === "near" ? data.trueAdd : 0)
     };
     if (!data.eyes) for (const v of [views.current, views.true]) { delete v.eyeId; delete v.spread; }
-    const usePhoto = photo && data.scene !== "near";
+    const usePhoto = Boolean(photo);
     const scene = drawScene(document.createElement("canvas"), usePhoto ? photo : data.scene);
     const pitch = usePhoto ? PHOTO_PITCH_ARCMIN : PITCH_ARCMIN;
     const results = await Promise.all([renderVectors(scene, views.current, pitch), renderVectors(scene, views.true, pitch)]);

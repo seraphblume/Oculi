@@ -10,7 +10,7 @@ const { chromium } = require("playwright");
 const settle = page => page.evaluate(() => document.fonts.ready.then(() => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)))));
 
 const root = path.resolve(__dirname, "..");
-const types = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css", ".svg": "image/svg+xml", ".png": "image/png", ".webmanifest": "application/manifest+json" };
+const types = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css", ".svg": "image/svg+xml", ".png": "image/png", ".jpg": "image/jpeg", ".webmanifest": "application/manifest+json" };
 const server = http.createServer(async (req, res) => {
   try {
     const pathname = decodeURIComponent(new URL(req.url, "http://localhost").pathname);
@@ -424,14 +424,20 @@ const server = http.createServer(async (req, res) => {
     await page.locator("#geniusCompare").waitFor({ state: "visible", timeout: 30000 });
     assert.match(await page.locator("#geniusCompareCurrentNote").innerText(), /^Current glasses · about \d\.\d\d D out of focus/);
     assert.match(await page.locator("#geniusCompareTrueNote").innerText(), /^Full correction −2\.25 −1\.00 × 180° · in focus/);
-    const contrast = id => page.evaluate(id => {
+    // Edge energy (sharpness) and colour of a rendered panel.
+    const measure = id => page.evaluate(id => {
       const c = document.getElementById(id), d = c.getContext("2d").getImageData(0, 0, c.width, c.height).data;
-      let lo = 255, hi = 0; for (let i = 0; i < d.length; i += 4) { lo = Math.min(lo, d[i + 1]); hi = Math.max(hi, d[i + 1]); } return hi - lo;
+      let edges = 0, colour = 0;
+      for (let i = 4; i < d.length; i += 4) { edges += (d[i + 1] - d[i - 3]) ** 2; colour += Math.abs(d[i] - d[i + 2]); }
+      return { edges: edges / (d.length / 4), colour: colour / (d.length / 4) };
     }, id);
-    assert.ok(await contrast("geniusCompareTrue") > await contrast("geniusCompareCurrent"), "the corrected chart is sharper");
+    const sharp = await measure("geniusCompareTrue"), blurred = await measure("geniusCompareCurrent");
+    assert.ok(sharp.edges > blurred.edges, `the corrected view is sharper: ${sharp.edges} vs ${blurred.edges}`);
+    assert.ok(sharp.colour > 10, `Genius' distance view is the colour photo: ${sharp.colour}`);
     assert.equal(await page.locator("#geniusResults").isVisible(), true, "the comparison never invalidates the proposal");
     await page.getByRole("radio", { name: "Near", exact: true }).click();
     await page.locator("#geniusCompareStatus").filter({ hasText: /at 40 cm/ }).waitFor({ timeout: 30000 });
+    assert.ok((await measure("geniusCompareTrue")).colour < 4, "near stays the reading chart");
 
     // Verification in a trial frame is required before the preview.
     const preview = () => page.locator("#geniusPreview").click();
