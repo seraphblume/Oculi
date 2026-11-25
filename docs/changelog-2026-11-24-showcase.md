@@ -24,10 +24,10 @@ A fourth space between Genius and Tools, with previews to share with a patient. 
 ## Copy pass
 
 - Footnotes and hints are trimmed across all four spaces.
-- The development-preview labels are gone. Safety lines stay, in short form:
-  - the card: "Not a prescription. Confirm with an eye exam.";
-  - the splash: "Research tool, not a medical device.";
-  - the proposal header: "Beryl 1.1 · not clinically validated".
+- The development-preview labels are gone, along with "Not a prescription", "not clinically validated" and the engines' "unvalidated research model" review note.
+  - The card's badge, watermark and warning line now read "Not indicative of the final product".
+  - The engines still emit their UNVALIDATED flag in their output and research exports. Clinical Study and Genius no longer show it.
+  - The splash keeps "Research tool, not a medical device."
 - The card's cover reads "About this card". The PDF is saved as `oculi-rx-card-<date>.pdf`, and Genius' button now reads "Prepare Card".
 - About now lists each engine's role briefly, with ZL Thickness added.
 

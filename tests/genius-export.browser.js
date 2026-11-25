@@ -114,7 +114,7 @@ async function genius(page, worst) {
     assert.match(await page.locator("#geniusPrescriptionVersion").innerText(), /^Oculi Model · proposed OD −2\.25 −1\.00 × 180°/);
     const previewText = await page.locator("#geniusPrescription").innerText();
     assert.doesNotMatch(previewText, /research prototype|Model v0\.3/i);
-    assert.doesNotMatch(await page.locator("#geniusFlags").innerText(), /Not a prescription|fitted offset/);
+    assert.doesNotMatch(await page.locator("#geniusFlags").innerText(), /Not indicative|unvalidated|Not clinically validated|fitted offset/);
     assert.equal(await page.locator("#geniusPrint").isVisible(), true, "desktop browsers can print");
     assert.equal(await page.locator("#geniusSavePdf").innerText(), "Save PDF");
     assert.equal(await page.locator("#geniusNewPatient").isVisible(), true);
@@ -153,8 +153,9 @@ async function genius(page, worst) {
     const text = checkOculiPdf(pdf);
     assert.equal(pageCount(pdf, "saved PDF"), 2);
     assert.match(text, /\/MediaBox \[0 0 255\.12 453\.54\]/, "a 90 × 160 mm card on every locale");
-    for (const s of ["(Valeria Luxe)", "(Pending certification)", "(VERIFIED BY)", "(LICENCE OR CERTIFICATION)", "(NOT A PRESCRIPTION)", "(About this card)",
-      "(Not a prescription.)", "(Maria Fernanda", "(SPHERE)", "(PD FAR)", "(PD NEAR)", "(31.5)", "(Progressive)", "(Adapting to new glasses)", "(Oculi)"]) assert.ok(text.includes(s), `PDF contains ${s}`);
+    for (const s of ["(Valeria Luxe)", "(Pending certification)", "(VERIFIED BY)", "(LICENCE OR CERTIFICATION)", "(NOT INDICATIVE OF THE FINAL PRODUCT)", "(About this card)",
+      "(Not indicative of the final product.)", "(Maria Fernanda", "(SPHERE)", "(PD FAR)", "(PD NEAR)", "(31.5)", "(Progressive)", "(Adapting to new glasses)", "(Oculi)"]) assert.ok(text.includes(s), `PDF contains ${s}`);
+    for (const s of ["NOT A PRESCRIPTION", "Not a prescription", "unvalidated", "Not clinically validated"]) assert.ok(!text.includes(s), `PDF leaves out ${s}`);
     assert.match(text, / cm\n[\s\S]*\(Oculi\) Tj[\s\S]*\nQ/, "front cover drawn turned 180°");
     assert.match(text, /0\.08 0\.07 0\.35 rg [\d. ]+ m/, "the emblem in labs-indigo");
     assert.ok(/\(Oculi Model \\267 proposed OD \\226/.test(text), "footer label with the minus sign as an en dash");

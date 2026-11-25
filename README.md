@@ -33,7 +33,7 @@ The assessment works at any age. The Rx proposal is for adults:
 
 - **Propose.** A warning sign or an age under 18 stops here. Beryl 1.1 reads the full ticket; glasses, symptoms and history become review notes.
 - **Verify.** VA through the proposed Rx in a trial frame, near with the ADD, the +0.25 D test, then accepted or refined.
-- **Card.** A 9 × 16 cm folding card: the Rx, PD and lens type inside; verification, notes and signatures below the fold; a cover and adaptation advice outside. Save it as a PDF or print it double-sided. It is not a prescription.
+- **Card.** A 9 × 16 cm folding card: the Rx, PD and lens type inside; verification, notes and signatures below the fold; a cover and adaptation advice outside. Save it as a PDF or print it double-sided. It is marked as not indicative of the final product.
 
 Nothing in Genius is saved.
 

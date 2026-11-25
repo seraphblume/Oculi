@@ -5,7 +5,6 @@
   const $ = id => document.getElementById(id);
   const Rx = window.OculiRx;
   const engine = window.OculiEngineBerylV11; // unchanged v0.3.0 rules under the Beryl release identity
-  const ENGINE_NOTE = "not clinically validated";
   const MODEL_LABEL = "Oculi Model";
   const MIN_AGE = 18;
   const LARGE_CHANGE_D = 0.75;
@@ -304,7 +303,8 @@
   // ---------------------------------------------------------------- flags
 
   function engineFlags(prediction) {
-    const list = prediction.flags.map(f => ({ ...f }));
+    // The engine's standing validation notice stays in its output and exports, not on screen or the card.
+    const list = prediction.flags.filter(f => f.code !== "UNVALIDATED").map(f => ({ ...f }));
     for (const eye of EYES) for (const f of prediction[eye.id].flags) list.push({ ...f, eye: eye.short });
     return list;
   }
@@ -392,7 +392,7 @@
 
   function renderProposal() {
     const p = proposal.prediction;
-    $("geniusVersion").textContent = `${p.name || "Beryl"} ${String(p.version).split(".").slice(0, 2).join(".")} · ${ENGINE_NOTE}`;
+    $("geniusVersion").textContent = `${p.name || "Beryl"} ${String(p.version).split(".").slice(0, 2).join(".")}`;
     $("geniusOdResult").textContent = Rx.fmtRx(p.od);
     $("geniusOsResult").textContent = Rx.fmtRx(p.os);
     $("geniusAddResult").textContent = addText(p.tentativeAdd);
@@ -615,9 +615,9 @@
     let y = M + 4;
 
     // ---- above the fold: the Rx
-    pdf.rotatedText("NOT A PRESCRIPTION", W / 2, P / 2 + 6, 28, { font: "regular", size: 17, color: pale, spacing: 1.2 });
+    pdf.rotatedText("NOT INDICATIVE OF THE FINAL PRODUCT", W / 2, P / 2 + 6, 28, { font: "regular", size: 10, color: pale, spacing: 0.6 });
     label("Oculi · Genius", M, y);
-    const badge = "NOT A PRESCRIPTION", bw = pdf.textWidth(badge, "regular", 5) + 0.25 * (badge.length - 1) + 8;
+    const badge = "NOT INDICATIVE OF THE FINAL PRODUCT", bw = pdf.textWidth(badge, "regular", 5) + 0.25 * (badge.length - 1) + 8;
     pdf.rect(W - M - bw, y - 6.5, bw, 9.5, { stroke: ink, width: 0.5 });
     pdf.text(badge, W - M - bw / 2, y, { size: 5, color: ink, align: "center", spacing: 0.25 });
     y += 14;

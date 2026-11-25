@@ -175,7 +175,7 @@ select:disabled, input:disabled { opacity: 0.45; }
 .rx-card * { color: var(--ink); }
 .rx-panel { position: relative; display: flex; flex-direction: column; min-height: 0; padding: calc(5 * var(--mm)); overflow: hidden; }
 .rx-panel-top { box-shadow: inset 0 -1px 0 rgba(21, 19, 88, 0.25); }
-.rx-panel-top::after { content: "NOT A PRESCRIPTION"; position: absolute; left: 50%; top: 52%; transform: translate(-50%, -50%) rotate(-28deg); font: 500 calc(6 * var(--mm))/1 var(--zl-font-sans); color: var(--ink); opacity: 0.06; white-space: nowrap; pointer-events: none; }
+.rx-panel-top::after { content: "NOT INDICATIVE OF THE FINAL PRODUCT"; position: absolute; left: 50%; top: 52%; transform: translate(-50%, -50%) rotate(-28deg); font: 500 calc(3.6 * var(--mm))/1 var(--zl-font-sans); color: var(--ink); opacity: 0.06; white-space: nowrap; pointer-events: none; }
 .rx-label { display: block; font: 500 calc(1.8 * var(--mm))/1.3 var(--zl-font-mono); text-transform: uppercase; letter-spacing: 0; }
 .rx-card-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: calc(3.5 * var(--mm)); }
 .rx-card .prescription-badge { padding: calc(0.7 * var(--mm)) calc(1.5 * var(--mm)); box-shadow: inset 0 0 0 1px var(--ink); background: #FFFFFF; font: 500 calc(1.7 * var(--mm))/1 var(--zl-font-mono); text-transform: uppercase; }

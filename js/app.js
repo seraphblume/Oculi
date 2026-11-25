@@ -632,7 +632,7 @@
 
   function flagsFor(prediction) {
     if (!prediction || !prediction.od || !prediction.os) return [];
-    const list = [...(prediction.flags || [])];
+    const list = (prediction.flags || []).filter(f => f.code !== "UNVALIDATED"); // standing notice: kept in exports, not shown
     for (const eye of EYES) {
       for (const f of prediction[eye.id].flags) list.push({ ...f, eye: eye.short });
     }
@@ -1141,7 +1141,7 @@
   setCaseId(newCaseId());
   $("ratingEngine").textContent = engineLabel(engines.primaryId());
 
-  $("engineLine").textContent = `${engineLabel(engines.primaryId())} · not clinically validated · compared with ${engineLabel(engines.shadowId())}`;
+  $("engineLine").textContent = `${engineLabel(engines.primaryId())} · compared with ${engineLabel(engines.shadowId())}`;
 
   setStage("measure");
   updateStats();

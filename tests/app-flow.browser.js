@@ -68,7 +68,7 @@ const server = http.createServer(async (req, res) => {
     assert.deepEqual(await bodyColours(), ["rgb(244, 242, 248)", "rgb(21, 19, 88)"]);
     await page.locator(".about-done").click();
     assert.equal(await page.locator("#aboutDialog").evaluate(d => d.open), false);
-    assert.match(await page.locator("#engineLine").innerText(), /Beryl 1\.1 · not clinically validated · compared with Heliodor 1\.0/);
+    assert.match(await page.locator("#engineLine").innerText(), /^Beryl 1\.1 · compared with Heliodor 1\.0$/);
     assert.equal(await page.locator("#previousRxFields").isVisible(), false);
 
     // A real old-format record must retain both engine identities and its original bytes.
@@ -394,13 +394,13 @@ const server = http.createServer(async (req, res) => {
     await page.locator("#geniusOtherSymptoms").fill("Halos");
     await geniusSubmit();
     assert.equal(await page.locator("#geniusResults").isVisible(), true, await page.locator("#geniusError").innerText());
-    assert.match(await page.locator("#geniusVersion").textContent(), /^Beryl 1\.1 · not clinically validated$/);
+    assert.match(await page.locator("#geniusVersion").textContent(), /^Beryl 1\.1$/);
     assert.equal(await page.locator("#geniusOdResult").innerText(), "−2.25 −1.00 × 180°");
     assert.equal(await page.locator("#geniusOsResult").innerText(), "+0.75 −0.50 × 090°");
     assert.equal(await page.locator("#geniusAddResult").innerText(), "+0.75 D");
     const geniusFlags = await page.locator("#geniusFlags").innerText();
     for (const text of [/Large change from current glasses · OD/, /Refraction may fluctuate/, /Check the ADD at near/, /Repeat readings not entered/]) assert.match(geniusFlags, text);
-    assert.doesNotMatch(geniusFlags, /Not a prescription/, "the card's badge and callout carry the warning");
+    assert.doesNotMatch(geniusFlags, /Not indicative|unvalidated|Not clinically validated/, "no validation or card labels among the review notes");
     assert.doesNotMatch(geniusFlags, /Large change from current glasses · OS/);
     assert.doesNotMatch(geniusFlags, /First glasses/);
     assert.equal(await page.locator("#geniusPrescription").isVisible(), false, "no preview before verification");
@@ -464,7 +464,8 @@ const server = http.createServer(async (req, res) => {
     assert.equal(await page.locator("#geniusLicence").innerText(), "Pending certification");
     assert.doesNotMatch(await page.locator("#geniusPrescription").innerText(), /research prototype/i);
     assert.match(await page.locator("#geniusPrescriptionFlags").innerText(), /Large change from current glasses · OD/);
-    assert.match(await page.locator("#geniusPrescription").innerText(), /not a prescription/i);
+    assert.match(await page.locator("#geniusPrescription").innerText(), /not indicative of the final product/i);
+    assert.doesNotMatch(await page.locator("#geniusPrescription").innerText(), /not a prescription|unvalidated|not clinically validated/i);
     // The card: 90 × 160 mm at true proportions, a lens-type row, and a cover that carries the patient.
     const cardBox = await page.locator("#rxCardInside").boundingBox();
     assert.ok(Math.abs(cardBox.height / cardBox.width - 160 / 90) < 0.01, "card keeps 9 × 16 cm proportions");
