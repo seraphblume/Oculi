@@ -227,7 +227,7 @@
       status.textContent = warningCount
         ? `Imported with ${warningCount} item${warningCount === 1 ? "" : "s"} to review`
         : "Imported · review values before locking";
-      toast(warningCount ? "Ticket imported. Review highlighted/missing values." : "Ticket imported. Review values before locking.");
+      toast(warningCount ? "Ticket imported. Check the highlighted values." : "Ticket imported. Check the values before locking.");
     } catch (err) {
       status.textContent = "Scan failed · use manual entry or try another photo";
       toast(err && err.message ? err.message : "Could not scan this ticket.", true);
@@ -810,7 +810,7 @@
       html += `<button class="row row-button" type="button" id="followUpToggle">${followUpView.expanded ? "Show fewer" : `Show all ${pending.length}`}</button>`;
     }
     $("followUpList").innerHTML = html;
-    $("followUpFooter").textContent = `${due} due now, ${pending.length} pending. Ask how the new glasses are going one to four weeks after the exam. Tolerance and your rating are what Goshenite learns from; neither ever feeds a prediction.`;
+    $("followUpFooter").textContent = `${due} due now · ${pending.length} pending. Check in one to four weeks after the exam. Tolerance and your rating train Goshenite; they never change a prediction.`;
   }
 
   function setChoice(list, value) {

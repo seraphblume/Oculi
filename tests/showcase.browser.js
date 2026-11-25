@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Demotools: True Vision renders both charts from a typed final Rx; Frame/Lens Preview edges two
+// Showcase: Clarity renders both charts from a typed final Rx; Lens Studio edges two
 // Rx in the same frame. Light and dark, phone to desktop, no overflow, nothing saved.
 const assert = require("node:assert/strict");
 const fs = require("node:fs/promises");
@@ -55,12 +55,12 @@ const sharpness = (page, id) => page.evaluate(id => {
     // The tab sits between Genius and Tools and keeps arrow-key order.
     await page.locator("#geniusTab").focus();
     await page.keyboard.press("ArrowRight");
-    assert.equal(await page.locator("#demoTab").getAttribute("aria-selected"), "true");
-    assert.equal(await page.locator("#demoPanel").isVisible(), true);
-    assert.equal(await page.evaluate(() => document.body.dataset.view), "demo");
-    assert.equal(await page.locator("#actionBar").isVisible(), false, "no case actions on Demotools");
+    assert.equal(await page.locator("#showcaseTab").getAttribute("aria-selected"), "true");
+    assert.equal(await page.locator("#showcasePanel").isVisible(), true);
+    assert.equal(await page.evaluate(() => document.body.dataset.view), "showcase");
+    assert.equal(await page.locator("#actionBar").isVisible(), false, "no case actions on Showcase");
 
-    // ------------------------------------------------------------ True Vision
+    // ------------------------------------------------------------ Clarity
     await page.locator("#tvShow").click();
     assert.match(await page.locator("#tvStatus").innerText(), /age/i);
     await page.locator("#tvAge").fill("9");
@@ -85,8 +85,8 @@ const sharpness = (page, id) => page.evaluate(id => {
     await page.locator("#tvCompare").waitFor({ state: "visible" });
     assert.match(await page.locator("#tvCurrentNote").innerText(), /Current glasses −2\.00 DS · about 2\.50 D out of focus/);
     await page.locator("#tvScene").getByRole("radio", { name: "Near" }).click();
-    await page.waitForFunction(() => /at 40 cm/.test(document.getElementById("tvStatus").textContent));
-    if (shots) await page.locator("#demoVisionForm").screenshot({ path: path.join(shots, "demotools-true-vision.png") });
+    await page.waitForFunction(() => /near, 40 cm/.test(document.getElementById("tvStatus").textContent));
+    if (shots) await page.locator("#clarityForm").screenshot({ path: path.join(shots, "showcase-clarity.png") });
 
     // A presbyope: the final Rx's ADD clears the near chart.
     await page.locator("#tvAge").fill("58");
@@ -105,10 +105,10 @@ const sharpness = (page, id) => page.evaluate(id => {
     assert.equal(await page.locator("#tvAge").inputValue(), "");
     assert.equal(await page.locator("#tvCurrentFields").isVisible(), false);
 
-    // ------------------------------------------------------------ Frame/Lens Preview
-    await page.locator("#demoLensTab").click();
-    assert.equal(await page.locator("#demoLensForm").isVisible(), true);
-    assert.equal(await page.locator("#demoVisionForm").isVisible(), false);
+    // ------------------------------------------------------------ Lens Studio
+    await page.locator("#lensStudioTab").click();
+    assert.equal(await page.locator("#lensStudioForm").isVisible(), true);
+    assert.equal(await page.locator("#clarityForm").isVisible(), false);
     await page.locator("#flShow").click();
     assert.match(await page.locator("#flError").innerText(), /Rx A/);
     await page.locator("#flRxASph").selectOption("2.00");
@@ -125,9 +125,9 @@ const sharpness = (page, id) => page.evaluate(id => {
     assert.equal(a.Centre, "1.0 mm");
     const edge = s => Number(/[\d.]+/.exec(s)[0]);
     assert.ok(edge(b["Thickest edge"]) > edge(a["Thickest edge"]) + 2, `−6.00 thicker than −2.00: ${JSON.stringify([a, b])}`);
-    assert.ok(Number.parseFloat(b["Weight · one lens"]) > Number.parseFloat(a["Weight · one lens"]));
-    assert.match(b["Colour fringing · edge"], /noticeable/);
-    assert.equal(a["Front base curve"], "5 D");
+    assert.ok(Number.parseFloat(b["Weight, each"]) > Number.parseFloat(a["Weight, each"]));
+    assert.match(b["Fringing · edge"], /noticeable/);
+    assert.equal(a["Base curve"], "5 D");
     assert.match(await page.locator("#flFigB figcaption").innerText(), /New\n−6\.00 −1\.50 × 180° · OD/);
     assert.equal(await page.locator("#flFigA svg.lens-svg").count(), 1);
     assert.equal(await page.locator("#flFigA canvas.fringe-strip").count(), 2);
@@ -164,21 +164,21 @@ const sharpness = (page, id) => page.evaluate(id => {
     // ------------------------------------------------------------ layout
     for (const colorScheme of ["light", "dark"]) {
       await page.emulateMedia({ colorScheme, reducedMotion: "reduce" });
-      for (const tool of ["#demoVisionTab", "#demoLensTab"]) {
+      for (const tool of ["#clarityTab", "#lensStudioTab"]) {
         await page.locator(tool).click();
         for (const width of [320, 390, 1280]) {
           await page.setViewportSize({ width, height: 900 });
           await page.evaluate(() => document.fonts.ready.then(() => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)))));
           const o = await overflow(page);
           assert.ok(o.scroll <= width, `${colorScheme} ${tool} overflow at ${width}: ${JSON.stringify(o)}`);
-          if (shots && width !== 320) await page.screenshot({ path: path.join(shots, `demotools-${tool.slice(5, -3).toLowerCase()}-${colorScheme}-${width}.png`), fullPage: true });
+          if (shots && width !== 320) await page.screenshot({ path: path.join(shots, `showcase-${tool === "#clarityTab" ? "clarity" : "lens-studio"}-${colorScheme}-${width}.png`), fullPage: true });
         }
       }
     }
 
-    assert.equal(await page.evaluate(() => JSON.stringify(Object.keys(localStorage).sort())), storageBefore, "Demotools stores nothing");
+    assert.equal(await page.evaluate(() => JSON.stringify(Object.keys(localStorage).sort())), storageBefore, "Showcase stores nothing");
     assert.deepEqual(errors, []);
-    console.log("PASS: Demotools True Vision and Frame/Lens Preview, light and dark, 320 px to desktop");
+    console.log("PASS: Showcase Clarity and Lens Studio, light and dark, 320 px to desktop");
   } finally {
     if (browser) await browser.close();
     server.close();

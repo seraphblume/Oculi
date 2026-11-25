@@ -1,5 +1,5 @@
-// Frame/Lens Preview: an Rx edged into a frame in polycarbonate, through ZL Thickness.
-// Pure geometry and figures; the drawing lives in demotools.js. Nothing is stored.
+// Lens Studio: an Rx edged into a frame in polycarbonate, through ZL Thickness.
+// Pure geometry and figures; the drawing lives in showcase.js. Nothing is stored.
 (function (root) {
   "use strict";
   const T = root.ZLThickness || (typeof require !== "undefined" ? require("./zl-thickness.js") : null);
@@ -146,6 +146,6 @@
   }
 
   const api = Object.freeze({ POLYCARBONATE, SHAPES, BASES, baseCurve, frameRadii, lensAxis, preview, fringing });
-  root.OculiLensPreview = api;
+  root.OculiLensStudio = api;
   if (typeof module !== "undefined" && module.exports) module.exports = api;
 })(typeof window !== "undefined" ? window : globalThis);

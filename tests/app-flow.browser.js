@@ -348,7 +348,7 @@ const server = http.createServer(async (req, res) => {
     assert.equal(await page.locator("#actionBar").isVisible(), false);
     assert.equal(await page.locator("#caseActions").isVisible(), false);
     assert.equal(await page.locator("#geniusPanel h1").innerText(), "Genius");
-    assert.match(await page.locator("#geniusPanel .title-sub").innerText(), /^Visual assessment and guided refraction · development preview\.$/);
+    assert.match(await page.locator("#geniusPanel .title-sub").innerText(), /^Visual assessment and guided refraction\.$/);
     const geniusSubmit = () => page.locator("#geniusForm button[type=submit]").click();
     await geniusSubmit();
     assert.match(await page.locator("#geniusError").innerText(), /age from 1 to 120/i);
@@ -394,13 +394,13 @@ const server = http.createServer(async (req, res) => {
     await page.locator("#geniusOtherSymptoms").fill("Halos");
     await geniusSubmit();
     assert.equal(await page.locator("#geniusResults").isVisible(), true, await page.locator("#geniusError").innerText());
-    assert.match(await page.locator("#geniusVersion").textContent(), /v1\.1\.0 · Beryl base model · unvalidated/);
+    assert.match(await page.locator("#geniusVersion").textContent(), /^Beryl 1\.1 · not clinically validated$/);
     assert.equal(await page.locator("#geniusOdResult").innerText(), "−2.25 −1.00 × 180°");
     assert.equal(await page.locator("#geniusOsResult").innerText(), "+0.75 −0.50 × 090°");
     assert.equal(await page.locator("#geniusAddResult").innerText(), "+0.75 D");
     const geniusFlags = await page.locator("#geniusFlags").innerText();
     for (const text of [/Large change from current glasses · OD/, /Refraction may fluctuate/, /Check the ADD at near/, /Repeat readings not entered/]) assert.match(geniusFlags, text);
-    assert.doesNotMatch(geniusFlags, /Development preview/, "the preview's watermark, badge and callout carry the warning");
+    assert.doesNotMatch(geniusFlags, /Not a prescription/, "the card's badge and callout carry the warning");
     assert.doesNotMatch(geniusFlags, /Large change from current glasses · OS/);
     assert.doesNotMatch(geniusFlags, /First glasses/);
     assert.equal(await page.locator("#geniusPrescription").isVisible(), false, "no preview before verification");
@@ -513,7 +513,7 @@ const server = http.createServer(async (req, res) => {
     assert.deepEqual(await page.locator("#calculatorPanel .calculator-tabs [role=tab]").allTextContents(), ["Vertex", "Spherical Equivalent", "Transposition"]);
     assert.equal(await page.locator("#conversionControls").isVisible(), true);
     await page.locator("#calculatorForm button[type=submit]").click();
-    assert.match(await page.locator("#calculatorError").innerText(), /Enter sphere/);
+    assert.match(await page.locator("#calculatorError").innerText(), /Enter at least one eye/);
     for (const [id, value] of Object.entries({ calcSphere: "-1.50", calcCylinder: "-1.25", calcAxis: "180" })) await page.locator(`#${id}`).fill(value);
     await page.locator("#calculatorForm button[type=submit]").click();
     assert.equal(await page.locator('[data-calculator-result="conversion"]').first().isVisible(), true);
@@ -560,7 +560,7 @@ const server = http.createServer(async (req, res) => {
     await page.locator("#calculatorStatus").filter({ hasText: /Clipboard unavailable/ }).waitFor();
     await page.locator("#calculatorTab").focus();
     await page.keyboard.press("ArrowLeft");
-    assert.equal(await page.locator("#demoTab").getAttribute("aria-selected"), "true");
+    assert.equal(await page.locator("#showcaseTab").getAttribute("aria-selected"), "true");
     await page.keyboard.press("ArrowLeft");
     assert.equal(await page.locator("#geniusTab").getAttribute("aria-selected"), "true");
     await page.keyboard.press("ArrowLeft");

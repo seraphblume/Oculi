@@ -2,9 +2,9 @@
   "use strict";
   const $ = id => document.getElementById(id);
   const optics = window.DioptraOptics;
-  const tabs = [$("caseTab"), $("geniusTab"), $("demoTab"), $("calculatorTab")];
-  const panels = [$("casePanel"), $("geniusPanel"), $("demoPanel"), $("calculatorPanel")];
-  const views = ["case", "genius", "demo", "calculator"];
+  const tabs = [$("caseTab"), $("geniusTab"), $("showcaseTab"), $("calculatorTab")];
+  const panels = [$("casePanel"), $("geniusPanel"), $("showcasePanel"), $("calculatorPanel")];
+  const views = ["case", "genius", "showcase", "calculator"];
   const scrollPositions = [0, 0, 0, 0];
   let selected = 0;
   let result = null;
@@ -106,7 +106,7 @@
       try { next[eye.key] = optics.calculate(...values); }
       catch (error) { throw new Error(`${eye.label}: ${error.message}`); }
     }
-    if (!Object.keys(next).length) throw new Error("Enter sphere and cylinder for at least one eye (use 0 cylinder for sphere only).");
+    if (!Object.keys(next).length) throw new Error("Enter at least one eye. Use 0 cylinder for sphere only.");
     return next;
   }
   function renderEye(eye, next, from, to) {
@@ -198,7 +198,7 @@
   });
   async function copyText(text, label) {
     try { await navigator.clipboard.writeText(text); $("calculatorStatus").textContent = `${label} copied.`; }
-    catch { $("calculatorStatus").textContent = "Clipboard unavailable. Select and copy the displayed result manually."; }
+    catch { $("calculatorStatus").textContent = "Clipboard unavailable. Select and copy the result instead."; }
   }
   for (const eye of eyes) {
     $("useTransposed" + eye.suffix).addEventListener("click", () => {

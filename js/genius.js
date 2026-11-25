@@ -5,7 +5,7 @@
   const $ = id => document.getElementById(id);
   const Rx = window.OculiRx;
   const engine = window.OculiEngineBerylV11; // unchanged v0.3.0 rules under the Beryl release identity
-  const ENGINE_NOTE = "Beryl base model · unvalidated";
+  const ENGINE_NOTE = "not clinically validated";
   const MODEL_LABEL = "Oculi Model";
   const MIN_AGE = 18;
   const LARGE_CHANGE_D = 0.75;
@@ -196,7 +196,7 @@
       $("geniusAge").value = String(Math.max(age, 0));
       $("geniusAgeNote").textContent = `Age ${age} from the birthdate.`;
     } else {
-      $("geniusAgeNote").textContent = value ? "That birthdate is not valid." : "Enter the age, or the birthdate and the age fills in.";
+      $("geniusAgeNote").textContent = value ? "Check the birthdate." : "A birthdate fills in the age.";
     }
   }
 
@@ -253,7 +253,7 @@
     const d = outOfFocus(v);
     parts.push(d < 0.125 ? "in focus" : `about ${d.toFixed(2)} D out of focus`);
     if (v.accommodationUsed >= 0.25) parts.push(`focusing ${v.accommodationUsed.toFixed(2)} D`);
-    if (v.limited) parts.push("blur shown at the demo's limit");
+    if (v.limited) parts.push("blur capped for display");
     return parts.join(" · ");
   }
 
@@ -293,7 +293,7 @@
       const where = input.scene === "near" ? `at ${Math.round(input.nearDistanceM * 100)} cm` : "at distance";
       $("geniusCompareCurrentNote").textContent = viewNote(views.current, input.current ? "Current glasses" : "No glasses");
       $("geniusCompareTrueNote").textContent = viewNote(views.true, `Full correction ${Rx.fmtRx(input.eye)}`);
-      status.textContent = `${eyeName} ${where}. Full correction is Beryl's estimate from the autorefractor, before the exam.`;
+      status.textContent = `${eyeName} ${where}. Correction estimated by Beryl from the autorefractor.`;
     } catch (error) {
       status.textContent = `Could not render the comparison: ${error.message}`;
     } finally {
@@ -392,7 +392,7 @@
 
   function renderProposal() {
     const p = proposal.prediction;
-    $("geniusVersion").textContent = `v${p.version} · ${ENGINE_NOTE}`;
+    $("geniusVersion").textContent = `${p.name || "Beryl"} ${String(p.version).split(".").slice(0, 2).join(".")} · ${ENGINE_NOTE}`;
     $("geniusOdResult").textContent = Rx.fmtRx(p.od);
     $("geniusOsResult").textContent = Rx.fmtRx(p.os);
     $("geniusAddResult").textContent = addText(p.tentativeAdd);
@@ -572,7 +572,7 @@
   }
 
   function pdfFileName() {
-    return `oculi-genius-preview-${previewDate()}.pdf`;
+    return `oculi-rx-card-${previewDate()}.pdf`;
   }
 
   // The card: 90 × 160 mm, folding to 90 × 80 mm.
@@ -593,7 +593,7 @@
       rows: EYES.map(eye => ({ eye: eye.short, side: eye.name.replace(" eye", ""),
         cells: ["Sphere", "Cylinder", "Axis", "PdDist", "PdNear"].map(c => text(`geniusPrescription${c}${eye.key}`)) })),
       add: text("geniusPrescriptionAdd"), lenses: lensTypes(),
-      cover: { title: "Prescription preview", body: document.querySelector(".rx-cover-body").textContent.trim(),
+      cover: { title: document.querySelector(".rx-cover-title").textContent.trim(), body: document.querySelector(".rx-cover-body").textContent.trim(),
         back: [...$("rxBackList").children].map(li => li.textContent.trim()), backTitle: document.querySelector(".rx-back-title").textContent.trim(),
         version: text("rxBackVersion") },
       va: text("geniusPrescriptionVa"), outcome: text("geniusPrescriptionOutcome"),
@@ -799,7 +799,7 @@
     const touch = window.matchMedia && window.matchMedia("(pointer: coarse)").matches;
     if (touch && navigator.canShare && navigator.canShare({ files: [file] })) {
       try {
-        await navigator.share({ files: [file], title: "Prescription preview" });
+        await navigator.share({ files: [file], title: "Prescription card" });
         status.textContent = "";
         return;
       } catch (error) {
@@ -822,8 +822,8 @@
     document.querySelectorAll("#geniusPanel .cc-row").forEach(row => { row.hidden = true; });
     syncPinhole();
     clearComparison();
-    $("geniusCompareStatus").textContent = "Needs the age and the autorefractor lines in section 2. Works at any age.";
-    $("geniusAgeNote").textContent = "Enter the age, or the birthdate and the age fills in.";
+    $("geniusCompareStatus").textContent = "Uses the age and the autorefractor lines above.";
+    $("geniusAgeNote").textContent = "A birthdate fills in the age.";
     $("geniusGlassesFields").hidden = true;
     $("geniusGlassesFields").disabled = true;
     ["geniusPatientName", "geniusPrescriptionDate", "geniusPrescriptionNotes"].forEach(id => { $(id).value = ""; });

@@ -891,10 +891,10 @@ body[data-view="calculator"] #toast { display: none; }
 #geniusCompareControls .row-button { color: var(--tint); }
 #geniusCompareControls .row-button:disabled { color: var(--label-3); cursor: progress; }
 
-/* ------------------------------------------------------------------ Demotools */
+/* ------------------------------------------------------------------ Showcase */
 
-.demo-tabs { grid-template-columns: repeat(2, minmax(0, 1fr)); margin: 4px 0 8px; }
-.demo-tool .vision-compare { margin-top: 20px; }
+.showcase-tabs { grid-template-columns: repeat(2, minmax(0, 1fr)); margin: 4px 0 8px; }
+.showcase-tool .vision-compare { margin-top: 20px; }
 .eye-header.rx-name { display: flex; align-items: center; gap: 10px; }
 .eye-header.rx-name span { flex: none; }
 .eye-header.rx-name .inline-input { flex: 1 1 auto; min-width: 0; max-width: 200px; text-transform: none; }

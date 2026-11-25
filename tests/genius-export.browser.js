@@ -114,7 +114,7 @@ async function genius(page, worst) {
     assert.match(await page.locator("#geniusPrescriptionVersion").innerText(), /^Oculi Model · proposed OD −2\.25 −1\.00 × 180°/);
     const previewText = await page.locator("#geniusPrescription").innerText();
     assert.doesNotMatch(previewText, /research prototype|Model v0\.3/i);
-    assert.doesNotMatch(await page.locator("#geniusFlags").innerText(), /Development preview|fitted offset/);
+    assert.doesNotMatch(await page.locator("#geniusFlags").innerText(), /Not a prescription|fitted offset/);
     assert.equal(await page.locator("#geniusPrint").isVisible(), true, "desktop browsers can print");
     assert.equal(await page.locator("#geniusSavePdf").innerText(), "Save PDF");
     assert.equal(await page.locator("#geniusNewPatient").isVisible(), true);
@@ -148,18 +148,18 @@ async function genius(page, worst) {
 
     // Save PDF on desktop downloads the two-page card with the preview's content.
     const [download] = await Promise.all([page.waitForEvent("download"), page.locator("#geniusSavePdf").click()]);
-    assert.match(download.suggestedFilename(), /^oculi-genius-preview-\d{4}-\d{2}-\d{2}\.pdf$/);
+    assert.match(download.suggestedFilename(), /^oculi-rx-card-\d{4}-\d{2}-\d{2}\.pdf$/);
     const pdf = await fs.readFile(await download.path());
     const text = checkOculiPdf(pdf);
     assert.equal(pageCount(pdf, "saved PDF"), 2);
     assert.match(text, /\/MediaBox \[0 0 255\.12 453\.54\]/, "a 90 × 160 mm card on every locale");
-    for (const s of ["(Valeria Luxe)", "(Pending certification)", "(VERIFIED BY)", "(LICENCE OR CERTIFICATION)", "(NOT A PRESCRIPTION)", "(Prescription preview)",
-      "(Development preview.)", "(Maria Fernanda", "(SPHERE)", "(PD FAR)", "(PD NEAR)", "(31.5)", "(Progressive)", "(Adapting to new glasses)", "(Oculi)"]) assert.ok(text.includes(s), `PDF contains ${s}`);
+    for (const s of ["(Valeria Luxe)", "(Pending certification)", "(VERIFIED BY)", "(LICENCE OR CERTIFICATION)", "(NOT A PRESCRIPTION)", "(About this card)",
+      "(Not a prescription.)", "(Maria Fernanda", "(SPHERE)", "(PD FAR)", "(PD NEAR)", "(31.5)", "(Progressive)", "(Adapting to new glasses)", "(Oculi)"]) assert.ok(text.includes(s), `PDF contains ${s}`);
     assert.match(text, / cm\n[\s\S]*\(Oculi\) Tj[\s\S]*\nQ/, "front cover drawn turned 180°");
     assert.match(text, /0\.08 0\.07 0\.35 rg [\d. ]+ m/, "the emblem in labs-indigo");
     assert.ok(/\(Oculi Model \\267 proposed OD \\226/.test(text), "footer label with the minus sign as an en dash");
     assert.ok(!/research prototype/.test(text));
-    assert.match(await page.locator("#geniusExportStatus").innerText(), /Saved oculi-genius-preview-/);
+    assert.match(await page.locator("#geniusExportStatus").innerText(), /Saved oculi-rx-card-/);
     if (process.env.DIOPTRA_SCREENSHOT_DIR) await fs.writeFile(path.join(process.env.DIOPTRA_SCREENSHOT_DIR, "genius-preview.pdf"), pdf);
 
     // The card is the same size everywhere.
@@ -208,7 +208,7 @@ async function genius(page, worst) {
     await mobile.locator("#geniusSavePdf").click();
     await mobile.waitForFunction(() => window.__shared);
     const shared = await mobile.evaluate(() => window.__shared);
-    assert.match(shared.name, /^oculi-genius-preview-\d{4}-\d{2}-\d{2}\.pdf$/);
+    assert.match(shared.name, /^oculi-rx-card-\d{4}-\d{2}-\d{2}\.pdf$/);
     assert.equal(shared.type, "application/pdf");
     checkOculiPdf(Uint8Array.from(shared.bytes));
     assert.equal(pageCount(Uint8Array.from(shared.bytes), "shared PDF"), 2);

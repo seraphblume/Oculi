@@ -276,7 +276,7 @@ select:disabled, input:disabled { opacity: 0.45; }
 }
 .group > .disclosure-row { padding-right: 4px; } /* room for the turned chevron */
 
-/* Demotools: ink for the lens, accent for what to look at */
+/* Showcase: ink for the lens, accent for what to look at */
 .lens-band { fill: var(--zl-ink); opacity: 0.8; }
 .lens-rim { stroke: var(--zl-ink); }
 .lens-oc, .lens-callout { stroke: var(--zl-accent); fill: var(--zl-accent); }

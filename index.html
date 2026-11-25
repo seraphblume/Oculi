@@ -33,7 +33,7 @@
       <div class="view-tabs" role="tablist" aria-label="Workspace">
         <button id="caseTab" role="tab" aria-selected="true" aria-controls="casePanel" type="button">Clinical Study</button>
         <button id="geniusTab" role="tab" aria-selected="false" aria-controls="geniusPanel" tabindex="-1" type="button">Genius</button>
-        <button id="demoTab" role="tab" aria-selected="false" aria-controls="demoPanel" tabindex="-1" type="button">Demotools</button>
+        <button id="showcaseTab" role="tab" aria-selected="false" aria-controls="showcasePanel" tabindex="-1" type="button">Showcase</button>
         <button id="calculatorTab" role="tab" aria-selected="false" aria-controls="calculatorPanel" tabindex="-1" type="button">Tools</button>
       </div>
       <div class="nav-actions" id="caseActions">
@@ -88,7 +88,7 @@
           <div class="chips" id="medicalChips"></div>
         </div>
       </div>
-      <p id="warningNote" class="group-footer warning-footer" hidden>New flashes or floaters are a warning sign. Refer to an eye doctor before prescribing.</p>
+      <p id="warningNote" class="group-footer warning-footer" hidden>New flashes or floaters: refer to an eye doctor before prescribing.</p>
       <h2 class="group-header section-header"><span class="section-number">1</span>Visual acuity</h2>
       <div class="group va-group">
         <table class="va-table va-table-2">
@@ -108,7 +108,7 @@
           </div>
         </div>
       </div>
-      <p class="group-footer">Pinhole is not needed for an eye that already reads 20/25 or better.</p>
+      <p class="group-footer">Pinhole isn’t needed at 20/25 or better.</p>
 
       <h2 class="group-header section-header"><span class="section-number">2</span>Initial refraction</h2>
       <fieldset id="previousRxFields" hidden disabled>
@@ -122,7 +122,7 @@
           <label class="row"><span class="row-label">Time wearing this Rx</span><span class="row-value"><input id="previousWornMonths" class="row-input num short" type="number" min="0" max="600" step="1" list="rxDurationOptions" placeholder="Unknown" aria-label="Time wearing previous Rx in months" /><span class="unit">months</span></span></label>
         </div>
         <datalist id="rxDurationOptions"><option value="3"></option><option value="6"></option><option value="12"></option><option value="18"></option><option value="24"></option><option value="36"></option><option value="60"></option><option value="120"></option></datalist>
-        <p class="group-footer">Minus cylinder. Leave cylinder blank for sphere only. Duration is optional context: blank is unknown, 0 is under a month.</p>
+        <p class="group-footer">Minus cylinder; leave it blank for sphere only. Duration is optional (0 is under a month).</p>
       </fieldset>
 
       <h3 class="sub-header">Autorefractor</h3>
@@ -151,7 +151,7 @@
           <div class="group rx-table" id="ar-os"></div>
         </section>
       </div>
-      <p class="group-footer">Copy the three readings and the bracketed line ‹ ›. Only the bracketed line is required. Q is the reliability digit after each reading.</p>
+      <p class="group-footer">The bracketed line ‹ › is required; the readings are optional. Q is the reliability digit.</p>
 
       <h3 class="sub-header">Near</h3>
       <div class="group">
@@ -173,7 +173,7 @@
           <span class="row-value"><input id="nearPoint" class="row-input num" type="text" inputmode="decimal" placeholder="—" aria-label="Near point in mm" /><span class="unit">mm</span></span>
         </label>
       </div>
-      <p class="group-footer">Optional. Refraction uses a fixed 12 mm vertex.</p>
+      <p class="group-footer">Optional. Vertex is fixed at 12 mm.</p>
 
       <details class="group disclosure" id="kSection">
         <summary class="row disclosure-row"><span class="row-label">Keratometry</span><span class="row-detail">Optional</span></summary>
@@ -226,7 +226,7 @@
           </div>
         </div>
       </div>
-      <p class="group-footer">Optional, about ten seconds. If the patient still reads the same line through +0.25 D, the Rx may carry extra minus.</p>
+      <p class="group-footer">Optional. If the line still holds through +0.25 D, the Rx may carry extra minus.</p>
 
       <h2 class="group-header">Endpoint</h2>
       <div class="group">
@@ -256,7 +256,7 @@
           </div>
         </div>
       </fieldset>
-      <p class="group-footer">The endpoint is the refined result before any prescribing decision: the most plus that gives the best acuity.</p>
+      <p class="group-footer">The refined result before prescribing: the most plus for the best acuity.</p>
     </fieldset>
 
     <!-- 3 · Compare ------------------------------------------------------- -->
@@ -275,7 +275,7 @@
           </div>
         </div>
       </div>
-      <p class="group-footer">5 use as is · 4 minor change · 3 clinically meaningful change · 2 major change · 1 reject. Required to save. Goshenite learns from this rating and from the patient's tolerance at follow-up.</p>
+      <p class="group-footer">5 as is · 4 minor change · 3 meaningful change · 2 major change · 1 reject. Required to save; Goshenite learns from it.</p>
     </section>
 
     <!-- Study ------------------------------------------------------------- -->
@@ -289,25 +289,25 @@
         <summary class="row disclosure-row"><span class="row-label">Engine comparison</span><span class="row-detail" id="engineCompareDetail"></span></summary>
         <div id="engineCompare" class="engine-compare"></div>
       </details>
-      <p class="group-footer">Power-vector error, with an axis tolerance that tightens as cylinder grows (±14° at 0.25 D to ±2° above 1.50 D). ±5° allows for axes recorded in 5° steps. Don't tune an engine on a cohort that is still open.</p>
+      <p class="group-footer">Power-vector error. Axis tolerance tightens with cylinder, from ±14° at 0.25 D to ±2° above 1.50 D; ±5° allows for 5° steps. Don’t tune on an open cohort.</p>
 
       <h2 class="group-header">Follow-ups</h2>
       <div class="group" id="followUpList"></div>
-      <p class="group-footer" id="followUpFooter">Ask how the new glasses are going one to four weeks after the exam. Patient tolerance is Goshenite's second outcome.</p>
+      <p class="group-footer" id="followUpFooter">Check in one to four weeks after the exam. Tolerance is Goshenite’s second outcome.</p>
 
       <div class="group">
         <button id="clearDataBtn" class="row row-button destructive" type="button">Delete All Cases…</button>
       </div>
     </section>
 
-    <p class="footnote">Research prototype. Not a validated medical device or a basis for prescribing on its own. Data stays on this device.</p>
+    <p class="footnote">Research tool, not a medical device. Data stays on this device.</p>
   </section>
 
   <!-- ================================================================ Genius -->
   <section class="content genius-panel" id="geniusPanel" role="tabpanel" aria-labelledby="geniusTab" tabindex="0" hidden>
     <div class="large-title">
       <h1>Genius</h1>
-      <p class="title-sub">Visual assessment and guided refraction · development preview.</p>
+      <p class="title-sub">Visual assessment and guided refraction.</p>
     </div>
 
     <ol class="stepper" id="geniusStepper" aria-label="Genius progress">
@@ -339,7 +339,7 @@
           </div>
         </div>
       </div>
-      <p class="group-footer" id="geniusAgeNote">Enter the age, or the birthdate and the age fills in.</p>
+      <p class="group-footer" id="geniusAgeNote">A birthdate fills in the age.</p>
 
       <h2 class="group-header">History</h2>
       <div class="group">
@@ -379,7 +379,7 @@
           </div>
         </div>
       </div>
-      <p class="group-footer">Any warning sign stops Genius. These need an eye doctor before any prescription.</p>
+      <p class="group-footer">Any warning sign needs an eye doctor first.</p>
 
       <h2 class="group-header section-header"><span class="section-number">1</span>Visual acuity</h2>
       <div class="group va-group" data-keep>
@@ -397,7 +397,7 @@
           </tbody>
         </table>
       </div>
-      <p class="group-footer">Optional. The with-glasses rows appear when the patient wears glasses.</p>
+      <p class="group-footer">Optional. With-glasses rows appear when the patient wears glasses.</p>
 
       <h2 class="group-header section-header"><span class="section-number">2</span>Initial refraction</h2>
       <fieldset id="geniusGlassesFields" hidden disabled>
@@ -407,7 +407,7 @@
           <section class="eye-section"><div class="group rx-table final" id="genius-prev-os"></div></section>
         </div>
         <div class="group"><label class="row"><span class="row-label">ADD</span><select id="geniusPrevAdd" class="row-select"></select></label></div>
-        <p class="group-footer">Minus cylinder. Leave cylinder blank for sphere only.</p>
+        <p class="group-footer">Minus cylinder; leave it blank for sphere only.</p>
       </fieldset>
       <h3 class="sub-header">Autorefractor</h3>
       <div class="group">
@@ -434,7 +434,7 @@
           <div class="group rx-table" id="genius-ar-os"></div>
         </section>
       </div>
-      <p class="group-footer">Copy the three readings and the bracketed line ‹ ›. Only the bracketed line is required; repeats let Genius check fixation.</p>
+      <p class="group-footer">The bracketed line ‹ › is required; the readings let Genius check fixation.</p>
 
       <h3 class="sub-header">Near</h3>
       <div class="group">
@@ -452,7 +452,7 @@
           <span class="row-value"><input id="geniusNearWd" class="row-input num" type="text" inputmode="decimal" placeholder="400" aria-label="Near working distance in mm" /><span class="unit">mm</span></span>
         </label>
       </div>
-      <p class="group-footer">Refraction uses a fixed 12 mm vertex.</p>
+      <p class="group-footer">Vertex is fixed at 12 mm.</p>
 
 
       <h2 class="group-header section-header"><span class="section-number">3</span>Pre-diagnosis</h2>
@@ -467,7 +467,7 @@
           </div>
         </div>
       </div>
-      <p class="group-footer" id="geniusDxNote">Ticked from the autorefractor and age: spherical equivalent of −0.50 D or more is myopia, +0.50 D or more hyperopia, cylinder of 0.50 D or more astigmatism, age 40 or over presbyopia. Change any box.</p>
+      <p class="group-footer" id="geniusDxNote">Suggested from the autorefractor and age. Change any box.</p>
 
       <h2 class="group-header section-header"><span class="section-number">4</span>Vision comparison</h2>
       <div class="group" data-keep id="geniusCompareControls">
@@ -497,8 +497,8 @@
           <figcaption><strong>True vision</strong><span id="geniusCompareTrueNote"></span></figcaption>
         </figure>
       </div>
-      <p class="group-footer" id="geniusCompareStatus">Needs the age and the autorefractor lines in section 2. Works at any age.</p>
-      <p class="group-footer compare-disclaimer">An optical illustration of focus only, for a 4 mm pupil. It cannot show how this patient perceives, and it says nothing about eye health.</p>
+      <p class="group-footer" id="geniusCompareStatus">Uses the age and the autorefractor lines above.</p>
+      <p class="group-footer compare-disclaimer">An illustration of focus only. It can’t show how the patient perceives, or anything about eye health.</p>
 
       <p id="geniusError" class="form-error" role="status" aria-live="polite"></p>
       <div class="form-actions">
@@ -512,7 +512,7 @@
       <p class="eyebrow">Refer</p>
       <h2>See an eye doctor first</h2>
       <p id="geniusStopReason"></p>
-      <p>Genius does not propose a prescription in this case.</p>
+      <p>Genius won’t propose an Rx in this case.</p>
     </section>
 
     <section id="geniusResults" aria-labelledby="geniusResultsTitle" hidden>
@@ -554,7 +554,7 @@
           </div>
         </div>
       </div>
-      <p class="group-footer">Put the proposed Rx in a trial frame and check each eye, both eyes, and near when there is an ADD. Refine only if needed.</p>
+      <p class="group-footer">Check each eye, both eyes, and near when there is an ADD. Refine only if needed.</p>
 
       <fieldset id="geniusRefineFields" hidden disabled>
         <div class="eye-columns">
@@ -572,13 +572,13 @@
 
       <p id="geniusVerifyError" class="form-error" role="status" aria-live="polite"></p>
       <div class="form-actions">
-        <button id="geniusPreview" class="button-primary" type="button">Prepare Preview</button>
+        <button id="geniusPreview" class="button-primary" type="button">Prepare Card</button>
       </div>
     </section>
 
     <section id="geniusPrescription" class="genius-prescription" aria-labelledby="geniusPrescriptionTitle" hidden>
       <h2 class="group-header" id="geniusPrescriptionTitle">Prescription card</h2>
-      <p class="group-footer card-howto">9 × 16 cm. Print both sides, flipping on the long edge, then fold in half with the Rx inside.</p>
+      <p class="group-footer card-howto">9 × 16 cm. Print double-sided, flip on the long edge, and fold in half.</p>
       <div class="rx-faces">
         <figure class="rx-face">
           <figcaption class="rx-face-label">Inside</figcaption>
@@ -608,7 +608,7 @@
                 <label><input type="checkbox" data-lens="Bifocal" /><span>Bifocal</span></label>
                 <label><input type="checkbox" data-lens="Occupational" /><span>Occupational</span></label>
               </div>
-              <p class="prescription-warning" role="note"><strong>Development preview.</strong> This is not a prescription, is not clinical guidance, and is not indicative of the final product.</p>
+              <p class="prescription-warning" role="note"><strong>Not a prescription.</strong> Confirm with an eye exam.</p>
             </div>
             <div class="rx-panel rx-panel-bottom">
               <div class="rx-fit" id="rxFit">
@@ -643,15 +643,15 @@
           <div class="rx-card rx-card-outside" id="rxCardOutside">
             <div class="rx-panel rx-cover">
               <div class="rx-cover-mark"><span class="rx-wordmark">Oculi</span><span class="rx-emblem" id="rxCoverEmblem" aria-hidden="true"></span></div>
-              <h3 class="rx-cover-title">Prescription preview</h3>
-              <p class="rx-cover-body">A record of a guided refraction preview made with Oculi. It is not a prescription and must be confirmed by an independent eye examination.</p>
+              <h3 class="rx-cover-title">About this card</h3>
+              <p class="rx-cover-body">A record of a guided refraction made with Oculi. It is not a prescription; confirm it with an eye exam.</p>
               <p class="rx-cover-meta"><span id="rxCoverPatient"></span><span id="rxCoverDate"></span></p>
               <span class="rx-band" aria-hidden="true"></span>
             </div>
             <div class="rx-panel rx-back">
               <h3 class="rx-back-title">Adapting to new glasses</h3>
               <ul class="rx-back-list" id="rxBackList">
-                <li>Wear them full-time for the first week. Things can look slightly different for a few days.</li>
+                <li>Wear them full-time for the first week; things may look different for a few days.</li>
                 <li>With progressive lenses, read through the lower part and turn your head to look to the side.</li>
                 <li>Come back if headaches, dizziness or double vision last beyond the first week.</li>
                 <li>Clean them with water and mild soap, dry them with a soft cloth, and keep them in their case.</li>
@@ -669,22 +669,22 @@
       </div>
     </section>
 
-    <p class="footnote">Nothing entered in Genius is saved or added to the Clinical Study.</p>
+    <p class="footnote">Nothing in Genius is saved.</p>
   </section>
 
   <!-- ================================================================ Tools -->
-  <!-- ================================================================== Demotools -->
-  <section class="content demo-panel" id="demoPanel" role="tabpanel" aria-labelledby="demoTab" tabindex="0" hidden>
+  <!-- ================================================================== Showcase -->
+  <section class="content showcase-panel" id="showcasePanel" role="tabpanel" aria-labelledby="showcaseTab" tabindex="0" hidden>
     <div class="large-title">
-      <h1>Demotools</h1>
-      <p class="title-sub">Show a patient what a correction and a lens choice change.</p>
+      <h1>Showcase</h1>
+      <p class="title-sub">Show patients what their new Rx and lenses change.</p>
     </div>
-    <div class="calculator-tabs demo-tabs" role="tablist" aria-label="Demotools">
-      <button id="demoVisionTab" role="tab" aria-selected="true" aria-controls="demoVisionForm" type="button">True Vision</button>
-      <button id="demoLensTab" role="tab" aria-selected="false" aria-controls="demoLensForm" tabindex="-1" type="button">Frame/Lens Preview</button>
+    <div class="calculator-tabs showcase-tabs" role="tablist" aria-label="Showcase">
+      <button id="clarityTab" role="tab" aria-selected="true" aria-controls="clarityForm" type="button">Clarity</button>
+      <button id="lensStudioTab" role="tab" aria-selected="false" aria-controls="lensStudioForm" tabindex="-1" type="button">Lens Studio</button>
     </div>
 
-    <form id="demoVisionForm" class="demo-tool" role="tabpanel" aria-labelledby="demoVisionTab" novalidate>
+    <form id="clarityForm" class="showcase-tool" role="tabpanel" aria-labelledby="clarityTab" novalidate>
       <h2 class="group-header">Patient</h2>
       <div class="group">
         <label class="row"><span class="row-label">Age</span>
@@ -710,7 +710,7 @@
         <section class="eye-section"><h4 class="eye-header">Left eye · OS</h4><div class="group rx-table" data-rx="tvFinOs" data-eye="OS"></div></section>
       </div>
       <div class="group"><label class="row"><span class="row-label">ADD</span><select id="tvFinAdd" class="row-select"></select></label></div>
-      <p class="group-footer">The Rx you found. Enter the eye you will show; the other is optional.</p>
+      <p class="group-footer">Only the eye you show is required.</p>
 
       <h2 class="group-header">Comparison</h2>
       <div class="group">
@@ -734,11 +734,11 @@
         <figure><canvas id="tvCanvasTrue" width="280" height="360" role="img" aria-label="Chart as seen with the final Rx"></canvas>
           <figcaption><strong>True vision</strong><span id="tvTrueNote"></span></figcaption></figure>
       </div>
-      <p class="group-footer" id="tvStatus" role="status" aria-live="polite">Works at any age. Nothing entered here is saved.</p>
-      <p class="group-footer compare-disclaimer">An optical illustration of focus only, for a 4 mm pupil, rendered by ZL Retina. It cannot show how this patient perceives, and it says nothing about eye health.</p>
+      <p class="group-footer" id="tvStatus" role="status" aria-live="polite">Nothing here is saved.</p>
+      <p class="group-footer compare-disclaimer">An illustration of focus only. It can’t show how the patient perceives, or anything about eye health.</p>
     </form>
 
-    <form id="demoLensForm" class="demo-tool" role="tabpanel" aria-labelledby="demoLensTab" novalidate hidden>
+    <form id="lensStudioForm" class="showcase-tool" role="tabpanel" aria-labelledby="lensStudioTab" novalidate hidden>
       <h2 class="group-header">Frame</h2>
       <div class="group">
         <label class="row"><span class="row-label">Shape</span>
@@ -750,7 +750,7 @@
         <label class="row"><span class="row-label">Lens height · B</span><span class="row-value"><input id="flB" class="row-input num" type="text" inputmode="decimal" value="38" /><span class="unit">mm</span></span></label>
         <label class="row"><span class="row-label">Bridge · DBL</span><span class="row-value"><input id="flDbl" class="row-input num" type="text" inputmode="decimal" value="18" /><span class="unit">mm</span></span></label>
       </div>
-      <p class="group-footer">A, B and DBL are printed inside the temple, for example 52□18.</p>
+      <p class="group-footer">Printed inside the temple, as in 52□18.</p>
       <h2 class="group-header">Fitting</h2>
       <div class="group">
         <div class="row"><span class="row-label">Eye</span>
@@ -762,26 +762,26 @@
         <label class="row"><span class="row-label">Monocular PD</span><span class="row-value"><input id="flPd" class="row-input num" type="text" inputmode="decimal" value="31" /><span class="unit">mm</span></span></label>
         <label class="row"><span class="row-label">Fitting height</span><span class="row-value"><input id="flFh" class="row-input num" type="text" inputmode="decimal" placeholder="B ÷ 2" /><span class="unit">mm</span></span></label>
       </div>
-      <h2 class="group-header">Rx A · Rx B</h2>
+      <h2 class="group-header">Prescriptions</h2>
       <div class="eye-columns">
         <section class="eye-section"><label class="eye-header rx-name"><span>Rx A</span><input id="flNameA" class="inline-input" type="text" maxlength="24" value="Current" aria-label="Rx A name" /></label><div class="group rx-table" data-rx="flRxA" data-eye="A"></div></section>
         <section class="eye-section"><label class="eye-header rx-name"><span>Rx B</span><input id="flNameB" class="inline-input" type="text" maxlength="24" value="New" aria-label="Rx B name" /></label><div class="group rx-table" data-rx="flRxB" data-eye="B"></div></section>
       </div>
       <p class="group-footer">Polycarbonate · index 1.586 · Abbe 30 · 1.20 g/cm³ · single vision.</p>
-      <div class="form-actions"><button class="button-primary" type="submit" id="flShow">Preview Lenses</button><button class="quiet-button" type="button" id="flReset">Clear</button></div>
+      <div class="form-actions"><button class="button-primary" type="submit" id="flShow">Compare Lenses</button><button class="quiet-button" type="button" id="flReset">Clear</button></div>
       <p class="form-error" id="flError" role="status" aria-live="polite"></p>
       <div class="lens-compare" id="flCompare" hidden aria-live="polite">
         <figure class="lens-figure" id="flFigA"></figure>
         <figure class="lens-figure" id="flFigB"></figure>
       </div>
-      <p class="group-footer" id="flNotes" hidden>Edged thickness from ZL Thickness on the frame shape above, drawn as you face the wearer. The band round the rim is the edge thickness at true scale; the + marks the optical centre, the accent dot the thickest edge and the ink dot the thinnest. Base curves follow Vogel's rule; centre and edge are held to at least 1.0 mm. Bevel, polish and drill mounts are not modelled, so a lab's figures can differ by a few tenths. Colour fringing is Prentice prism ÷ Abbe number; about 0.10 Δ is where fringes start to be noticed. The strips show it at the scale of the True Vision chart.</p>
+      <p class="group-footer" id="flNotes" hidden>Drawn as you face the wearer, edge thickness to scale: + optical centre, accent dot thickest edge, ink dot thinnest. Bevelling and mounting can shift the figures by a few tenths of a millimetre. Colour fringing shows from about 0.10 Δ.</p>
     </form>
   </section>
 
   <section class="content calculator-panel" id="calculatorPanel" role="tabpanel" aria-labelledby="calculatorTab" tabindex="0" hidden>
     <div class="large-title">
       <h1>Tools</h1>
-      <p class="title-sub">Optical calculations only. Nothing here reads or saves patient cases.</p>
+      <p class="title-sub">Quick optical conversions. Nothing here is saved.</p>
     </div>
     <div class="calculator-tabs" role="tablist" aria-label="Optical tools">
       <button id="calculatorConversionTab" role="tab" aria-selected="true" aria-controls="calculatorToolPanel" type="button" data-calculator-tool="conversion">Vertex</button>
@@ -816,7 +816,7 @@
             <label class="row" for="calcAxisOs"><span class="row-label">Axis</span><span class="row-value"><input id="calcAxisOs" class="row-input num" type="text" inputmode="numeric" autocomplete="off" placeholder="90" aria-describedby="calculatorError axisHint" /><span class="unit unit-deg">°</span></span></label>
           </div>
         </fieldset>
-        <p id="axisHint" class="group-footer">Axis 1–180°. Enter 0 cylinder for sphere only. Leave an eye blank if unused.</p>
+        <p id="axisHint" class="group-footer">Axis 1–180°. Use 0 cylinder for sphere only.</p>
         <div id="vertexControls">
           <h2 class="group-header">Vertex distance</h2>
           <div class="group">
@@ -957,7 +957,7 @@
     <div class="zl-splash-text">
       <p class="zl-label">ZepheniaLabs</p>
       <h1 id="zlSplashName">Oculi</h1>
-      <p><span id="zlSplashVersion"></span> · Research tool. Not a validated medical device; every result needs an independent exam.</p>
+      <p><span id="zlSplashVersion"></span> · Research tool, not a medical device. Confirm every result with an eye exam.</p>
     </div>
     <button id="zlSplashContinue" class="zl-splash-continue" type="button">Continue</button>
   </div>
@@ -990,7 +990,7 @@
         <div class="row"><span class="row-label">Data</span><span class="row-detail">Stays on this device</span></div>
         <div class="row"><span class="row-label">Typeface</span><span class="row-detail">IBM Plex · <a href="assets/fonts/IBM-Plex-OFL.txt" target="_blank" rel="noopener">SIL Open Font License</a></span></div>
       </div>
-      <p class="group-footer" id="aboutPaletteNote">Oculi wears the ZepheniaLabs theme you choose here. Zephyr, following the device, is the default.</p>
+      <p class="group-footer" id="aboutPaletteNote">Choose a ZepheniaLabs theme. Zephyr, following the device, is the default.</p>
       <p class="about-motto">ZepheniaLabs · De L’existence a L’existant</p>
       <form method="dialog"><button class="button-primary about-done" value="done">Done</button></form>
     </div>
@@ -1020,8 +1020,8 @@
   <script src="js/vision-compare.js"></script>
   <script src="js/genius.js"></script>
   <script src="js/zl-thickness.js"></script>
-  <script src="js/lens-preview.js"></script>
-  <script src="js/demotools.js"></script>
+  <script src="js/lens-studio.js"></script>
+  <script src="js/showcase.js"></script>
   <script src="js/zl-field.js"></script>
   <script src="js/studio.js"></script>
   <script src="js/workspace.js"></script>

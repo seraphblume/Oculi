@@ -53,10 +53,11 @@
 
   function engineRows() {
     const rows = [
-      [releaseName(), "Primary · v0.3.0 rules"],
-      [(() => { const e = engines.ENGINES[engines.shadowId()]; return `${e.label} ${e.version().split(".").slice(0, 2).join(".")}`; })(), "Comparison · former Beryl 1.0"],
-      ["Goshenite 1.0", "Flagship · collecting outcomes, not trained"],
-      [`ZL Retina ${window.ZLRetina ? window.ZLRetina.version : ""}`.trim(), "Vision comparison in Genius"]
+      [releaseName(), "Primary"],
+      [(() => { const e = engines.ENGINES[engines.shadowId()]; return `${e.label} ${e.version().split(".").slice(0, 2).join(".")}`; })(), "Comparison"],
+      ["Goshenite 1.0", "Flagship · learning from outcomes"],
+      [`ZL Retina ${window.ZLRetina ? window.ZLRetina.version : ""}`.trim(), "Genius and Clarity"],
+      [`ZL Thickness ${window.ZLThickness ? window.ZLThickness.version : ""}`.trim(), "Lens Studio"]
     ];
     return rows.map(([name, role]) => `<div class="row"><span class="row-label">${name}</span><span class="row-detail">${role}</span></div>`).join("");
   }

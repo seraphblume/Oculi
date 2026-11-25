@@ -1,7 +1,7 @@
-// Frame/Lens Preview: frame shapes, base curves, power through the edged lens, fringing.
+// Lens Studio: frame shapes, base curves, power through the edged lens, fringing.
 const assert = require("assert");
 const T = require("../js/zl-thickness.js");
-const L = require("../js/lens-preview.js");
+const L = require("../js/lens-studio.js");
 
 const near = (a, b, tol, msg) => assert.ok(Math.abs(a - b) <= tol, `${msg}: ${a} vs ${b} (±${tol})`);
 
@@ -88,4 +88,4 @@ near(high.decentration[1], 5, 1e-12, "fitting height 24 in a 38 mm B");
 assert.throws(() => L.preview({ sphere: -4, cylinder: 0, axis: 0 }, { ...frame, pd: 60 }, "od"), RangeError);
 assert.throws(() => L.preview({ sphere: -4, cylinder: 0, axis: 0 }, { ...frame, fittingHeight: 37 }, "od"), RangeError);
 
-console.log("PASS: Frame/Lens Preview shapes, base curves, back-vertex power, thickness and fringing");
+console.log("PASS: Lens Studio shapes, base curves, back-vertex power, thickness and fringing");

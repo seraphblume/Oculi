@@ -1,25 +1,25 @@
-// Demotools: True Vision (ZL Retina) and Frame/Lens Preview (ZL Thickness, polycarbonate).
+// Showcase: Clarity (ZL Retina) and Lens Studio (ZL Thickness, polycarbonate).
 // Both are illustrations for the patient. Nothing here reads or writes storage.
 (function () {
   "use strict";
   const $ = id => document.getElementById(id);
   const Rx = window.OculiRx;
   const Vision = window.OculiVisionCompare;
-  const Lens = window.OculiLensPreview;
+  const Lens = window.OculiLensStudio;
   const show$ = Rx.displayMinus;
   const SVG = "http://www.w3.org/2000/svg";
 
   // ---------------------------------------------------------------- build
 
-  document.querySelectorAll("#demoPanel .rx-table[data-rx]").forEach(el => {
+  document.querySelectorAll("#showcasePanel .rx-table[data-rx]").forEach(el => {
     el.innerHTML = Rx.rxRowHTML(el.dataset.rx, el.dataset.eye, el.dataset.rx.startsWith("tvCur") ? "current" : "Rx");
   });
   ["tvCurAdd", "tvFinAdd"].forEach(id => { $(id).innerHTML = Rx.addOptionsHTML(); });
 
   // ---------------------------------------------------------------- sub-tabs
 
-  const subTabs = [$("demoVisionTab"), $("demoLensTab")];
-  const subPanels = [$("demoVisionForm"), $("demoLensForm")];
+  const subTabs = [$("clarityTab"), $("lensStudioTab")];
+  const subPanels = [$("clarityForm"), $("lensStudioForm")];
   function selectTool(index, focus = false) {
     subTabs.forEach((tab, i) => {
       tab.setAttribute("aria-selected", String(i === index));
@@ -38,15 +38,15 @@
   });
 
   // Zero or blank cylinder means sphere only, as everywhere else in Oculi.
-  $("demoPanel").addEventListener("change", e => {
+  $("showcasePanel").addEventListener("change", e => {
     const m = e.target.id.match(/^((?:tvCur|tvFin)O[ds]|flRx[AB])(Sph|Cyl)$/);
     if (m) Rx.syncRxAxis(m[1], true);
   });
 
   // A sign tap changes the Rx without an input event.
-  $("demoPanel").addEventListener("click", e => {
+  $("showcasePanel").addEventListener("click", e => {
     if (!e.target.closest(".sign:not(.static)")) return;
-    if (e.target.closest("#demoVisionForm")) clearVision("Inputs changed · show the comparison again.");
+    if (e.target.closest("#clarityForm")) clearVision("Inputs changed · show the comparison again.");
     else $("flCompare").hidden = true;
   });
 
@@ -57,13 +57,13 @@
       if (required) throw new Error(`Enter ${label}.`);
       return null;
     }
-    if (!Rx.validRx(r)) throw new Error(`${label}: enter sphere, cylinder and an axis from 1 to 180 (or no cylinder).`);
+    if (!Rx.validRx(r)) throw new Error(`${label}: complete the sphere, cylinder and axis.`);
     return r;
   }
 
   const readAdd = id => { const v = Number($(id).value); return Number.isFinite(v) && v > 0 ? v : 0; };
 
-  // ---------------------------------------------------------------- True Vision
+  // ---------------------------------------------------------------- Clarity
 
   const tvCanvases = () => ({ current: $("tvCanvasCurrent"), true: $("tvCanvasTrue") });
 
@@ -79,7 +79,7 @@
     const d = outOfFocus(v);
     parts.push(d < 0.125 ? "in focus" : `about ${d.toFixed(2)} D out of focus`);
     if (v.accommodationUsed >= 0.25) parts.push(`focusing ${v.accommodationUsed.toFixed(2)} D`);
-    if (v.limited) parts.push("blur shown at the demo's limit");
+    if (v.limited) parts.push("blur capped for display");
     return show$(parts.join(" · "));
   }
 
@@ -112,7 +112,7 @@
       $("tvCompare").hidden = false;
       $("tvCurrentNote").textContent = viewNote(views.current, input.current ? `Current glasses ${Rx.fmtRx(input.current)}` : "No glasses");
       $("tvTrueNote").textContent = viewNote(views.true, `Final Rx ${Rx.fmtRx(input.eye)}`);
-      status.textContent = `${input.eyeId === "od" ? "Right eye" : "Left eye"} ${input.scene === "near" ? "at 40 cm" : "at distance"}. Nothing entered here is saved.`;
+      status.textContent = `${input.eyeId === "od" ? "Right eye" : "Left eye"} · ${input.scene === "near" ? "near, 40 cm" : "distance"}`;
     } catch (error) {
       status.textContent = `Could not render the comparison: ${error.message}`;
     } finally {
@@ -120,9 +120,9 @@
     }
   }
 
-  $("demoVisionForm").addEventListener("submit", showVision);
-  $("demoVisionForm").addEventListener("input", () => clearVision("Inputs changed · show the comparison again."));
-  $("demoVisionForm").addEventListener("segmentchange", e => {
+  $("clarityForm").addEventListener("submit", showVision);
+  $("clarityForm").addEventListener("input", () => clearVision("Inputs changed · show the comparison again."));
+  $("clarityForm").addEventListener("segmentchange", e => {
     if (e.target.id === "tvGlasses") {
       const wears = e.detail.value === "yes";
       $("tvCurrentFields").hidden = !wears;
@@ -133,14 +133,14 @@
     }
   });
   $("tvReset").addEventListener("click", () => {
-    resetForm($("demoVisionForm"));
+    resetForm($("clarityForm"));
     setSegment("tvGlasses", "none"); setSegment("tvEye", "od"); setSegment("tvScene", "distance");
     $("tvCurrentFields").hidden = true; $("tvCurrentFields").disabled = true;
-    clearVision("Works at any age. Nothing entered here is saved.");
+    clearVision("Nothing here is saved.");
     $("tvAge").focus();
   });
 
-  // ---------------------------------------------------------------- Frame/Lens Preview
+  // ---------------------------------------------------------------- Lens Studio
 
   function num(id, label) {
     const t = $(id).value.trim().replace(",", ".");
@@ -195,7 +195,7 @@
 
   // Colour fringing through one point of the lens. The prism spreads each point of the letters
   // into a short spectrum, red at one end and blue at the other (Prentice ÷ Abbe gives that spread);
-  // each colour channel averages its third of the spectrum. Same scale as the True Vision chart.
+  // each colour channel averages its third of the spectrum. Same scale as the Clarity chart.
   function fringeStrip(prism) {
     const W = 240, H = 46;
     const c = document.createElement("canvas");
@@ -252,10 +252,10 @@
       ["Centre", fmtMm(p.mesh.centerMm)],
       ["Thickest edge", `${fmtMm(p.thickest.mm)} · ${p.thickest.where}`],
       ["Thinnest edge", `${fmtMm(p.thinnest.mm)} · ${p.thinnest.where}`],
-      ["Weight · one lens", `${p.mesh.massG.toFixed(1)} g`],
-      ["Front base curve", `${p.base.toFixed(p.base % 1 ? 2 : 0)} D`],
-      ["Colour fringing · 10 mm", `${p.fringe.at10mm.toFixed(2)} Δ`],
-      ["Colour fringing · edge", `${p.fringe.atRim.toFixed(2)} Δ${p.fringe.atRim >= p.fringe.threshold ? " · noticeable" : ""}`]
+      ["Weight, each", `${p.mesh.massG.toFixed(1)} g`],
+      ["Base curve", `${p.base.toFixed(p.base % 1 ? 2 : 0)} D`],
+      ["Fringing · 10 mm", `${p.fringe.at10mm.toFixed(2)} Δ`],
+      ["Fringing · edge", `${p.fringe.atRim.toFixed(2)} Δ${p.fringe.atRim >= p.fringe.threshold ? " · noticeable" : ""}`]
     ];
     for (const [k, v] of rows) {
       const dt = document.createElement("dt"); dt.textContent = k;
@@ -275,7 +275,7 @@
     if (p.mesh.carrierUsed) {
       const note = document.createElement("p");
       note.className = "group-footer";
-      note.textContent = "This Rx is beyond what a single curve can make across this frame; the edge is an estimate.";
+      note.textContent = "Too strong for a single curve across this frame; the edge is approximate.";
       target.append(note);
     }
   }
@@ -289,7 +289,7 @@
         a: num("flA", "Lens width"), b: num("flB", "Lens height"), dbl: num("flDbl", "Bridge"),
         pd: num("flPd", "Monocular PD"), fittingHeight: num("flFh", "Fitting height")
       };
-      if ([frame.a, frame.b, frame.dbl, frame.pd].some(v => v == null)) throw new Error("Enter A, B, DBL and the monocular PD.");
+      if ([frame.a, frame.b, frame.dbl, frame.pd].some(v => v == null)) throw new Error("Enter A, B, DBL and the PD.");
       const eye = $("flEye").dataset.value || "od";
       const a = readRx("flRxA", "Rx A", true), b = readRx("flRxB", "Rx B", true);
       const pa = Lens.preview(a, frame, eye), pb = Lens.preview(b, frame, eye);
@@ -304,11 +304,11 @@
     }
   }
 
-  $("demoLensForm").addEventListener("submit", showLenses);
-  $("demoLensForm").addEventListener("input", () => { $("flCompare").hidden = true; });
-  $("demoLensForm").addEventListener("segmentchange", () => { if (!$("flCompare").hidden) $("flShow").click(); });
+  $("lensStudioForm").addEventListener("submit", showLenses);
+  $("lensStudioForm").addEventListener("input", () => { $("flCompare").hidden = true; });
+  $("lensStudioForm").addEventListener("segmentchange", () => { if (!$("flCompare").hidden) $("flShow").click(); });
   $("flReset").addEventListener("click", () => {
-    resetForm($("demoLensForm"));
+    resetForm($("lensStudioForm"));
     setSegment("flEye", "od");
     $("flCompare").hidden = true; $("flNotes").hidden = true; $("flError").textContent = "";
   });
@@ -328,5 +328,5 @@
     form.querySelectorAll("select.field[id$='Ax']").forEach(s => { s.disabled = false; });
   }
 
-  window.OculiDemotools = Object.freeze({ selectTool });
+  window.OculiShowcase = Object.freeze({ selectTool });
 })();

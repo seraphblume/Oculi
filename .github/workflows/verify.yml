@@ -55,8 +55,8 @@ jobs:
         run: node tests/vision-compare.test.js
       - name: ZL Thickness parity with the Python package
         run: node tests/zl-thickness.test.js
-      - name: Frame/Lens Preview geometry
-        run: node tests/lens-preview.test.js
+      - name: Lens Studio geometry
+        run: node tests/lens-studio.test.js
 
       - name: Install browser test runtime
         run: |
@@ -73,8 +73,8 @@ jobs:
         env:
           DIOPTRA_SCREENSHOT_DIR: ${{ runner.temp }}/dioptra-ui
 
-      - name: Verify Demotools
-        run: node tests/demotools.browser.js
+      - name: Verify Showcase
+        run: node tests/showcase.browser.js
         env:
           DIOPTRA_SCREENSHOT_DIR: ${{ runner.temp }}/dioptra-ui
 
