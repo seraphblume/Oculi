@@ -22,7 +22,7 @@ A guided visual assessment, from history and acuity to the autorefractor ticket 
 **Let them see it.**
 
 - **Clarity** puts the same chart side by side: how your patient sees today, and how their new prescription sees. Distance or near, at any age. Built for guardians and skeptics alike.
-- **Lens Studio** edges two prescriptions into the same frame and shows the difference before the lab does. Pick a shape, enter the frame size, and compare edge thickness, weight and colour fringing at a glance.
+- **Lens Studio** draws the full frame twice, current pair on top and new pair below, both eyes at once. Pick a shape, enter the frame size and PD, and compare edge thickness, weight and colour fringing at a glance.
 
 ### Tools
 **The essentials, always at hand.**

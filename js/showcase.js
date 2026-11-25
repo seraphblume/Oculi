@@ -14,6 +14,12 @@
   document.querySelectorAll("#showcasePanel .rx-table[data-rx]").forEach(el => {
     el.innerHTML = Rx.rxRowHTML(el.dataset.rx, el.dataset.eye, el.dataset.rx.startsWith("tvCur") ? "current" : "Rx");
   });
+  // Lens Studio: one table per Rx with an OD and an OS row under a single header.
+  document.querySelectorAll("#showcasePanel .rx-table[data-rx-pair]").forEach(el => {
+    const p = el.dataset.rxPair, kind = p.endsWith("A") ? "Rx A" : "Rx B";
+    const os = Rx.rxRowHTML(`${p}Os`, "OS", kind);
+    el.innerHTML = Rx.rxRowHTML(`${p}Od`, "OD", kind) + os.slice(os.indexOf('<div class="rx-row">'));
+  });
   ["tvCurAdd", "tvFinAdd"].forEach(id => { $(id).innerHTML = Rx.addOptionsHTML(); });
 
   // ---------------------------------------------------------------- sub-tabs
@@ -39,7 +45,7 @@
 
   // Zero or blank cylinder means sphere only, as everywhere else in Oculi.
   $("showcasePanel").addEventListener("change", e => {
-    const m = e.target.id.match(/^((?:tvCur|tvFin)O[ds]|flRx[AB])(Sph|Cyl)$/);
+    const m = e.target.id.match(/^((?:tvCur|tvFin|flRxA|flRxB)O[ds])(Sph|Cyl)$/);
     if (m) Rx.syncRxAxis(m[1], true);
   });
 
@@ -157,39 +163,42 @@
     return node;
   }
 
-  // The lens as you face the wearer: OD's nasal side to the right, OS's to the left.
-  // The band inside the rim is the edge thickness at true scale.
-  function frontView(p, scale) {
-    const flip = p.eye === "os" ? -1 : 1;
-    const pad = 26; // room for the callouts and the nasal mark
-    const xs = p.mesh.rim.map(q => q[0]), ys = p.mesh.rim.map(q => q[1]);
-    const halfW = Math.max(...xs.map(Math.abs)), top = Math.max(...ys), bottom = Math.min(...ys);
-    const width = 2 * halfW * scale + 2 * pad, height = (top - bottom) * scale + 2 * pad;
-    const X = x => width / 2 + flip * x * scale, Y = y => pad + (top - y) * scale;
-    const size = width;
-    const svg = el("svg", { viewBox: `0 0 ${width.toFixed(1)} ${height.toFixed(1)}`, class: "lens-svg", role: "img" });
-    const outer = [], inner = [];
-    p.mesh.rim.forEach(([x, y], i) => {
-      const r = Math.hypot(x, y), t = Math.min(p.mesh.edgeMm[i], r * 0.6);
-      outer.push(`${X(x).toFixed(2)},${Y(y).toFixed(2)}`);
-      inner.push(`${X(x * (1 - t / r)).toFixed(2)},${Y(y * (1 - t / r)).toFixed(2)}`);
-    });
-    svg.append(el("path", { d: `M${outer.join("L")}Z M${inner.reverse().join("L")}Z`, class: "lens-band", "fill-rule": "evenodd" }));
-    svg.append(el("polygon", { points: outer.reverse().join(" "), class: "lens-rim" }));
-    // optical centre
-    const [ox, oy] = p.decentration;
-    svg.append(el("path", { d: `M${X(ox) - 6},${Y(oy)}H${X(ox) + 6}M${X(ox)},${Y(oy) - 6}V${Y(oy) + 6}`, class: "lens-oc" }));
-    // nasal marker
-    svg.append(el("text", { x: flip > 0 ? size - 4 : 4, y: Y(0) + 4, class: "lens-tick", "text-anchor": flip > 0 ? "end" : "start" }, "N"));
-    // callouts: thickest and thinnest rim points
-    for (const [mark, cls] of [[p.thickest, "lens-callout"], [p.thinnest, "lens-callout thin"]]) {
-      const [x, y] = p.mesh.rim[mark.deg];
-      const r = Math.hypot(x, y), ux = x / r, uy = y / r;
-      const x1 = X(x), y1 = Y(y), x2 = X(x + ux * 7), y2 = Y(y + uy * 7);
-      svg.append(el("line", { x1, y1, x2, y2, class: cls }));
-      svg.append(el("circle", { cx: x1, cy: y1, r: 2.2, class: cls }));
+  // The whole frame as you face the wearer: OD on the left with its nasal side towards the bridge,
+  // OS on the right. Drawn in millimetres, so both frames share one scale; the band inside each
+  // rim is the edge thickness at true scale.
+  function frameView(pair, frame) {
+    const half = (frame.a + frame.dbl) / 2; // boxing centre of each lens from the bridge centre
+    const padX = 9, padTop = 7, padBottom = 10;
+    const top = frame.b / 2 + padTop, width = 2 * (half + frame.a / 2 + padX), height = frame.b + padTop + padBottom;
+    const svg = el("svg", { viewBox: `${-width / 2} ${-top} ${width} ${height}`, class: "frame-svg", role: "img" });
+    const lenses = [[pair.od, -half, 1], [pair.os, half, -1]]; // [preview, centre x, nasal direction]
+    const at = (cx, dir, x, y) => [cx + dir * x, -y];
+    for (const [p, cx, dir] of lenses) {
+      const outer = [], inner = [];
+      p.mesh.rim.forEach(([x, y], i) => {
+        const r = Math.hypot(x, y), t = Math.min(p.mesh.edgeMm[i], r * 0.6);
+        outer.push(at(cx, dir, x, y).map(v => v.toFixed(2)).join(","));
+        inner.push(at(cx, dir, x * (1 - t / r), y * (1 - t / r)).map(v => v.toFixed(2)).join(","));
+      });
+      svg.append(el("path", { d: `M${outer.join("L")}Z M${inner.reverse().join("L")}Z`, class: "lens-band", "fill-rule": "evenodd" }));
+      svg.append(el("polygon", { points: outer.join(" "), class: "lens-rim" }));
+      const [ox, oy] = at(cx, dir, p.decentration[0], p.decentration[1]);
+      svg.append(el("path", { d: `M${ox - 2},${oy}H${ox + 2}M${ox},${oy - 2}V${oy + 2}`, class: "lens-oc" }));
+      for (const [mark, cls] of [[p.thickest, "lens-callout"], [p.thinnest, "lens-callout thin"]]) {
+        const [x, y] = p.mesh.rim[mark.deg];
+        const r = Math.hypot(x, y);
+        const [x1, y1] = at(cx, dir, x, y), [x2, y2] = at(cx, dir, x + (x / r) * 4, y + (y / r) * 4);
+        svg.append(el("line", { x1, y1, x2, y2, class: cls }));
+        svg.append(el("circle", { cx: x1, cy: y1, r: 0.9, class: cls }));
+      }
+      svg.append(el("text", { x: cx, y: frame.b / 2 + 7, class: "lens-tick", "text-anchor": "middle" }, p.eye.toUpperCase()));
     }
-    svg.setAttribute("aria-label", `${p.eye.toUpperCase()} lens front view: edge ${p.thinnest.mm.toFixed(1)} to ${p.thickest.mm.toFixed(1)} mm, centre ${p.mesh.centerMm.toFixed(1)} mm`);
+    // bridge, from just above each lens's nasal edge
+    const [nx, ny] = pair.od.mesh.rim[25];
+    const [bx1, by1] = at(-half, 1, nx, ny), [bx2] = at(half, -1, nx, ny);
+    svg.append(el("path", { d: `M${bx1},${by1} Q0,${by1 - 4} ${bx2},${by1}`, class: "frame-bridge" }));
+    const pairMass = pair.od.mesh.massG + pair.os.mesh.massG;
+    svg.setAttribute("aria-label", `Frame front view. OD edge ${pair.od.thinnest.mm.toFixed(1)} to ${pair.od.thickest.mm.toFixed(1)} mm, OS edge ${pair.os.thinnest.mm.toFixed(1)} to ${pair.os.thickest.mm.toFixed(1)} mm, ${pairMass.toFixed(1)} g for the pair`);
     return svg;
   }
 
@@ -239,45 +248,76 @@
   }
 
   const fmtMm = v => `${v.toFixed(1)} mm`;
-  function figureFor(target, name, p, scale) {
+  const fmtPrism = (v, threshold) => ({ text: `${v.toFixed(2)} Δ`, notice: v >= threshold });
+
+  function caption(name, pair) {
+    const cap = document.createElement("figcaption");
+    const strong = document.createElement("strong"); strong.textContent = name;
+    const line = document.createElement("span");
+    line.textContent = show$(`OD ${Rx.fmtRx(pair.od.rx)} · OS ${Rx.fmtRx(pair.os.rx)}`);
+    cap.append(strong, line);
+    return cap;
+  }
+
+  function figureFor(target, name, pair, frame) {
+    target.replaceChildren(caption(name, pair), frameView(pair, frame));
+  }
+
+  function dataFor(target, name, pair) {
     target.replaceChildren();
-    const head = document.createElement("figcaption");
-    head.innerHTML = `<strong></strong><span></span>`;
-    head.firstChild.textContent = name;
-    head.lastChild.textContent = show$(`${Rx.fmtRx(p.rx)} · ${p.eye.toUpperCase()}`);
-    target.append(head, frontView(p, scale));
-    const dl = document.createElement("dl");
-    dl.className = "lens-figures";
+    const head = document.createElement("h3");
+    head.className = "frame-data-title";
+    head.textContent = name;
+    const table = document.createElement("table");
+    table.className = "lens-table";
+    table.innerHTML = "<thead><tr><th scope=\"col\"><span class=\"visually-hidden\">Figure</span></th><th scope=\"col\">OD</th><th scope=\"col\">OS</th></tr></thead><tbody></tbody>";
     const rows = [
-      ["Centre", fmtMm(p.mesh.centerMm)],
-      ["Thickest edge", `${fmtMm(p.thickest.mm)} · ${p.thickest.where}`],
-      ["Thinnest edge", `${fmtMm(p.thinnest.mm)} · ${p.thinnest.where}`],
-      ["Weight, each", `${p.mesh.massG.toFixed(1)} g`],
-      ["Base curve", `${p.base.toFixed(p.base % 1 ? 2 : 0)} D`],
-      ["Fringing · 10 mm", `${p.fringe.at10mm.toFixed(2)} Δ`],
-      ["Fringing · edge", `${p.fringe.atRim.toFixed(2)} Δ${p.fringe.atRim >= p.fringe.threshold ? " · noticeable" : ""}`]
+      ["Centre", p => fmtMm(p.mesh.centerMm)],
+      ["Thickest edge", p => fmtMm(p.thickest.mm)],
+      ["Thinnest edge", p => fmtMm(p.thinnest.mm)],
+      ["Weight", p => `${p.mesh.massG.toFixed(1)} g`],
+      ["Base curve", p => `${p.base.toFixed(p.base % 1 ? 2 : 0)} D`],
+      ["Fringing · 10 mm", p => fmtPrism(p.fringe.at10mm, p.fringe.threshold)],
+      ["Fringing · edge", p => fmtPrism(p.fringe.atRim, p.fringe.threshold)]
     ];
-    for (const [k, v] of rows) {
-      const dt = document.createElement("dt"); dt.textContent = k;
-      const dd = document.createElement("dd"); dd.textContent = show$(v);
-      dl.append(dt, dd);
+    const body = table.tBodies[0];
+    for (const [label, value] of rows) {
+      const tr = body.insertRow();
+      const th = document.createElement("th"); th.scope = "row"; th.textContent = label; tr.append(th);
+      for (const p of [pair.od, pair.os]) {
+        const v = value(p), td = tr.insertCell();
+        if (typeof v === "string") td.textContent = v;
+        else {
+          td.textContent = v.text;
+          if (v.notice) { td.classList.add("notice"); td.title = "A wearer may notice this fringing"; }
+        }
+      }
     }
-    target.append(dl);
+    const total = body.insertRow();
+    const th = document.createElement("th"); th.scope = "row"; th.textContent = "Pair"; total.append(th);
+    const cell = total.insertCell(); cell.colSpan = 2;
+    cell.textContent = `${(pair.od.mesh.massG + pair.os.mesh.massG).toFixed(1)} g`;
     const strips = document.createElement("div");
     strips.className = "fringe-strips";
-    for (const [label, prism] of [["10 mm from centre", p.fringe.at10mm], ["At the edge", p.fringe.atRim]]) {
-      const wrap = document.createElement("div");
-      const cap = document.createElement("span"); cap.className = "fringe-label"; cap.textContent = label;
-      wrap.append(cap, fringeStrip(prism));
-      strips.append(wrap);
+    for (const [where, key] of [["10 mm", "at10mm"], ["edge", "atRim"]]) {
+      for (const p of [pair.od, pair.os]) {
+        const wrap = document.createElement("div");
+        const cap = document.createElement("span"); cap.className = "fringe-label"; cap.textContent = `${p.eye.toUpperCase()} · ${where}`;
+        wrap.append(cap, fringeStrip(p.fringe[key]));
+        strips.append(wrap);
+      }
     }
-    target.append(strips);
-    if (p.mesh.carrierUsed) {
+    target.append(head, table, strips);
+    if (pair.od.mesh.carrierUsed || pair.os.mesh.carrierUsed) {
       const note = document.createElement("p");
       note.className = "group-footer";
       note.textContent = "Too strong for a single curve across this frame; the edge is approximate.";
       target.append(note);
     }
+  }
+
+  function readPair(prefix, name) {
+    return { od: readRx(`${prefix}Od`, `${name} · OD`, true), os: readRx(`${prefix}Os`, `${name} · OS`, true) };
   }
 
   function showLenses(event) {
@@ -287,15 +327,22 @@
       const frame = {
         shape: $("flShape").value,
         a: num("flA", "Lens width"), b: num("flB", "Lens height"), dbl: num("flDbl", "Bridge"),
-        pd: num("flPd", "Monocular PD"), fittingHeight: num("flFh", "Fitting height")
+        fittingHeight: num("flFh", "Fitting height")
       };
-      if ([frame.a, frame.b, frame.dbl, frame.pd].some(v => v == null)) throw new Error("Enter A, B, DBL and the PD.");
-      const eye = $("flEye").dataset.value || "od";
-      const a = readRx("flRxA", "Rx A", true), b = readRx("flRxB", "Rx B", true);
-      const pa = Lens.preview(a, frame, eye), pb = Lens.preview(b, frame, eye);
-      const scale = 3; // px per mm, the same for both so the bands compare
-      figureFor($("flFigA"), $("flNameA").value.trim() || "Rx A", pa, scale);
-      figureFor($("flFigB"), $("flNameB").value.trim() || "Rx B", pb, scale);
+      const pd = { od: num("flPdOd", "PD · OD"), os: num("flPdOs", "PD · OS") };
+      if ([frame.a, frame.b, frame.dbl, pd.od, pd.os].some(v => v == null)) throw new Error("Enter A, B, DBL and the PD for each eye.");
+      for (const eye of ["od", "os"]) if (!(pd[eye] >= 20 && pd[eye] <= 45)) throw new Error(`PD · ${eye.toUpperCase()}: from 20 to 45 mm.`);
+      const nameA = $("flNameA").value.trim() || "Rx A", nameB = $("flNameB").value.trim() || "Rx B";
+      const rxA = readPair("flRxA", nameA), rxB = readPair("flRxB", nameB);
+      const edge = (pairRx) => ({
+        od: Lens.preview(pairRx.od, { ...frame, pd: pd.od }, "od"),
+        os: Lens.preview(pairRx.os, { ...frame, pd: pd.os }, "os")
+      });
+      const pa = edge(rxA), pb = edge(rxB);
+      figureFor($("flFigA"), nameA, pa, frame);
+      figureFor($("flFigB"), nameB, pb, frame);
+      dataFor($("flDataA"), nameA, pa);
+      dataFor($("flDataB"), nameB, pb);
       $("flCompare").hidden = false;
       $("flNotes").hidden = false;
     } catch (error) {
@@ -306,10 +353,8 @@
 
   $("lensStudioForm").addEventListener("submit", showLenses);
   $("lensStudioForm").addEventListener("input", () => { $("flCompare").hidden = true; });
-  $("lensStudioForm").addEventListener("segmentchange", () => { if (!$("flCompare").hidden) $("flShow").click(); });
   $("flReset").addEventListener("click", () => {
     resetForm($("lensStudioForm"));
-    setSegment("flEye", "od");
     $("flCompare").hidden = true; $("flNotes").hidden = true; $("flError").textContent = "";
   });
 

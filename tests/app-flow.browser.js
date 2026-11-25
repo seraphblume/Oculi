@@ -42,7 +42,8 @@ const server = http.createServer(async (req, res) => {
 
     // Studio surface: the first-run splash appears once, waits for Continue, then never again.
     assert.equal(await page.locator("#zlSplash").isVisible(), true, "first run shows the splash");
-    assert.match(await page.locator("#zlSplash").innerText(), /ZEPHENIALABS[\s\S]*Oculi[\s\S]*Beryl 1\.1/i);
+    assert.match(await page.locator("#zlSplash").innerText(), /ZEPHENIALABS[\s\S]*Oculi[\s\S]*Refraction, focused\./i);
+    assert.doesNotMatch(await page.locator("#zlSplash").innerText(), /Beryl|medical device/i, "the splash carries only the tagline");
     assert.equal(await page.evaluate(() => getComputedStyle(document.getElementById("zlSplash")).backgroundColor), "rgb(244, 242, 248)", "Zephyr light ground on a light device");
     await page.locator("#zlSplashContinue").click();
     assert.equal(await page.locator("#zlSplash").isVisible(), false);

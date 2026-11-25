@@ -19,6 +19,7 @@ const server = http.createServer(async (req, res) => {
   } catch { res.writeHead(404).end(); }
 });
 const shots = process.env.DIOPTRA_SCREENSHOT_DIR;
+const near = (a, b, tol, msg) => assert.ok(Math.abs(a - b) <= tol, `${msg}: ${a} vs ${b}`);
 
 async function overflow(page) {
   return page.evaluate(() => ({ scroll: document.documentElement.scrollWidth,
@@ -109,55 +110,61 @@ const sharpness = (page, id) => page.evaluate(id => {
     await page.locator("#lensStudioTab").click();
     assert.equal(await page.locator("#lensStudioForm").isVisible(), true);
     assert.equal(await page.locator("#clarityForm").isVisible(), false);
+    assert.equal(await page.locator("#flEye").count(), 0, "both eyes at once, no eye switch");
     await page.locator("#flShow").click();
-    assert.match(await page.locator("#flError").innerText(), /Rx A/);
-    await page.locator("#flRxASph").selectOption("2.00");
-    await page.locator("#flRxBSph").selectOption("6.00");
-    await page.locator("#flRxBCyl").selectOption("1.50");
-    await page.locator("#flRxBAx").selectOption("180");
+    assert.match(await page.locator("#flError").innerText(), /Current · OD/);
+    const pick = async values => { for (const [id, value] of Object.entries(values)) await page.locator(`#${id}`).selectOption(value); };
+    await pick({ flRxAOdSph: "2.00", flRxAOsSph: "2.25" });
+    await page.locator("#flShow").click();
+    assert.match(await page.locator("#flError").innerText(), /New · OD/, "every eye of both Rx is required");
+    await pick({ flRxBOdSph: "6.00", flRxBOdCyl: "1.50", flRxBOdAx: "180", flRxBOsSph: "5.50" });
     await page.locator("#flShow").click();
     await page.locator("#flCompare").waitFor({ state: "visible" });
-    const figures = async id => page.locator(`#${id} .lens-figures`).evaluate(dl => {
-      const out = {}; const dts = dl.querySelectorAll("dt"), dds = dl.querySelectorAll("dd");
-      dts.forEach((dt, i) => { out[dt.textContent] = dds[i].textContent; }); return out;
-    });
-    const a = await figures("flFigA"), b = await figures("flFigB");
-    assert.equal(a.Centre, "1.0 mm");
-    const edge = s => Number(/[\d.]+/.exec(s)[0]);
-    assert.ok(edge(b["Thickest edge"]) > edge(a["Thickest edge"]) + 2, `−6.00 thicker than −2.00: ${JSON.stringify([a, b])}`);
-    assert.ok(Number.parseFloat(b["Weight, each"]) > Number.parseFloat(a["Weight, each"]));
-    assert.match(b["Fringing · edge"], /noticeable/);
-    assert.equal(a["Base curve"], "5 D");
-    assert.match(await page.locator("#flFigB figcaption").innerText(), /New\n−6\.00 −1\.50 × 180° · OD/);
-    assert.equal(await page.locator("#flFigA svg.lens-svg").count(), 1);
-    assert.equal(await page.locator("#flFigA canvas.fringe-strip").count(), 2);
+
+    // Per-eye figures: { label: [OD, OS] }
+    const figures = id => page.locator(`#${id} .lens-table tbody`).evaluate(body => Object.fromEntries([...body.rows].map(r =>
+      [r.cells[0].textContent, [...r.cells].slice(1).map(c => c.textContent)])));
+    const a = await figures("flDataA"), b = await figures("flDataB");
+    assert.deepEqual(a.Centre, ["1.0 mm", "1.0 mm"]);
+    const mm = s => Number.parseFloat(s);
+    for (const i of [0, 1]) assert.ok(mm(b["Thickest edge"][i]) > mm(a["Thickest edge"][i]) + 1.5, `stronger Rx, thicker edge: ${JSON.stringify([a, b])}`);
+    assert.ok(mm(b.Pair[0]) > mm(a.Pair[0]));
+    near(mm(a.Pair[0]), mm(a.Weight[0]) + mm(a.Weight[1]), 0.11, "pair weight is the sum");
+    assert.equal(a["Base curve"][0], "5 D");
+    assert.equal(await page.locator("#flDataB td.notice").count() > 0, true, "noticeable fringing is marked");
+    assert.match(await page.locator("#flFigB figcaption").innerText(), /New\nOD −6\.00 −1\.50 × 180° · OS −5\.50 DS/);
+    assert.equal(await page.locator("#flFigA svg.frame-svg").count(), 1);
+    assert.equal(await page.locator("#flFigA .lens-band").count(), 2, "both lenses in one frame");
+    assert.deepEqual(await page.locator("#flFigA .lens-tick").allTextContents(), ["OD", "OS"]);
+    assert.equal(await page.locator("#flDataA canvas.fringe-strip").count(), 4);
     assert.equal(await page.locator("#flNotes").isVisible(), true);
 
-    // OS mirrors the drawing: the nasal marker moves to the left.
-    const nasalX = () => page.locator("#flFigA .lens-tick").evaluate(t => Number(t.getAttribute("x")));
-    const odX = await nasalX();
-    await page.locator("#flEye").getByRole("radio", { name: "OS" }).click();
-    await page.waitForFunction(() => !document.getElementById("flCompare").hidden && /OS/.test(document.querySelector("#flFigA figcaption").textContent));
-    assert.ok(await nasalX() < odX, "OS nasal side on the left");
-    await page.locator("#flEye").getByRole("radio", { name: "OD" }).click();
+    // As you face the wearer: OD on the left, OS on the right; both frames share one scale.
+    const ticks = await page.locator("#flFigA .lens-tick").evaluateAll(t => t.map(n => Number(n.getAttribute("x"))));
+    assert.ok(ticks[0] < 0 && ticks[1] > 0, `OD left, OS right: ${ticks}`);
+    assert.equal(await page.locator("#flFigA svg").getAttribute("viewBox"), await page.locator("#flFigB svg").getAttribute("viewBox"));
+    // Current sits directly above New.
+    const boxA = await page.locator("#flFigA").boundingBox(), boxB = await page.locator("#flFigB").boundingBox();
+    assert.ok(boxB.y >= boxA.y + boxA.height - 1 && Math.abs(boxA.x - boxB.x) < 1, "frames stacked, Current on top");
 
     // A plus Rx in a cat-eye: thick centre, edge held at 1.0 mm.
     await page.locator("#flShape").selectOption("cateye");
-    await page.locator("#flRxASph").selectOption("");
-    await page.locator("#flRxASph").evaluate(s => { s.dataset.sign = "1"; s.previousElementSibling.textContent = "+"; });
-    await page.locator("#flRxASph").selectOption("4.00");
+    for (const id of ["flRxAOdSph", "flRxAOsSph"]) {
+      await page.locator(`#${id}`).evaluate(s => { s.dataset.sign = "1"; s.previousElementSibling.textContent = "+"; });
+      await page.locator(`#${id}`).selectOption("4.00");
+    }
     await page.locator("#flShow").click();
     await page.locator("#flCompare").waitFor({ state: "visible" });
-    const plus = await figures("flFigA");
-    assert.ok(Number.parseFloat(plus.Centre) > 3, `+4.00 centre ${plus.Centre}`);
-    assert.match(plus["Thinnest edge"], /^1\.0 mm/);
+    const plus = await figures("flDataA");
+    assert.ok(mm(plus.Centre[0]) > 3 && mm(plus.Centre[1]) > 3, `+4.00 centre ${plus.Centre}`);
+    assert.deepEqual(plus["Thinnest edge"], ["1.0 mm", "1.0 mm"]);
 
     // Bad frame numbers are named, not thrown.
-    await page.locator("#flPd").fill("70");
+    await page.locator("#flPdOs").fill("70");
     await page.locator("#flShow").click();
-    assert.match(await page.locator("#flError").innerText(), /Monocular PD/);
+    assert.match(await page.locator("#flError").innerText(), /PD · OS/);
     assert.equal(await page.locator("#flCompare").isVisible(), false);
-    await page.locator("#flPd").fill("31");
+    await page.locator("#flPdOs").fill("31");
     await page.locator("#flShow").click();
     await page.locator("#flCompare").waitFor({ state: "visible" });
 

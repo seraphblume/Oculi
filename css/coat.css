@@ -282,11 +282,16 @@ select:disabled, input:disabled { opacity: 0.45; }
 .lens-oc, .lens-callout { stroke: var(--zl-accent); fill: var(--zl-accent); }
 .lens-oc { fill: none; }
 .lens-callout.thin { stroke: var(--zl-ink); fill: var(--zl-ink); }
+circle.lens-callout.thin { fill: var(--zl-ground); }
 .lens-tick { fill: var(--zl-ink); font: 500 10px var(--zl-font-mono); }
-.lens-figure figcaption strong { font-weight: 500; color: var(--zl-ink); }
-.lens-figure figcaption span, .lens-figures dt { color: var(--zl-ink); opacity: 0.7; }
-.lens-figures { font-family: var(--zl-font-sans); }
-.lens-figures dd { font-family: var(--zl-font-mono); font-size: 12px; }
-.lens-figures dt, .lens-figures dd { box-shadow: inset 0 -1px 0 color-mix(in srgb, var(--zl-ink) 20%, transparent); }
 .fringe-label { font: 500 11px/1.2 var(--zl-font-mono); text-transform: uppercase; color: var(--zl-ink); }
 .fringe-strip { box-shadow: 0 0 0 1px var(--zl-ink); }
+.frame-figure figcaption strong, .frame-data-title { font-weight: 500; color: var(--zl-ink); }
+.frame-figure figcaption span { color: var(--zl-ink); opacity: 0.7; }
+.frame-bridge { stroke: var(--zl-ink); }
+.frame-svg .lens-tick { font: 500 3.4px var(--zl-font-mono); }
+.lens-table th, .lens-table td { box-shadow: inset 0 -1px 0 color-mix(in srgb, var(--zl-ink) 20%, transparent); }
+.lens-table thead th { font: 500 11px var(--zl-font-mono); color: var(--zl-ink); }
+.lens-table tbody th { color: var(--zl-ink); opacity: 0.75; }
+.lens-table td { font: 500 12px var(--zl-font-mono); color: var(--zl-ink); }
+.lens-table td.notice::before { color: var(--zl-accent); }

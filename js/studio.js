@@ -33,7 +33,6 @@
   let splashField = null;
 
   function showSplash() {
-    $("zlSplashVersion").textContent = releaseName();
     $("zlSplash").hidden = false;
     const width = Math.round(Math.min(320, window.innerWidth * 0.62, window.innerHeight * 0.42));
     splashField = startField($("zlSplashField"), width, "centreOut");

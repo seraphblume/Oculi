@@ -753,28 +753,25 @@
       <p class="group-footer">Printed inside the temple, as in 52□18.</p>
       <h2 class="group-header">Fitting</h2>
       <div class="group">
-        <div class="row"><span class="row-label">Eye</span>
-          <div class="segmented" id="flEye" data-value="od" role="radiogroup" aria-label="Eye">
-            <button type="button" data-value="od" role="radio" aria-checked="true">OD</button>
-            <button type="button" data-value="os" role="radio">OS</button>
-          </div>
-        </div>
-        <label class="row"><span class="row-label">Monocular PD</span><span class="row-value"><input id="flPd" class="row-input num" type="text" inputmode="decimal" value="31" /><span class="unit">mm</span></span></label>
+        <label class="row"><span class="row-label">PD · OD</span><span class="row-value"><input id="flPdOd" class="row-input num" type="text" inputmode="decimal" value="31" /><span class="unit">mm</span></span></label>
+        <label class="row"><span class="row-label">PD · OS</span><span class="row-value"><input id="flPdOs" class="row-input num" type="text" inputmode="decimal" value="31" /><span class="unit">mm</span></span></label>
         <label class="row"><span class="row-label">Fitting height</span><span class="row-value"><input id="flFh" class="row-input num" type="text" inputmode="decimal" placeholder="B ÷ 2" /><span class="unit">mm</span></span></label>
       </div>
       <h2 class="group-header">Prescriptions</h2>
       <div class="eye-columns">
-        <section class="eye-section"><label class="eye-header rx-name"><span>Rx A</span><input id="flNameA" class="inline-input" type="text" maxlength="24" value="Current" aria-label="Rx A name" /></label><div class="group rx-table" data-rx="flRxA" data-eye="A"></div></section>
-        <section class="eye-section"><label class="eye-header rx-name"><span>Rx B</span><input id="flNameB" class="inline-input" type="text" maxlength="24" value="New" aria-label="Rx B name" /></label><div class="group rx-table" data-rx="flRxB" data-eye="B"></div></section>
+        <section class="eye-section"><label class="eye-header rx-name"><span>Rx A</span><input id="flNameA" class="inline-input" type="text" maxlength="24" value="Current" aria-label="Rx A name" /></label><div class="group rx-table" data-rx-pair="flRxA"></div></section>
+        <section class="eye-section"><label class="eye-header rx-name"><span>Rx B</span><input id="flNameB" class="inline-input" type="text" maxlength="24" value="New" aria-label="Rx B name" /></label><div class="group rx-table" data-rx-pair="flRxB"></div></section>
       </div>
       <p class="group-footer">Polycarbonate · index 1.586 · Abbe 30 · 1.20 g/cm³ · single vision.</p>
       <div class="form-actions"><button class="button-primary" type="submit" id="flShow">Compare Lenses</button><button class="quiet-button" type="button" id="flReset">Clear</button></div>
       <p class="form-error" id="flError" role="status" aria-live="polite"></p>
       <div class="lens-compare" id="flCompare" hidden aria-live="polite">
-        <figure class="lens-figure" id="flFigA"></figure>
-        <figure class="lens-figure" id="flFigB"></figure>
+        <figure class="frame-figure" id="flFigA"></figure>
+        <figure class="frame-figure" id="flFigB"></figure>
+        <section class="frame-data" id="flDataA"></section>
+        <section class="frame-data" id="flDataB"></section>
       </div>
-      <p class="group-footer" id="flNotes" hidden>Drawn as you face the wearer, edge thickness to scale: + optical centre, accent dot thickest edge, ink dot thinnest. Bevelling and mounting can shift the figures by a few tenths of a millimetre. Colour fringing shows from about 0.10 Δ.</p>
+      <p class="group-footer" id="flNotes" hidden>Drawn as you face the wearer, edge thickness to scale: + optical centre, filled dot thickest edge, open dot thinnest. A dot marks colour fringing a wearer may notice, from about 0.10 Δ. Bevelling and mounting can shift the figures by a few tenths of a millimetre.</p>
     </form>
   </section>
 
@@ -957,7 +954,7 @@
     <div class="zl-splash-text">
       <p class="zl-label">ZepheniaLabs</p>
       <h1 id="zlSplashName">Oculi</h1>
-      <p><span id="zlSplashVersion"></span> · Research tool, not a medical device. Confirm every result with an eye exam.</p>
+      <p>Refraction, focused.</p>
     </div>
     <button id="zlSplashContinue" class="zl-splash-continue" type="button">Continue</button>
   </div>
