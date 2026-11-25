@@ -1,88 +1,65 @@
 # Oculi
 
-Refraction, focused.
+**Refraction, focused.**
 
-Oculi brings clinical comparison, guided refraction and patient-facing previews into one calm, private workspace. Case data stays on the device.
+Everything an eye exam needs, in one calm workspace. Measure, refract, compare and show your patient the difference, all in the browser and all on your device.
 
-## Four spaces
+---
+
+## Four spaces. One flow.
 
 ### Clinical Study
+**Your judgment, measured.**
 
-A blinded comparison workflow for structured research.
-
-1. **Measure.** Patient, history, visual acuity (pinhole only below 20/25), then the initial refraction: previous Rx, autorefractor ticket, near and keratometry.
-2. **Refract.** Run your own exam without seeing the prediction. Record the final Rx, final VA, the +0.25 D test and, when it differs, the endpoint.
-3. **Compare.** Reveal the prediction, rate it 1–5 and save the case.
-
-**Follow-ups.** One to four weeks after the exam, record how the glasses are going and what was done. Your rating and the patient's tolerance are the two outcomes Goshenite learns from; neither ever changes a prediction.
-
-The primary engine is **Beryl 1.1** (the v0.3.0 rules), compared against **Heliodor 1.0** (the former Beryl 1.0). Vertex is fixed at 12 mm.
+Run your exam blind, then reveal what Oculi predicted. Rate it, save the case, and follow up a few weeks later. Every case sharpens the engines that come next.
 
 ### Genius
+**From first look to finished card.**
 
-A visual assessment and guided refraction, following the paper *Evaluación visual 3.0*:
-
-- **Patient.** Name (never saved), age or birthdate, current glasses.
-- **History.** Symptoms, medical background and warning signs.
-- **1 · Visual acuity.** Distance and near, with and without glasses; pinhole per eye.
-- **2 · Initial refraction.** Lensometer, autorefractor ticket, near working distance and a PD per eye.
-- **3 · Pre-diagnosis.** Suggested from the ticket and age; every box can be changed.
-- **4 · Vision comparison.** The same chart side by side, through the current correction and through Beryl's estimate.
-
-The assessment works at any age. The Rx proposal is for adults:
-
-- **Propose.** A warning sign or an age under 18 stops here. Beryl 1.1 reads the full ticket; glasses, symptoms and history become review notes.
-- **Verify.** VA through the proposed Rx in a trial frame, near with the ADD, the +0.25 D test, then accepted or refined.
-- **Card.** A 9 × 16 cm folding card: the Rx, PD and lens type inside; verification, notes and signatures below the fold; a cover and adaptation advice outside. Save it as a PDF or print it double-sided. It is marked as not indicative of the final product.
-
-Nothing in Genius is saved.
+A guided visual assessment, from history and acuity to the autorefractor ticket and a suggested pre-diagnosis. Oculi proposes an Rx, you verify it in the trial frame, and the result becomes a folding 9 × 16 cm card, ready to print or save as a PDF.
 
 ### Showcase
+**Let them see it.**
 
-Previews to share with a patient at the counter. Nothing here is saved.
-
-- **Clarity.** Enter the final Rx, and the current glasses if any, to see the same chart as the patient sees it now and as the new Rx corrects it. Distance or near, either eye, any age.
-- **Lens Studio.** Two prescriptions edged into the same frame in polycarbonate. Choose a shape (rectangle, oval, round, aviator or cat-eye), A, B, DBL, the PD and an optional fitting height. Each lens is drawn as you face the wearer, edge thickness to scale, with its centre and edge thickness, weight, base curve and colour fringing.
+- **Clarity** puts the same chart side by side: how your patient sees today, and how their new prescription sees. Distance or near, at any age. Built for guardians and skeptics alike.
+- **Lens Studio** edges two prescriptions into the same frame and shows the difference before the lab does. Pick a shape, enter the frame size, and compare edge thickness, weight and colour fringing at a glance.
 
 ### Tools
+**The essentials, always at hand.**
 
-- **Vertex.** Convert between spectacle and contact-lens planes, including custom distances.
-- **Spherical Equivalent.** Calculate and copy the nearest quarter dioptre.
-- **Transposition.** Switch cylinder notation.
+Vertex conversion, spherical equivalent and transposition for both eyes at once, ready to copy.
 
-Both eyes can be entered together. Nothing here is saved.
+---
 
-## Optics
+## Engines with names, not numbers.
 
-**ZL Retina.** `js/zl-retina.js` ports the studio's `zl_retina` 0.1.0: scalar diffraction through a 4 mm pupil, convolved in linear light, rendered off the main thread. It is monochromatic, since the eye doesn't perceive its own chromatic fringes. Young eyes may focus through hyperopia (Hofstetter's minimum amplitude, 15 − 0.25 × age); cylinder is never focused away. It illustrates focus only, not perception or eye health.
+**Beryl 1.1** drives every prediction.
+**Heliodor 1.0** runs alongside it as a second opinion.
+**Goshenite 1.0** is next: it learns from your ratings and your patients' comfort at follow-up.
 
-**ZL Thickness.** `js/zl-thickness.js` ports the lens geometry of `zl_thickness` 0.3.0: toric and aspheric sag, rim and centre thickness, volume and decentration. Lens Studio solves each back surface for the prescribed back-vertex power through the lens's own centre thickness, picks the front base curve by Vogel's rule, and holds centre and edge to at least 1.0 mm. Colour fringing is Prentice prism ÷ Abbe number, noticeable from about 0.10 Δ. Bevelling and mounting are not modelled, so a lab's figures can differ by a few tenths of a millimetre.
+---
 
-Both ports are checked against output from the Python packages.
+## Real optics, right in the browser.
 
-## Private by design
+Clarity renders vision with **ZL Retina**, which models how light passes through a 4 mm pupil. Lens Studio shapes every lens with **ZL Thickness**, solved for the exact prescription in polycarbonate. Both are ports of ZepheniaLabs' own optics packages, checked against the originals.
 
-Case data stays in the browser. Oculi needs no account and works offline after its first load. Ticket scanning runs in the browser; the image and patient name are never saved, and every recognised value stays editable.
+---
 
-## Research status
+## Private by design.
 
-Oculi is a research tool, not a validated medical device, and must not be the sole basis for prescribing, dispensing, diagnosis or treatment.
+No account. No server. No upload. Cases stay in the browser on your device, ticket photos are read and discarded, and Oculi keeps working offline after its first visit.
 
-Beryl 1.1 and Heliodor 1.0 are release names for unchanged rule sets; historical records keep their original identities. **Version numbers and gemstone names are not validation claims**, and agreement scores are software tolerances, not clinical confidence.
+---
 
-Goshenite 1.0 is the planned flagship: a learned layer on Beryl 1.1, tuned on the optometrist's rating and the patient's tolerance. Oculi now collects both; Goshenite stays untrained until enough follow-ups are in. See [`docs/engine-transition-2026-11-24.md`](docs/engine-transition-2026-11-24.md).
+## Designed by ZepheniaLabs.
 
-## Design
+Square corners, hairline rules, IBM Plex type, and three palettes (Zephyr, Boreas and Harukaze) in light or dark. Oculi follows your device until you choose a theme in About.
 
-Oculi wears the ZepheniaLabs design system as applied in O(n!): ground, ink and accent; IBM Plex Sans and Plex Mono; square corners and hairline rules. It follows the device in Zephyr until you choose a palette (Zephyr, Boreas, Harukaze) and appearance in About (tap **Oculi**). The coat lives in `css/coat.css` over `css/app.css`; tokens, fonts and the glyph field come from ZLDesignSystem:
+---
 
-```sh
-node tools/sync-zl-design.js ~/ZepheniaLabs/Workspace/Packages/ZLDesignSystem
-```
+## Get started
 
-## Run Oculi
-
-No build step. Serve the repository with any local web server:
+Oculi needs no build step. Serve the folder and open it:
 
 ```sh
 python3 -m http.server 8000
@@ -90,9 +67,16 @@ python3 -m http.server 8000
 
 Then visit `http://localhost:8000`.
 
-## Verify changes
+<details>
+<summary>For developers</summary>
 
-The suite covers the frozen engine contracts, engine parity across releases, the comparison engine, exports and fitting, ticket parsing, optical calculations, the PDF writer, ZL Retina and ZL Thickness parity, Lens Studio geometry, and the full browser workflow in light and dark from 320 px to desktop.
+**Structure.** Plain HTML, CSS and JavaScript, with a service worker for offline use. The design coat lives in `css/coat.css` over `css/app.css`. Tokens, fonts and the glyph field are synced from ZLDesignSystem:
+
+```sh
+node tools/sync-zl-design.js ~/ZepheniaLabs/Workspace/Packages/ZLDesignSystem
+```
+
+**Tests.** Continuous integration runs every check on each pull request:
 
 ```sh
 node tests/v0.2-freeze.test.js
@@ -113,8 +97,12 @@ node tests/genius-export.browser.js
 node tests/showcase.browser.js
 ```
 
-Continuous integration runs the same checks on every pull request.
+**Docs.** Engine behaviour, data definitions, research notes and sources are in [`docs/`](docs/).
 
-## Learn more
+</details>
 
-Research notes, engine behaviour, data definitions and sources are in [`docs/`](docs/).
+---
+
+<sub>Oculi is a research tool and not a medical device. Every result should be confirmed by an independent eye examination. Engine names and version numbers are not claims of clinical validation. Clarity illustrates focus only; it cannot show how a person perceives, and it says nothing about eye health. Lens Studio figures are estimates, and finished lenses can differ by a few tenths of a millimetre.</sub>
+
+<sub>© ZepheniaLabs · De L’existence a L’existant</sub>
