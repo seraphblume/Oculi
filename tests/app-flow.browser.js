@@ -6,6 +6,9 @@ const path = require("node:path");
 const http = require("node:http");
 const { chromium } = require("playwright");
 
+// Measure only after a resize has laid out: two animation frames once the fonts are in.
+const settle = page => page.evaluate(() => document.fonts.ready.then(() => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)))));
+
 const root = path.resolve(__dirname, "..");
 const types = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css", ".svg": "image/svg+xml", ".png": "image/png", ".webmanifest": "application/manifest+json" };
 const server = http.createServer(async (req, res) => {
@@ -142,6 +145,7 @@ const server = http.createServer(async (req, res) => {
     assert.match(await page.locator("#toast").innerText(), /250–1000 mm/, "a 15 cm working distance is rejected, not capped");
     await page.locator("#nearWd").fill("330");
     await page.setViewportSize({ width: 390, height: 844 });
+    await settle(page);
     assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true, "mobile has no horizontal overflow");
     if (process.env.DIOPTRA_SCREENSHOT_DIR) {
       await fs.mkdir(process.env.DIOPTRA_SCREENSHOT_DIR, { recursive: true });
@@ -191,6 +195,7 @@ const server = http.createServer(async (req, res) => {
     assert.match(await page.locator("#comparisonContent").innerText(), /not clinical confidence/i);
     for (const width of [320, 390, 1280]) {
       await page.setViewportSize({ width, height: 900 });
+      await settle(page);
       assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), `RC agreement overflows at ${width}`);
       if (process.env.DIOPTRA_SCREENSHOT_DIR && width !== 320) {
         await page.locator("#compareSection").evaluate(el => el.scrollIntoView({ behavior: "instant", block: "start" }));
@@ -475,8 +480,10 @@ const server = http.createServer(async (req, res) => {
     assert.equal(await page.locator("#rxCoverPatient").innerText(), "Preview patient");
     assert.equal(await page.evaluate(() => JSON.stringify(DioptraStorage.listCases())), beforeTools, "Genius never writes study cases");
     await page.setViewportSize({ width: 320, height: 900 });
+    await settle(page);
     assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), "Genius has no mobile overflow");
     await page.setViewportSize({ width: 1280, height: 900 });
+    await settle(page);
     await page.locator("#geniusVaOs").selectOption("20/20");
     assert.equal(await page.locator("#geniusPrescription").isVisible(), false, "verification edits hide a stale preview");
     await page.locator("#geniusAge").fill("43");
@@ -503,7 +510,7 @@ const server = http.createServer(async (req, res) => {
     assert.equal(await page.locator("#casePanel").isVisible(), false);
     assert.equal(await page.locator("#actionBar").isVisible(), false);
     assert.equal(await page.locator("#caseActions").isVisible(), false);
-    assert.deepEqual(await page.locator(".calculator-tabs [role=tab]").allTextContents(), ["Vertex", "Spherical Equivalent", "Transposition"]);
+    assert.deepEqual(await page.locator("#calculatorPanel .calculator-tabs [role=tab]").allTextContents(), ["Vertex", "Spherical Equivalent", "Transposition"]);
     assert.equal(await page.locator("#conversionControls").isVisible(), true);
     await page.locator("#calculatorForm button[type=submit]").click();
     assert.match(await page.locator("#calculatorError").innerText(), /Enter sphere/);
@@ -553,6 +560,8 @@ const server = http.createServer(async (req, res) => {
     await page.locator("#calculatorStatus").filter({ hasText: /Clipboard unavailable/ }).waitFor();
     await page.locator("#calculatorTab").focus();
     await page.keyboard.press("ArrowLeft");
+    assert.equal(await page.locator("#demoTab").getAttribute("aria-selected"), "true");
+    await page.keyboard.press("ArrowLeft");
     assert.equal(await page.locator("#geniusTab").getAttribute("aria-selected"), "true");
     await page.keyboard.press("ArrowLeft");
     assert.equal(await page.locator("#caseTab").getAttribute("aria-selected"), "true");
@@ -574,7 +583,8 @@ const server = http.createServer(async (req, res) => {
       await page.emulateMedia({ colorScheme, reducedMotion: "reduce" });
       for (const width of [320, 390, 1280]) {
         await page.setViewportSize({ width, height: 900 });
-        await page.evaluate(() => document.fonts.ready);
+        await settle(page);
+        await page.evaluate(() => document.fonts.ready.then(() => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)))));
         const calcOverflow = await page.evaluate(() => ({ scroll: document.documentElement.scrollWidth,
           over: [...document.querySelectorAll("body *")].filter(e => e.getBoundingClientRect().width && e.getBoundingClientRect().right > innerWidth + 1)
             .map(e => `${e.tagName}#${e.id}.${String(e.className).split(" ")[0]}:${Math.round(e.getBoundingClientRect().right)}`).slice(0, 8) }));
@@ -697,6 +707,7 @@ const server = http.createServer(async (req, res) => {
       await page.emulateMedia({ colorScheme });
       for (const width of [320, 390, 1280]) {
         await page.setViewportSize({ width, height: 900 });
+        await settle(page);
         const overflow = await page.evaluate(() => ({ width: innerWidth, scroll: document.documentElement.scrollWidth,
           elements: [...document.querySelectorAll("body *")].filter(e => e.getBoundingClientRect().width && e.getBoundingClientRect().right > innerWidth + 1).map(e => ({ tag: e.tagName, id: e.id, cls: e.className, right: e.getBoundingClientRect().right })).slice(0, 15) }));
         assert.ok(overflow.scroll <= width, `${colorScheme} refraction overflow at ${width}: ${JSON.stringify(overflow)}`);

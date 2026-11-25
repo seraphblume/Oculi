@@ -33,6 +33,7 @@
       <div class="view-tabs" role="tablist" aria-label="Workspace">
         <button id="caseTab" role="tab" aria-selected="true" aria-controls="casePanel" type="button">Clinical Study</button>
         <button id="geniusTab" role="tab" aria-selected="false" aria-controls="geniusPanel" tabindex="-1" type="button">Genius</button>
+        <button id="demoTab" role="tab" aria-selected="false" aria-controls="demoPanel" tabindex="-1" type="button">Demotools</button>
         <button id="calculatorTab" role="tab" aria-selected="false" aria-controls="calculatorPanel" tabindex="-1" type="button">Tools</button>
       </div>
       <div class="nav-actions" id="caseActions">
@@ -672,6 +673,111 @@
   </section>
 
   <!-- ================================================================ Tools -->
+  <!-- ================================================================== Demotools -->
+  <section class="content demo-panel" id="demoPanel" role="tabpanel" aria-labelledby="demoTab" tabindex="0" hidden>
+    <div class="large-title">
+      <h1>Demotools</h1>
+      <p class="title-sub">Show a patient what a correction and a lens choice change.</p>
+    </div>
+    <div class="calculator-tabs demo-tabs" role="tablist" aria-label="Demotools">
+      <button id="demoVisionTab" role="tab" aria-selected="true" aria-controls="demoVisionForm" type="button">True Vision</button>
+      <button id="demoLensTab" role="tab" aria-selected="false" aria-controls="demoLensForm" tabindex="-1" type="button">Frame/Lens Preview</button>
+    </div>
+
+    <form id="demoVisionForm" class="demo-tool" role="tabpanel" aria-labelledby="demoVisionTab" novalidate>
+      <h2 class="group-header">Patient</h2>
+      <div class="group">
+        <label class="row"><span class="row-label">Age</span>
+          <input id="tvAge" class="row-input num" type="text" inputmode="numeric" autocomplete="off" placeholder="Years" /></label>
+        <div class="row"><span class="row-label">Current glasses</span>
+          <div class="segmented" id="tvGlasses" data-value="none" role="radiogroup" aria-label="Current glasses">
+            <button type="button" data-value="none" role="radio" aria-checked="true">None</button>
+            <button type="button" data-value="yes" role="radio">Wears glasses</button>
+          </div>
+        </div>
+      </div>
+      <fieldset id="tvCurrentFields" hidden disabled>
+        <h3 class="sub-header">Current glasses</h3>
+        <div class="eye-columns">
+          <section class="eye-section"><h4 class="eye-header">Right eye · OD</h4><div class="group rx-table" data-rx="tvCurOd" data-eye="OD"></div></section>
+          <section class="eye-section"><h4 class="eye-header">Left eye · OS</h4><div class="group rx-table" data-rx="tvCurOs" data-eye="OS"></div></section>
+        </div>
+        <div class="group"><label class="row"><span class="row-label">ADD</span><select id="tvCurAdd" class="row-select"></select></label></div>
+      </fieldset>
+      <h3 class="sub-header">Final Rx</h3>
+      <div class="eye-columns">
+        <section class="eye-section"><h4 class="eye-header">Right eye · OD</h4><div class="group rx-table" data-rx="tvFinOd" data-eye="OD"></div></section>
+        <section class="eye-section"><h4 class="eye-header">Left eye · OS</h4><div class="group rx-table" data-rx="tvFinOs" data-eye="OS"></div></section>
+      </div>
+      <div class="group"><label class="row"><span class="row-label">ADD</span><select id="tvFinAdd" class="row-select"></select></label></div>
+      <p class="group-footer">The Rx you found. Enter the eye you will show; the other is optional.</p>
+
+      <h2 class="group-header">Comparison</h2>
+      <div class="group">
+        <div class="row"><span class="row-label">Eye</span>
+          <div class="segmented" id="tvEye" data-value="od" role="radiogroup" aria-label="Eye shown">
+            <button type="button" data-value="od" role="radio" aria-checked="true">OD</button>
+            <button type="button" data-value="os" role="radio">OS</button>
+          </div>
+        </div>
+        <div class="row"><span class="row-label">Chart</span>
+          <div class="segmented" id="tvScene" data-value="distance" role="radiogroup" aria-label="Chart distance">
+            <button type="button" data-value="distance" role="radio" aria-checked="true">Distance</button>
+            <button type="button" data-value="near" role="radio">Near</button>
+          </div>
+        </div>
+      </div>
+      <div class="form-actions"><button class="button-primary" type="submit" id="tvShow">Show Comparison</button><button class="quiet-button" type="button" id="tvReset">Clear</button></div>
+      <div class="vision-compare" id="tvCompare" hidden aria-live="polite">
+        <figure><canvas id="tvCanvasCurrent" width="280" height="360" role="img" aria-label="Chart as seen with the current correction"></canvas>
+          <figcaption><strong>Current vision</strong><span id="tvCurrentNote"></span></figcaption></figure>
+        <figure><canvas id="tvCanvasTrue" width="280" height="360" role="img" aria-label="Chart as seen with the final Rx"></canvas>
+          <figcaption><strong>True vision</strong><span id="tvTrueNote"></span></figcaption></figure>
+      </div>
+      <p class="group-footer" id="tvStatus" role="status" aria-live="polite">Works at any age. Nothing entered here is saved.</p>
+      <p class="group-footer compare-disclaimer">An optical illustration of focus only, for a 4 mm pupil, rendered by ZL Retina. It cannot show how this patient perceives, and it says nothing about eye health.</p>
+    </form>
+
+    <form id="demoLensForm" class="demo-tool" role="tabpanel" aria-labelledby="demoLensTab" novalidate hidden>
+      <h2 class="group-header">Frame</h2>
+      <div class="group">
+        <label class="row"><span class="row-label">Shape</span>
+          <select id="flShape" class="row-select">
+            <option value="rectangle">Rectangle</option><option value="oval">Oval</option><option value="round">Round</option>
+            <option value="aviator">Aviator</option><option value="cateye">Cat-eye</option>
+          </select></label>
+        <label class="row"><span class="row-label">Lens width · A</span><span class="row-value"><input id="flA" class="row-input num" type="text" inputmode="decimal" value="52" /><span class="unit">mm</span></span></label>
+        <label class="row"><span class="row-label">Lens height · B</span><span class="row-value"><input id="flB" class="row-input num" type="text" inputmode="decimal" value="38" /><span class="unit">mm</span></span></label>
+        <label class="row"><span class="row-label">Bridge · DBL</span><span class="row-value"><input id="flDbl" class="row-input num" type="text" inputmode="decimal" value="18" /><span class="unit">mm</span></span></label>
+      </div>
+      <p class="group-footer">A, B and DBL are printed inside the temple, for example 52□18.</p>
+      <h2 class="group-header">Fitting</h2>
+      <div class="group">
+        <div class="row"><span class="row-label">Eye</span>
+          <div class="segmented" id="flEye" data-value="od" role="radiogroup" aria-label="Eye">
+            <button type="button" data-value="od" role="radio" aria-checked="true">OD</button>
+            <button type="button" data-value="os" role="radio">OS</button>
+          </div>
+        </div>
+        <label class="row"><span class="row-label">Monocular PD</span><span class="row-value"><input id="flPd" class="row-input num" type="text" inputmode="decimal" value="31" /><span class="unit">mm</span></span></label>
+        <label class="row"><span class="row-label">Fitting height</span><span class="row-value"><input id="flFh" class="row-input num" type="text" inputmode="decimal" placeholder="B ÷ 2" /><span class="unit">mm</span></span></label>
+      </div>
+      <h2 class="group-header">Rx A · Rx B</h2>
+      <div class="eye-columns">
+        <section class="eye-section"><label class="eye-header rx-name"><span>Rx A</span><input id="flNameA" class="inline-input" type="text" maxlength="24" value="Current" aria-label="Rx A name" /></label><div class="group rx-table" data-rx="flRxA" data-eye="A"></div></section>
+        <section class="eye-section"><label class="eye-header rx-name"><span>Rx B</span><input id="flNameB" class="inline-input" type="text" maxlength="24" value="New" aria-label="Rx B name" /></label><div class="group rx-table" data-rx="flRxB" data-eye="B"></div></section>
+      </div>
+      <p class="group-footer">Polycarbonate · index 1.586 · Abbe 30 · 1.20 g/cm³ · single vision.</p>
+      <div class="form-actions"><button class="button-primary" type="submit" id="flShow">Preview Lenses</button><button class="quiet-button" type="button" id="flReset">Clear</button></div>
+      <p class="form-error" id="flError" role="status" aria-live="polite"></p>
+      <div class="lens-compare" id="flCompare" hidden aria-live="polite">
+        <figure class="lens-figure" id="flFigA"></figure>
+        <figure class="lens-figure" id="flFigB"></figure>
+      </div>
+      <p class="group-footer" id="flNotes" hidden>Edged thickness from ZL Thickness on the frame shape above, drawn as you face the wearer. The band round the rim is the edge thickness at true scale; the + marks the optical centre, the accent dot the thickest edge and the ink dot the thinnest. Base curves follow Vogel's rule; centre and edge are held to at least 1.0 mm. Bevel, polish and drill mounts are not modelled, so a lab's figures can differ by a few tenths. Colour fringing is Prentice prism ÷ Abbe number; about 0.10 Δ is where fringes start to be noticed. The strips show it at the scale of the True Vision chart.</p>
+    </form>
+  </section>
+
   <section class="content calculator-panel" id="calculatorPanel" role="tabpanel" aria-labelledby="calculatorTab" tabindex="0" hidden>
     <div class="large-title">
       <h1>Tools</h1>
@@ -913,6 +1019,9 @@
   <script src="js/zl-retina.js"></script>
   <script src="js/vision-compare.js"></script>
   <script src="js/genius.js"></script>
+  <script src="js/zl-thickness.js"></script>
+  <script src="js/lens-preview.js"></script>
+  <script src="js/demotools.js"></script>
   <script src="js/zl-field.js"></script>
   <script src="js/studio.js"></script>
   <script src="js/workspace.js"></script>

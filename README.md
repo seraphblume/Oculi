@@ -4,7 +4,7 @@ Refraction, focused.
 
 Oculi brings clinical comparison and essential prescription tools into one calm, private workspace. It is designed to keep each task clear, preserve the clinician’s independent judgment, and keep case data on the device.
 
-## Three focused spaces
+## Four focused spaces
 
 ### Clinical Study
 
@@ -40,6 +40,17 @@ Genius is clearly marked as a development preview, and nothing entered there is 
 #### ZL Retina
 
 `js/zl-retina.js` is a line-for-line port of the studio's `zl_retina` 0.1.0 package: scalar diffraction through a 4 mm pupil, convolved in linear light. `tests/zl-retina.test.js` checks it against output from the Python package itself. The comparison renders off the main thread and is monochromatic, because the eye's chromatic fringes are real but not perceived. Young eyes are allowed to focus through hyperopia (Hofstetter's minimum amplitude, 15 − 0.25 × age); cylinder is never focused away. The full correction shown is Beryl's estimate before the exam. The picture illustrates focus only: it cannot show how a patient perceives, and says nothing about eye health.
+
+### Demotools
+
+Illustrations to show a patient at the counter. Nothing entered here is saved. Both names are placeholders.
+
+- **True Vision.** Type the final Rx you found, and the current glasses if any, and see the same chart twice: as the patient sees it now and as the final Rx corrects it. Distance or near, either eye, any age. It uses the same ZL Retina rendering as Genius.
+- **Frame/Lens Preview.** Two Rx edged into the same frame in polycarbonate (index 1.586, Abbe 30). Choose a shape (rectangle, oval, round, aviator or cat-eye) and enter A, B, DBL, the monocular PD and an optional fitting height. Each lens is drawn as you face the wearer, with its edge thickness to true scale, and comes with its figures: centre, thickest and thinnest edge, weight, base curve, and the colour fringing at 10 mm and at the edge.
+
+#### ZL Thickness
+
+`js/zl-thickness.js` is a line-for-line port of the lens geometry in the studio's `zl_thickness` 0.3.0 package: toric and aspheric sag, rim and centre thickness, volume and boxing decentration. `tests/zl-thickness.test.js` checks all 360 rim thicknesses, the centre, volume and mass against output from the Python package itself. The preview solves each back surface for the prescribed back-vertex power through the lens's own centre thickness. Front base curves follow Vogel's rule. Centre and edge are held to at least 1.0 mm. Colour fringing is Prentice prism divided by the Abbe number; about 0.10 Δ is where it starts to be noticed. Bevels, polishing and drill mounts are not modelled, so a lab's figures can differ by a few tenths of a millimetre.
 
 ### Tools
 
@@ -95,7 +106,9 @@ The test suite covers:
 - optical calculations;
 - the PDF writer;
 - ZL Retina parity with the Python package, and the comparison's defocus model;
-- the complete browser workflow, Genius included, with one-page print and PDF export.
+- ZL Thickness parity with the Python package, and the Frame/Lens Preview geometry;
+- the complete browser workflow, Genius included, with one-page print and PDF export;
+- Demotools in light and dark, from 320 px to desktop.
 
 ```sh
 node tests/v0.2-freeze.test.js
@@ -109,8 +122,11 @@ node tests/optical-calculators.test.js
 node tests/pdf-lite.test.js
 node tests/zl-retina.test.js
 node tests/vision-compare.test.js
+node tests/zl-thickness.test.js
+node tests/lens-preview.test.js
 node tests/app-flow.browser.js
 node tests/genius-export.browser.js
+node tests/demotools.browser.js
 ```
 
 Continuous integration runs the same checks for every pull request.

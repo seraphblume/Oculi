@@ -2,10 +2,10 @@
   "use strict";
   const $ = id => document.getElementById(id);
   const optics = window.DioptraOptics;
-  const tabs = [$("caseTab"), $("geniusTab"), $("calculatorTab")];
-  const panels = [$("casePanel"), $("geniusPanel"), $("calculatorPanel")];
-  const views = ["case", "genius", "calculator"];
-  const scrollPositions = [0, 0, 0];
+  const tabs = [$("caseTab"), $("geniusTab"), $("demoTab"), $("calculatorTab")];
+  const panels = [$("casePanel"), $("geniusPanel"), $("demoPanel"), $("calculatorPanel")];
+  const views = ["case", "genius", "demo", "calculator"];
+  const scrollPositions = [0, 0, 0, 0];
   let selected = 0;
   let result = null;
   const show$ = window.OculiRx.displayMinus; // typographic minus on screen; copied text stays ASCII
@@ -45,7 +45,7 @@
     $("calculatorStatus").textContent = "";
   }
   const eyes = [{ key: "od", suffix: "", label: "Right eye · OD" }, { key: "os", suffix: "Os", label: "Left eye · OS" }];
-  const calculatorTabs = [...document.querySelectorAll(".calculator-tabs [role=tab]")];
+  const calculatorTabs = [...document.querySelectorAll("#calculatorPanel .calculator-tabs [role=tab]")];
   let calculatorTool = "conversion";
   const f = optics.formatPower;
   const quarter = x => Math.round((x + Number.EPSILON) * 4) / 4;

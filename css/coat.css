@@ -271,5 +271,22 @@ select:disabled, input:disabled { opacity: 0.45; }
 .calculator-panel details > summary { min-width: 0; }
 @media (max-width: 400px) {
   .calculator-tabs button { font-size: 11px; padding-left: 4px; padding-right: 4px; }
+  /* four workspaces: a two-word label takes two lines rather than push the row off screen */
+  .view-tabs button { white-space: normal; font-size: 11px; line-height: 1.15; padding-left: 4px; padding-right: 4px; min-width: 0; text-align: center; }
 }
 .group > .disclosure-row { padding-right: 4px; } /* room for the turned chevron */
+
+/* Demotools: ink for the lens, accent for what to look at */
+.lens-band { fill: var(--zl-ink); opacity: 0.8; }
+.lens-rim { stroke: var(--zl-ink); }
+.lens-oc, .lens-callout { stroke: var(--zl-accent); fill: var(--zl-accent); }
+.lens-oc { fill: none; }
+.lens-callout.thin { stroke: var(--zl-ink); fill: var(--zl-ink); }
+.lens-tick { fill: var(--zl-ink); font: 500 10px var(--zl-font-mono); }
+.lens-figure figcaption strong { font-weight: 500; color: var(--zl-ink); }
+.lens-figure figcaption span, .lens-figures dt { color: var(--zl-ink); opacity: 0.7; }
+.lens-figures { font-family: var(--zl-font-sans); }
+.lens-figures dd { font-family: var(--zl-font-mono); font-size: 12px; }
+.lens-figures dt, .lens-figures dd { box-shadow: inset 0 -1px 0 color-mix(in srgb, var(--zl-ink) 20%, transparent); }
+.fringe-label { font: 500 11px/1.2 var(--zl-font-mono); text-transform: uppercase; color: var(--zl-ink); }
+.fringe-strip { box-shadow: 0 0 0 1px var(--zl-ink); }

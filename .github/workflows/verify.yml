@@ -53,6 +53,10 @@ jobs:
         run: node tests/zl-retina.test.js
       - name: Vision comparison defocus
         run: node tests/vision-compare.test.js
+      - name: ZL Thickness parity with the Python package
+        run: node tests/zl-thickness.test.js
+      - name: Frame/Lens Preview geometry
+        run: node tests/lens-preview.test.js
 
       - name: Install browser test runtime
         run: |
@@ -66,6 +70,11 @@ jobs:
 
       - name: Verify Genius one-page print and PDF export
         run: node tests/genius-export.browser.js
+        env:
+          DIOPTRA_SCREENSHOT_DIR: ${{ runner.temp }}/dioptra-ui
+
+      - name: Verify Demotools
+        run: node tests/demotools.browser.js
         env:
           DIOPTRA_SCREENSHOT_DIR: ${{ runner.temp }}/dioptra-ui
 
